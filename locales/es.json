@@ -1,0 +1,160 @@
+{
+  "language": "Español",
+  "code": "es",
+  "app": {
+    "title": "Anotador YOLO",
+    "subtitle": "Herramienta profesional de anotación",
+    "branding": {
+      "fablab": "FabLab TecMedHub",
+      "university": "Universidad Austral de Chile - Sede Puerto Montt"
+    }
+  },
+  "header": {
+    "selectProject": "Seleccionar proyecto...",
+    "newProject": "Nuevo",
+    "exportProject": "Exportar Proyecto Completo",
+    "exportConfig": "Exportar Configuración",
+    "importConfig": "Importar Configuración",
+    "help": "Ayuda"
+  },
+  "tools": {
+    "title": "Herramientas",
+    "bbox": "Box",
+    "mask": "Mask",
+    "select": "Select",
+    "pan": "Pan",
+    "tooltips": {
+      "bbox": "Bounding Box (B)",
+      "mask": "Máscara (M)",
+      "select": "Seleccionar (V)",
+      "pan": "Pan (H)"
+    }
+  },
+  "classes": {
+    "title": "Clases Activas",
+    "manage": "Gestionar Clases",
+    "add": "Agregar Clase",
+    "placeholder": "Nombre de clase",
+    "empty": "Crea un proyecto primero",
+    "deleteConfirm": "Hay anotaciones con esta clase. ¿Eliminarla igual?",
+    "exists": "Ya existe una clase con ese nombre",
+    "enterName": "Ingresa un nombre para la clase"
+  },
+  "images": {
+    "title": "Cargar Imagen",
+    "select": "Seleccionar imágenes",
+    "upload": "Seleccionar imágenes",
+    "noImages": "No hay imágenes"
+  },
+  "actions": {
+    "title": "Acciones",
+    "save": "Guardar",
+    "undo": "Deshacer",
+    "clear": "Limpiar",
+    "delete": "Eliminar",
+    "cancel": "Cancelar",
+    "create": "Crear",
+    "confirm": "Confirmar",
+    "clearConfirm": "¿Limpiar todas las anotaciones de esta imagen?"
+  },
+  "shortcuts": {
+    "title": "Atajos",
+    "save": "Guardar",
+    "undo": "Deshacer",
+    "delete": "Eliminar",
+    "navigation": "Navegación",
+    "bbox": "Bbox",
+    "mask": "Mask",
+    "select": "Select",
+    "pan": "Pan",
+    "classes": "Clase 1-9"
+  },
+  "canvas": {
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
+    "resetZoom": "Restablecer Zoom",
+    "toggleLabels": "Mostrar/Ocultar Etiquetas",
+    "toggleGrid": "Mostrar/Ocultar Grilla",
+    "prevImage": "Imagen Anterior (←)",
+    "nextImage": "Imagen Siguiente (→)"
+  },
+  "stats": {
+    "title": "Estadísticas",
+    "images": "Imágenes",
+    "annotated": "Anotadas",
+    "labels": "Etiquetas",
+    "classes": "Clases",
+    "progress": "imágenes anotadas"
+  },
+  "gallery": {
+    "title": "Galería",
+    "all": "Todas",
+    "annotated": "Anotadas",
+    "unannotated": "Sin anotar",
+    "empty": "No hay imágenes",
+    "deleteConfirm": "¿Eliminar esta imagen?"
+  },
+  "export": {
+    "title": "Exportar",
+    "downloadDataset": "Descargar Dataset ZIP",
+    "downloadClasses": "Descargar classes.txt"
+  },
+  "project": {
+    "new": "Nuevo Proyecto",
+    "name": "Nombre del Proyecto",
+    "namePlaceholder": "Mi Proyecto YOLO",
+    "type": "Tipo de Anotación",
+    "typeBbox": "Bounding Box",
+    "typeMask": "Segmentación (Mask)",
+    "initialClasses": "Clases Iniciales (opcional)",
+    "classesPlaceholder": "clase1, clase2, clase3",
+    "classesHelp": "Separadas por comas. Puedes agregar más después.",
+    "enterName": "Ingresa un nombre para el proyecto",
+    "created": "Proyecto \"{name}\" creado",
+    "loaded": "Proyecto \"{name}\" cargado",
+    "deleted": "Proyecto eliminado",
+    "exported": "Proyecto exportado",
+    "configExported": "Configuración exportada",
+    "selectFirst": "Selecciona un proyecto primero"
+  },
+  "notifications": {
+    "imageSaved": "Imagen guardada",
+    "datasetDownloaded": "Dataset descargado",
+    "classesDownloaded": "classes.txt descargado",
+    "noClasses": "No hay clases para descargar",
+    "noImages": "No hay imágenes en el proyecto",
+    "noAnnotations": "No hay anotaciones para descargar",
+    "appStarted": "Aplicación iniciada",
+    "error": {
+      "createProject": "Error al crear proyecto",
+      "loadProject": "Error al cargar proyecto",
+      "updateProject": "Error al actualizar proyecto",
+      "deleteProject": "Error al eliminar proyecto",
+      "exportProject": "Error al exportar proyecto",
+      "exportConfig": "Error al exportar configuración",
+      "importConfig": "Error al importar configuración",
+      "loadImage": "Error al cargar imagen",
+      "saveImage": "Error al guardar imagen",
+      "deleteImage": "Error al eliminar imagen",
+      "loadImages": "Error al cargar imágenes",
+      "downloadDataset": "Error al descargar dataset",
+      "initApp": "Error al iniciar la aplicación"
+    }
+  },
+  "tour": {
+    "welcome": "Bienvenido al <strong>YOLO Annotator</strong>. Esta herramienta te permite anotar imágenes para entrenar modelos YOLO.",
+    "project": "Primero, crea un nuevo proyecto o selecciona uno existente. Cada proyecto puede ser de tipo <strong>Bounding Box</strong> o <strong>Segmentación</strong>.",
+    "tools": "Aquí encontrarás las <strong>herramientas</strong> de anotación: Box para rectángulos, Mask para máscaras pintables, Select para editar, y Pan para mover la vista.",
+    "classes": "Define tus <strong>clases</strong> de anotación. Cada clase tiene un nombre y un color. Puedes agregar, editar o eliminar clases.",
+    "workspace": "El <strong>área de trabajo</strong> principal. Aquí cargarás tus imágenes y crearás las anotaciones. Usa el mouse para dibujar y la rueda para hacer zoom.",
+    "management": "Panel de gestión donde verás las <strong>estadísticas</strong> del proyecto, la <strong>galería</strong> de imágenes y podrás <strong>exportar</strong> tu dataset en formato YOLO.",
+    "next": "Siguiente →",
+    "prev": "← Anterior",
+    "done": "¡Listo!",
+    "skip": "Saltar"
+  },
+  "imageInfo": {
+    "noName": "Sin nombre",
+    "dimensions": "Dimensiones"
+  }
+}

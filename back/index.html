@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anotador YOLO - Hojas de Respuestas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .header-branding {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .header-branding h3 {
+            font-size: 1.3em;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .header-branding p {
+            font-size: 0.95em;
+            opacity: 0.85;
+            margin: 3px 0;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            gap: 0;
+            min-height: 600px;
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            padding: 25px;
+            border-right: 2px solid #e0e0e0;
+        }
+
+        .class-selector {
+            margin-bottom: 30px;
+        }
+
+        .class-selector h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.2em;
+        }
+
+        .class-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 3px solid #ddd;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .class-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .class-btn.marked {
+            border-color: #e74c3c;
+            background: #e74c3c;
+            color: white;
+        }
+
+        .class-btn.empty {
+            border-color: #3498db;
+            background: #3498db;
+            color: white;
+        }
+
+        .class-btn.active {
+            box-shadow: 0 0 0 4px rgba(103, 126, 234, 0.3);
+            transform: scale(1.05);
+        }
+
+        .controls {
+            margin-top: 30px;
+        }
+
+        .controls h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.2em;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-wrapper label {
+            display: block;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .file-input-wrapper label:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-clear {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-download {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-undo {
+            background: #f39c12;
+            color: white;
+        }
+
+        .canvas-container {
+            padding: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #fafafa;
+        }
+
+        #canvas {
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            cursor: crosshair;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            max-width: 100%;
+            max-height: 70vh;
+        }
+
+        .stats {
+            margin-top: 30px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .stats h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #666;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .instructions {
+            margin-top: 30px;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .instructions h4 {
+            margin-bottom: 10px;
+            color: #856404;
+        }
+
+        .instructions ul {
+            margin-left: 20px;
+            color: #856404;
+        }
+
+        .instructions li {
+            margin-bottom: 5px;
+        }
+
+        .right-panel {
+            background: #f8f9fa;
+            padding: 25px;
+            border-left: 2px solid #e0e0e0;
+            overflow-y: auto;
+            max-height: 600px;
+        }
+
+        .panel-section {
+            margin-bottom: 30px;
+        }
+
+        .panel-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .label-list {
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .label-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+        }
+
+        .label-item:hover {
+            background: #f8f9fa;
+        }
+
+        .label-item:last-child {
+            border-bottom: none;
+        }
+
+        .label-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .label-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid #ddd;
+        }
+
+        .label-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .label-count {
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .label-delete {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s;
+        }
+
+        .label-delete:hover {
+            background: #c0392b;
+            transform: scale(1.05);
+        }
+
+        .class-manager {
+            background: white;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            padding: 15px;
+        }
+
+        .class-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .class-input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95em;
+        }
+
+        .class-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .color-input {
+            width: 60px;
+            height: 40px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .btn-add-class {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .btn-add-class:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .class-list {
+            margin-top: 15px;
+        }
+
+        .class-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .class-item-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .class-item-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            border: 2px solid #ddd;
+        }
+
+        .class-item-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .class-item-id {
+            background: #95a5a6;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+
+        .class-item-delete {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s;
+        }
+
+        .class-item-delete:hover {
+            background: #c0392b;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        .download-classes {
+            margin-top: 15px;
+        }
+
+        .btn-download-classes {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .btn-download-classes:hover:not(:disabled) {
+            background: #229954;
+            transform: translateY(-2px);
+        }
+
+        .btn-download-classes:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+
+        .dataset-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .dataset-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dataset-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .dataset-stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .dataset-stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .dataset-stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .btn-save-current {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .btn-save-current:hover:not(:disabled) {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-save-current:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+
+        .btn-download-zip {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .btn-download-zip:hover:not(:disabled) {
+            background: #229954;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .btn-download-zip:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+
+        .btn-clear-dataset {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .btn-clear-dataset:hover {
+            background: #c0392b;
+        }
+
+        .gallery-section {
+            margin-top: 20px;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .gallery-item {
+            position: relative;
+            cursor: pointer;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+            aspect-ratio: 1;
+        }
+
+        .gallery-item:hover {
+            border-color: #667eea;
+            transform: scale(1.05);
+        }
+
+        .gallery-item.active {
+            border-color: #27ae60;
+            box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.3);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gallery-item-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px;
+            font-size: 0.75em;
+            text-align: center;
+        }
+
+        .gallery-item-delete {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: bold;
+            display: none;
+            transition: all 0.2s;
+        }
+
+        .gallery-item:hover .gallery-item-delete {
+            display: block;
+        }
+
+        .gallery-item-delete:hover {
+            background: #c0392b;
+            transform: scale(1.1);
+        }
+
+        .no-images {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 Anotador YOLO</h1>
+            <p>Anota hojas de respuestas para entrenamiento</p>
+            <div class="header-branding">
+                <h3>🔬 FabLab TecMedHub</h3>
+                <p>Universidad Austral de Chile</p>
+                <p>Sede Puerto Montt</p>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="class-selector">
+                    <h3>Clase Actual</h3>
+                    <button class="class-btn marked active" onclick="selectClass(0)">
+                        ✓ Marcada
+                    </button>
+                    <button class="class-btn empty" onclick="selectClass(1)">
+                        ○ Vacía
+                    </button>
+                </div>
+
+                <div class="controls">
+                    <h3>Controles</h3>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="imageInput" accept="image/*" onchange="loadImage(event)">
+                        <label for="imageInput">📁 Subir Imagen</label>
+                    </div>
+                    <button class="btn btn-undo" onclick="undoLastBox()" id="undoBtn" disabled>↶ Deshacer</button>
+                    <button class="btn btn-clear" onclick="clearAll()" id="clearBtn" disabled>🗑️ Limpiar Todo</button>
+                    <button class="btn btn-download" onclick="downloadAnnotations()" id="downloadBtn" disabled>⬇️ Descargar YOLO</button>
+                </div>
+
+                <div class="stats">
+                    <h4>Estadísticas</h4>
+                    <div class="stat-item">
+                        <span class="stat-label">Marcadas:</span>
+                        <span class="stat-value" id="markedCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Vacías:</span>
+                        <span class="stat-value" id="emptyCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total:</span>
+                        <span class="stat-value" id="totalCount">0</span>
+                    </div>
+                </div>
+
+                <div class="instructions">
+                    <h4>💡 Atajos</h4>
+                    <ul>
+                        <li><strong>1-9</strong> - Seleccionar clase</li>
+                        <li><strong>S</strong> - Guardar imagen</li>
+                        <li><strong>Z</strong> - Deshacer</li>
+                        <li><strong>C</strong> - Limpiar</li>
+                    </ul>
+                </div>
+
+                <div class="dataset-section">
+                    <h3>💾 Dataset</h3>
+                    <div class="dataset-stats">
+                        <div class="dataset-stat-card">
+                            <div class="dataset-stat-value" id="datasetCount">0</div>
+                            <div class="dataset-stat-label">Imágenes</div>
+                        </div>
+                        <div class="dataset-stat-card">
+                            <div class="dataset-stat-value" id="datasetLabels">0</div>
+                            <div class="dataset-stat-label">Etiquetas</div>
+                        </div>
+                    </div>
+                    <button class="btn-save-current" onclick="saveCurrentImage()" id="saveBtn" disabled>
+                        💾 Guardar Actual
+                    </button>
+                    <button class="btn-download-zip" onclick="downloadDatasetZip()" id="zipBtn" disabled>
+                        📦 Descargar Dataset ZIP
+                    </button>
+                    <button class="btn-clear-dataset" onclick="clearDataset()">
+                        🗑️ Limpiar Dataset
+                    </button>
+                </div>
+
+                <div class="gallery-section">
+                    <h3>🖼️ Galería</h3>
+                    <div class="gallery-grid" id="galleryGrid">
+                        <div class="no-images">Sin imágenes guardadas</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="canvas"></canvas>
+            </div>
+
+            <div class="right-panel">
+                <div class="panel-section">
+                    <h3>🏷️ Etiquetas</h3>
+                    <div class="label-list" id="labelList">
+                        <div class="empty-message">Sin etiquetas aún</div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>🎨 Gestionar Clases</h3>
+                    <div class="class-manager">
+                        <div class="class-input-group">
+                            <input type="text" id="newClassName" class="class-input" placeholder="Nombre de clase">
+                            <input type="color" id="newClassColor" class="color-input" value="#e74c3c">
+                        </div>
+                        <button class="btn-add-class" onclick="addClass()">+ Agregar Clase</button>
+                        
+                        <div class="class-list" id="classList">
+                            <!-- Las clases se cargan aquí -->
+                        </div>
+
+                        <div class="download-classes">
+                            <button class="btn-download-classes" onclick="downloadClassesFile()" id="downloadClassesBtn">
+                                ⬇️ Descargar classes.txt
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let img = null;
+        let currentClass = 0;
+        let boxes = [];
+        let isDrawing = false;
+        let startX, startY;
+        let currentImageName = '';
+        let currentImageId = null;
+        let db = null;
+        
+        // Sistema dinámico de clases
+        let classes = [
+            { id: 0, name: 'marked', color: '#e74c3c' },
+            { id: 1, name: 'empty', color: '#3498db' }
+        ];
+
+        // Inicializar IndexedDB
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('YOLOAnnotatorDB', 1);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    
+                    // Store para imágenes y anotaciones
+                    if (!db.objectStoreNames.contains('images')) {
+                        const imageStore = db.createObjectStore('images', { keyPath: 'id', autoIncrement: true });
+                        imageStore.createIndex('name', 'name', { unique: false });
+                    }
+                    
+                    // Store para clases
+                    if (!db.objectStoreNames.contains('classes')) {
+                        db.createObjectStore('classes', { keyPath: 'id' });
+                    }
+                };
+            });
+        }
+
+        // Guardar imagen y anotaciones
+        function saveImageToDB(name, imageBlob, annotations, width, height) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['images'], 'readwrite');
+                const store = transaction.objectStore('images');
+                
+                const data = {
+                    name: name,
+                    image: imageBlob,
+                    annotations: annotations,
+                    width: width,
+                    height: height,
+                    timestamp: Date.now()
+                };
+                
+                const request = store.add(data);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // Obtener todas las imágenes
+        function getAllImages() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['images'], 'readonly');
+                const store = transaction.objectStore('images');
+                const request = store.getAll();
+                
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // Obtener imagen por ID
+        function getImageById(id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['images'], 'readonly');
+                const store = transaction.objectStore('images');
+                const request = store.get(id);
+                
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // Eliminar imagen
+        function deleteImageFromDB(id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['images'], 'readwrite');
+                const store = transaction.objectStore('images');
+                const request = store.delete(id);
+                
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // Limpiar toda la base de datos
+        function clearAllImages() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['images'], 'readwrite');
+                const store = transaction.objectStore('images');
+                const request = store.clear();
+                
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // Guardar clases en DB
+        function saveClassesToDB() {
+            return new Promise(async (resolve, reject) => {
+                try {
+                    const transaction = db.transaction(['classes'], 'readwrite');
+                    const store = transaction.objectStore('classes');
+                    
+                    // Limpiar clases anteriores
+                    await store.clear();
+                    
+                    // Guardar clases actuales
+                    for (const cls of classes) {
+                        await store.put(cls);
+                    }
+                    
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        }
+
+        // Cargar clases desde DB
+        function loadClassesFromDB() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['classes'], 'readonly');
+                const store = transaction.objectStore('classes');
+                const request = store.getAll();
+                
+                request.onsuccess = () => {
+                    const savedClasses = request.result;
+                    if (savedClasses.length > 0) {
+                        classes = savedClasses;
+                    }
+                    resolve();
+                };
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // Inicializar interfaz
+        async function init() {
+            try {
+                await initDB();
+                await loadClassesFromDB();
+                renderClassButtons();
+                renderClassList();
+                updateLabelList();
+                await updateGallery();
+                await updateDatasetStats();
+            } catch (error) {
+                console.error('Error initializing:', error);
+                alert('Error al inicializar la aplicación');
+            }
+        }
+
+        function renderClassButtons() {
+            const container = document.querySelector('.class-selector');
+            const h3 = container.querySelector('h3');
+            container.innerHTML = '';
+            container.appendChild(h3);
+            
+            classes.forEach((cls, index) => {
+                const btn = document.createElement('button');
+                btn.className = `class-btn ${index === currentClass ? 'active' : ''}`;
+                btn.style.borderColor = cls.color;
+                btn.style.background = cls.color;
+                btn.style.color = 'white';
+                btn.textContent = cls.name;
+                btn.onclick = () => selectClass(index);
+                container.appendChild(btn);
+            });
+        }
+
+        function renderClassList() {
+            const container = document.getElementById('classList');
+            
+            if (classes.length === 0) {
+                container.innerHTML = '<div class="empty-message">Sin clases definidas</div>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            classes.forEach(cls => {
+                const item = document.createElement('div');
+                item.className = 'class-list-item';
+                
+                item.innerHTML = `
+                    <div class="class-item-info">
+                        <div class="class-item-color" style="background: ${cls.color}"></div>
+                        <span class="class-item-name">${cls.name}</span>
+                        <span class="class-item-id">ID: ${cls.id}</span>
+                    </div>
+                    <button class="class-item-delete" onclick="deleteClass(${cls.id})">✕</button>
+                `;
+                
+                container.appendChild(item);
+            });
+        }
+
+        async function addClass() {
+            const nameInput = document.getElementById('newClassName');
+            const colorInput = document.getElementById('newClassColor');
+            
+            const name = nameInput.value.trim();
+            const color = colorInput.value;
+            
+            if (!name) {
+                alert('Por favor ingresa un nombre para la clase');
+                return;
+            }
+            
+            if (classes.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+                alert('Ya existe una clase con ese nombre');
+                return;
+            }
+            
+            const newId = classes.length > 0 ? Math.max(...classes.map(c => c.id)) + 1 : 0;
+            
+            classes.push({
+                id: newId,
+                name: name,
+                color: color
+            });
+            
+            await saveClassesToDB();
+            
+            nameInput.value = '';
+            colorInput.value = '#' + Math.floor(Math.random()*16777215).toString(16);
+            
+            renderClassButtons();
+            renderClassList();
+            updateLabelList();
+        }
+
+        async function deleteClass(classId) {
+            const hasBoxes = boxes.some(b => b.class === classId);
+            
+            if (hasBoxes) {
+                if (!confirm('Hay anotaciones con esta clase. ¿Eliminarla de todas formas? Las anotaciones se perderán.')) {
+                    return;
+                }
+                boxes = boxes.filter(b => b.class !== classId);
+                redraw();
+                updateStats();
+            }
+            
+            classes = classes.filter(c => c.id !== classId);
+            
+            if (currentClass >= classes.length) {
+                currentClass = classes.length > 0 ? 0 : -1;
+            }
+            
+            await saveClassesToDB();
+            
+            renderClassButtons();
+            renderClassList();
+            updateLabelList();
+            updateButtons();
+        }
+
+        function selectClass(classIndex) {
+            if (classIndex < 0 || classIndex >= classes.length) return;
+            currentClass = classIndex;
+            renderClassButtons();
+        }
+
+        function updateLabelList() {
+            const container = document.getElementById('labelList');
+            
+            if (boxes.length === 0) {
+                container.innerHTML = '<div class="empty-message">Sin etiquetas aún</div>';
+                return;
+            }
+            
+            const labelCounts = {};
+            boxes.forEach(box => {
+                labelCounts[box.class] = (labelCounts[box.class] || 0) + 1;
+            });
+            
+            container.innerHTML = '';
+            
+            Object.entries(labelCounts).forEach(([classId, count]) => {
+                const cls = classes.find(c => c.id === parseInt(classId));
+                if (!cls) return;
+                
+                const item = document.createElement('div');
+                item.className = 'label-item';
+                
+                item.innerHTML = `
+                    <div class="label-info">
+                        <div class="label-color" style="background: ${cls.color}"></div>
+                        <span class="label-name">${cls.name}</span>
+                    </div>
+                    <span class="label-count">${count}</span>
+                    <button class="label-delete" onclick="deleteAllLabels(${classId})">Eliminar</button>
+                `;
+                
+                container.appendChild(item);
+            });
+        }
+
+        function deleteAllLabels(classId) {
+            const cls = classes.find(c => c.id === classId);
+            const count = boxes.filter(b => b.class === classId).length;
+            
+            if (!confirm(`¿Eliminar todas las ${count} etiquetas de "${cls.name}"?`)) {
+                return;
+            }
+            
+            boxes = boxes.filter(b => b.class !== classId);
+            redraw();
+            updateStats();
+            updateLabelList();
+            updateButtons();
+        }
+
+        function loadImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            currentImageName = file.name.replace(/\.[^/.]+$/, "");
+            currentImageId = null;
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                img = new Image();
+                img.onload = function() {
+                    const maxWidth = 1000;
+                    const maxHeight = 700;
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > maxWidth || height > maxHeight) {
+                        const ratio = Math.min(maxWidth / width, maxHeight / height);
+                        width *= ratio;
+                        height *= ratio;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    boxes = [];
+                    redraw();
+                    updateButtons();
+                    updateStats();
+                    updateLabelList();
+                };
+                img.src = e.target.result;
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        async function loadImageFromGallery(imageId) {
+            try {
+                const imageData = await getImageById(imageId);
+                if (!imageData) return;
+                
+                currentImageId = imageId;
+                currentImageName = imageData.name;
+                boxes = imageData.annotations || [];
+                
+                const url = URL.createObjectURL(imageData.image);
+                img = new Image();
+                img.onload = function() {
+                    canvas.width = imageData.width;
+                    canvas.height = imageData.height;
+                    redraw();
+                    updateButtons();
+                    updateStats();
+                    updateLabelList();
+                    URL.revokeObjectURL(url);
+                    
+                    // Marcar como activa en la galería
+                    document.querySelectorAll('.gallery-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    document.querySelector(`[data-image-id="${imageId}"]`)?.classList.add('active');
+                };
+                img.src = url;
+            } catch (error) {
+                console.error('Error loading image:', error);
+                alert('Error al cargar la imagen');
+            }
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (!img || classes.length === 0) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            startX = e.clientX - rect.left;
+            startY = e.clientY - rect.top;
+            isDrawing = true;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDrawing || !img) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const currentX = e.clientX - rect.left;
+            const currentY = e.clientY - rect.top;
+            
+            redraw();
+            
+            const cls = classes[currentClass];
+            ctx.strokeStyle = cls.color;
+            ctx.lineWidth = 3;
+            ctx.strokeRect(startX, startY, currentX - startX, currentY - startY);
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (!isDrawing || !img) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const endX = e.clientX - rect.left;
+            const endY = e.clientY - rect.top;
+            
+            const width = Math.abs(endX - startX);
+            const height = Math.abs(endY - startY);
+            
+            if (width > 5 && height > 5) {
+                boxes.push({
+                    class: classes[currentClass].id,
+                    x: Math.min(startX, endX),
+                    y: Math.min(startY, endY),
+                    width: width,
+                    height: height
+                });
+                
+                updateStats();
+                updateButtons();
+                updateLabelList();
+            }
+            
+            isDrawing = false;
+            redraw();
+        });
+
+        function redraw() {
+            if (!img) return;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            
+            boxes.forEach(box => {
+                const cls = classes.find(c => c.id === box.class);
+                if (!cls) return;
+                
+                ctx.strokeStyle = cls.color;
+                ctx.lineWidth = 3;
+                ctx.strokeRect(box.x, box.y, box.width, box.height);
+                
+                ctx.fillStyle = cls.color;
+                ctx.font = 'bold 16px Arial';
+                ctx.fillText(cls.name, box.x + 5, box.y - 5);
+            });
+        }
+
+        function undoLastBox() {
+            if (boxes.length > 0) {
+                boxes.pop();
+                redraw();
+                updateStats();
+                updateButtons();
+                updateLabelList();
+            }
+        }
+
+        function clearAll() {
+            if (confirm('¿Limpiar todas las anotaciones?')) {
+                boxes = [];
+                redraw();
+                updateStats();
+                updateButtons();
+                updateLabelList();
+            }
+        }
+
+        function updateStats() {
+            const classCounts = {};
+            boxes.forEach(b => {
+                classCounts[b.class] = (classCounts[b.class] || 0) + 1;
+            });
+            
+            const markedCount = classCounts[classes.find(c => c.name === 'marked')?.id] || 0;
+            const emptyCount = classCounts[classes.find(c => c.name === 'empty')?.id] || 0;
+            
+            document.getElementById('markedCount').textContent = markedCount;
+            document.getElementById('emptyCount').textContent = emptyCount;
+            document.getElementById('totalCount').textContent = boxes.length;
+        }
+
+        function updateButtons() {
+            const hasBoxes = boxes.length > 0;
+            const hasImage = img !== null;
+            
+            document.getElementById('undoBtn').disabled = !hasBoxes;
+            document.getElementById('clearBtn').disabled = !hasBoxes;
+            document.getElementById('downloadBtn').disabled = !hasBoxes;
+            document.getElementById('saveBtn').disabled = !hasImage || !hasBoxes;
+        }
+
+        function downloadAnnotations() {
+            if (boxes.length === 0 || !img) {
+                alert('No hay anotaciones para descargar');
+                return;
+            }
+            
+            let yoloContent = '';
+            
+            boxes.forEach(box => {
+                const x_center = (box.x + box.width / 2) / canvas.width;
+                const y_center = (box.y + box.height / 2) / canvas.height;
+                const width = box.width / canvas.width;
+                const height = box.height / canvas.height;
+                
+                yoloContent += `${box.class} ${x_center.toFixed(6)} ${y_center.toFixed(6)} ${width.toFixed(6)} ${height.toFixed(6)}\n`;
+            });
+            
+            const blob = new Blob([yoloContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentImageName + '.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            alert('✓ Archivo descargado: ' + currentImageName + '.txt');
+        }
+
+        function downloadClassesFile() {
+            if (classes.length === 0) {
+                alert('No hay clases para descargar');
+                return;
+            }
+            
+            const sortedClasses = [...classes].sort((a, b) => a.id - b.id);
+            const classesContent = sortedClasses.map(cls => cls.name).join('\n');
+            
+            const blob = new Blob([classesContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'classes.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            alert('✓ Archivo descargado: classes.txt');
+        }
+
+        async function saveCurrentImage() {
+            if (!img || boxes.length === 0) {
+                alert('No hay imagen o anotaciones para guardar');
+                return;
+            }
+            
+            try {
+                // Convertir canvas a blob
+                canvas.toBlob(async (blob) => {
+                    try {
+                        await saveImageToDB(currentImageName, blob, boxes, canvas.width, canvas.height);
+                        alert('✓ Imagen guardada en el dataset');
+                        await updateGallery();
+                        await updateDatasetStats();
+                        
+                        // Limpiar canvas para siguiente imagen
+                        img = null;
+                        boxes = [];
+                        currentImageName = '';
+                        currentImageId = null;
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        updateButtons();
+                        updateStats();
+                        updateLabelList();
+                        document.getElementById('imageInput').value = '';
+                    } catch (error) {
+                        console.error('Error saving:', error);
+                        alert('Error al guardar la imagen');
+                    }
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al procesar la imagen');
+            }
+        }
+
+        async function updateGallery() {
+            try {
+                const images = await getAllImages();
+                const container = document.getElementById('galleryGrid');
+                
+                if (images.length === 0) {
+                    container.innerHTML = '<div class="no-images">Sin imágenes guardadas</div>';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                
+                images.forEach(imageData => {
+                    const item = document.createElement('div');
+                    item.className = 'gallery-item';
+                    item.dataset.imageId = imageData.id;
+                    
+                    const url = URL.createObjectURL(imageData.image);
+                    const annotationCount = imageData.annotations ? imageData.annotations.length : 0;
+                    
+                    item.innerHTML = `
+                        <img src="${url}" alt="${imageData.name}">
+                        <div class="gallery-item-info">${annotationCount} labels</div>
+                        <button class="gallery-item-delete" onclick="deleteImageFromGallery(${imageData.id}, event)">✕</button>
+                    `;
+                    
+                    item.onclick = (e) => {
+                        if (e.target.classList.contains('gallery-item-delete')) return;
+                        loadImageFromGallery(imageData.id);
+                    };
+                    
+                    container.appendChild(item);
+                });
+            } catch (error) {
+                console.error('Error updating gallery:', error);
+            }
+        }
+
+        async function deleteImageFromGallery(imageId, event) {
+            event.stopPropagation();
+            
+            if (!confirm('¿Eliminar esta imagen del dataset?')) {
+                return;
+            }
+            
+            try {
+                await deleteImageFromDB(imageId);
+                await updateGallery();
+                await updateDatasetStats();
+                
+                if (currentImageId === imageId) {
+                    img = null;
+                    boxes = [];
+                    currentImageName = '';
+                    currentImageId = null;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    updateButtons();
+                    updateStats();
+                    updateLabelList();
+                }
+            } catch (error) {
+                console.error('Error deleting image:', error);
+                alert('Error al eliminar la imagen');
+            }
+        }
+
+        async function updateDatasetStats() {
+            try {
+                const images = await getAllImages();
+                const totalLabels = images.reduce((sum, img) => sum + (img.annotations ? img.annotations.length : 0), 0);
+                
+                document.getElementById('datasetCount').textContent = images.length;
+                document.getElementById('datasetLabels').textContent = totalLabels;
+                
+                document.getElementById('zipBtn').disabled = images.length === 0;
+            } catch (error) {
+                console.error('Error updating stats:', error);
+            }
+        }
+
+        async function downloadDatasetZip() {
+            try {
+                const images = await getAllImages();
+                
+                if (images.length === 0) {
+                    alert('No hay imágenes en el dataset');
+                    return;
+                }
+                
+                const zip = new JSZip();
+                const imagesFolder = zip.folder('images');
+                const labelsFolder = zip.folder('labels');
+                
+                // Agregar images y labels
+                for (const imageData of images) {
+                    // Agregar imagen
+                    imagesFolder.file(imageData.name + '.jpg', imageData.image);
+                    
+                    // Crear archivo de anotaciones YOLO
+                    let yoloContent = '';
+                    if (imageData.annotations && imageData.annotations.length > 0) {
+                        imageData.annotations.forEach(box => {
+                            const x_center = (box.x + box.width / 2) / imageData.width;
+                            const y_center = (box.y + box.height / 2) / imageData.height;
+                            const width = box.width / imageData.width;
+                            const height = box.height / imageData.height;
+                            
+                            yoloContent += `${box.class} ${x_center.toFixed(6)} ${y_center.toFixed(6)} ${width.toFixed(6)} ${height.toFixed(6)}\n`;
+                        });
+                    }
+                    
+                    labelsFolder.file(imageData.name + '.txt', yoloContent);
+                }
+                
+                // Agregar classes.txt
+                const sortedClasses = [...classes].sort((a, b) => a.id - b.id);
+                const classesContent = sortedClasses.map(cls => cls.name).join('\n');
+                zip.file('classes.txt', classesContent);
+                
+                // Generar y descargar ZIP
+                const blob = await zip.generateAsync({ type: 'blob' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'yolo_dataset_' + Date.now() + '.zip';
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                alert('✓ Dataset descargado exitosamente');
+            } catch (error) {
+                console.error('Error creating ZIP:', error);
+                alert('Error al crear el archivo ZIP');
+            }
+        }
+
+        async function clearDataset() {
+            if (!confirm('¿Eliminar TODAS las imágenes del dataset? Esta acción no se puede deshacer.')) {
+                return;
+            }
+            
+            try {
+                await clearAllImages();
+                await updateGallery();
+                await updateDatasetStats();
+                alert('✓ Dataset limpiado');
+            } catch (error) {
+                console.error('Error clearing dataset:', error);
+                alert('Error al limpiar el dataset');
+            }
+        }
+
+        // Atajos de teclado
+        document.addEventListener('keydown', (e) => {
+            const key = e.key;
+            
+            if (key >= '1' && key <= '9') {
+                const classIndex = parseInt(key) - 1;
+                if (classIndex < classes.length) {
+                    selectClass(classIndex);
+                }
+            }
+            
+            if (key === 'z' || key === 'Z') undoLastBox();
+            if (key === 'c' || key === 'C') clearAll();
+            if (key === 's' || key === 'S') {
+                e.preventDefault();
+                saveCurrentImage();
+            }
+        });
+
+        // Inicializar al cargar
+        init();
+    </script>
+</body>
+</html>
