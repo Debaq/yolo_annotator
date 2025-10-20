@@ -509,8 +509,10 @@ class CanvasManager {
         this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
         this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
         this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
-        this.canvas.addEventListener('wheel', this.handleWheel.bind(this));
-        
+        this.canvas.addEventListener('wheel', this.handleWheel.bind(this), { passive: false });
+
+
+
         // Prevent context menu
         this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     }
@@ -1391,21 +1393,90 @@ class YOLOAnnotator {
         });
     }
 
+
     async loadImages(files) {
         if (!this.projectManager.currentProject) {
             this.ui.showToast('Selecciona un proyecto primero', 'warning');
             return;
         }
-        
+
+        let loadedCount = 0;
+        let firstImageId = null;
+
         for (const file of files) {
             try {
-                await this.canvasManager.loadImage(file);
-                break; // Load first image for now
+                // Load image to get dimensions
+                const img = await this.loadImageFile(file);
+
+                // Convert file to blob
+                const blob = await this.fileToBlob(file);
+
+                // Save to database
+                const imageData = {
+                    projectId: this.projectManager.currentProject.id,
+                    name: file.name.replace(/\.[^/.]+$/, ''),
+                    image: blob,
+                    annotations: [],
+                    width: img.width,
+                    height: img.height,
+                    timestamp: Date.now()
+                };
+
+                const imageId = await this.db.saveImage(imageData);
+
+                if (loadedCount === 0) {
+                    firstImageId = imageId;
+                }
+
+                loadedCount++;
             } catch (error) {
+                console.error(`Error loading ${file.name}:`, error);
                 this.ui.showToast(`Error al cargar ${file.name}`, 'error');
             }
         }
+
+        if (loadedCount > 0) {
+            // Reload gallery
+            await this.galleryManager.loadImages(this.projectManager.currentProject.id);
+            this.updateStats();
+
+            // Load first image in canvas
+            if (firstImageId) {
+                await this.galleryManager.loadImage(firstImageId);
+            }
+
+            this.ui.showToast(`${loadedCount} imágenes cargadas`, 'success');
+        }
     }
+
+    // AGREGAR estas funciones helper DESPUÉS de la función loadImages:
+
+    loadImageFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = e.target.result;
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    fileToBlob(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                resolve(new Blob([e.target.result], { type: file.type }));
+            };
+            reader.onerror = reject;
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+
 
     async saveCurrentImage() {
         if (!this.canvasManager.image || !this.projectManager.currentProject) {

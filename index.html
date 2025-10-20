@@ -397,42 +397,66 @@
         });
 
         // Update button states based on current state
-        function updateUIState() {
-            if (window.app && window.app.canvasManager) {
-                const hasImage = window.app.canvasManager.image !== null;
-                const hasAnnotations = window.app.canvasManager.annotations.length > 0;
-                const hasProject = window.app.projectManager.currentProject !== null;
+function updateUIState() {
+    if (window.app && window.app.canvasManager) {
+        const hasImage = window.app.canvasManager.image !== null;
+        const hasAnnotations = window.app.canvasManager.annotations.length > 0;
+        const hasProject = window.app.projectManager.currentProject !== null;
 
-                // Update button states
-                document.getElementById('btnSave').disabled = !hasImage || !hasAnnotations || !hasProject;
-                document.getElementById('btnUndo').disabled = !hasAnnotations;
-                document.getElementById('btnClear').disabled = !hasAnnotations;
-                document.getElementById('btnDownloadZip').disabled = !hasProject;
+        // Update button states - con verificación de existencia
+        const btnSave = document.getElementById('btnSave');
+        const btnUndo = document.getElementById('btnUndo');
+        const btnClear = document.getElementById('btnClear');
+        const btnDownloadZip = document.getElementById('btnDownloadZip');
 
-                // Update image info
-                if (hasImage) {
-                    document.getElementById('imageInfo').style.display = 'block';
-                    const nameElement = document.getElementById('imageName');
-                    nameElement.textContent = window.app.canvasManager.imageName || window.i18n.t('imageInfo.noName');
-                    document.getElementById('imageDimensions').textContent =
+        if (btnSave) btnSave.disabled = !hasImage || !hasAnnotations || !hasProject;
+        if (btnUndo) btnUndo.disabled = !hasAnnotations;
+        if (btnClear) btnClear.disabled = !hasAnnotations;
+        if (btnDownloadZip) btnDownloadZip.disabled = !hasProject;
+
+        // Update image info
+        const imageInfo = document.getElementById('imageInfo');
+        if (imageInfo) {
+            if (hasImage) {
+                imageInfo.style.display = 'block';
+                const nameElement = document.getElementById('imageName');
+                const dimensionsElement = document.getElementById('imageDimensions');
+                const countElement = document.getElementById('annotationCount');
+
+                if (nameElement) {
+                    nameElement.textContent = window.app.canvasManager.imageName ||
+                        (window.i18n ? window.i18n.t('imageInfo.noName') : 'No name');
+                }
+                if (dimensionsElement) {
+                    dimensionsElement.textContent =
                         `${window.app.canvasManager.image.width}x${window.app.canvasManager.image.height}`;
-                    document.getElementById('annotationCount').textContent = hasAnnotations ?
+                }
+                if (countElement) {
+                    countElement.textContent = hasAnnotations ?
                         window.app.canvasManager.annotations.length : 0;
-                } else {
-                    document.getElementById('imageInfo').style.display = 'none';
                 }
-
-                // Update stat classes
-                if (hasProject && window.app.canvasManager.classes) {
-                    document.getElementById('statClasses').textContent = window.app.canvasManager.classes.length;
-                }
-
-                // Update progress text
-                const images = window.app.galleryManager.images;
-                const annotated = images.filter(img => img.annotations && img.annotations.length > 0).length;
-                document.getElementById('progressCount').textContent = `${annotated}/${images.length}`;
+            } else {
+                imageInfo.style.display = 'none';
             }
         }
+
+        // Update stat classes
+        if (hasProject && window.app.canvasManager.classes) {
+            const statClasses = document.getElementById('statClasses');
+            if (statClasses) {
+                statClasses.textContent = window.app.canvasManager.classes.length;
+            }
+        }
+
+        // Update progress text
+        const images = window.app.galleryManager.images;
+        const annotated = images.filter(img => img.annotations && img.annotations.length > 0).length;
+        const progressCount = document.getElementById('progressCount');
+        if (progressCount) {
+            progressCount.textContent = `${annotated}/${images.length}`;
+        }
+    }
+}
 
         // Poll for UI updates
         setInterval(updateUIState, 500);
