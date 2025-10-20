@@ -1,0 +1,176 @@
+/* ============================================
+   CANVAS CSS
+   Canvas principal, controles y navegación
+   ============================================ */
+
+/* Canvas Central - FULLSCREEN FIX */
+.canvas-container {
+    position: relative;
+    background: var(--gray-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    height: 100%; /* CRITICAL: Use all available space */
+}
+
+.canvas-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+}
+
+#canvas {
+    display: block;
+    width: 100%; /* Use full container width */
+    height: 100%; /* Use full container height */
+    max-width: 100%;
+    max-height: 100%;
+    cursor: crosshair;
+    box-shadow: 0 4px 20px var(--shadow-strong);
+}
+
+#canvas.cursor-move {
+    cursor: move;
+}
+
+#canvas.cursor-grab {
+    cursor: grab;
+}
+
+#canvas.cursor-grabbing {
+    cursor: grabbing;
+}
+
+#canvas.cursor-paint {
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><circle cx="12" cy="12" r="8" fill="rgba(102,126,234,0.5)" stroke="white" stroke-width="2"/></svg>') 12 12, crosshair;
+}
+
+/* Controles de Canvas */
+.canvas-controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 100;
+}
+
+.control-group {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px var(--shadow);
+    padding: 8px;
+    display: flex;
+    gap: 4px;
+}
+
+.control-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: var(--white);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dark);
+}
+
+.control-btn:hover {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.control-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.zoom-level {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px var(--shadow);
+    padding: 6px 12px;
+    font-size: 0.85em;
+    font-weight: 600;
+    min-width: 60px;
+    text-align: center;
+}
+
+/* Navegación de Imágenes */
+.image-navigation {
+    position: absolute;
+    top: 50%;
+    left: 20px;
+    right: 20px;
+    transform: translateY(-50%);
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 50;
+}
+
+.nav-btn {
+    width: 48px;
+    height: 48px;
+    background: var(--white);
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px var(--shadow);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+    color: var(--dark);
+    transition: var(--transition);
+    pointer-events: auto;
+}
+
+.nav-btn:hover:not(:disabled) {
+    background: var(--primary);
+    color: var(--white);
+    transform: scale(1.1);
+}
+
+.nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Información de Imagen */
+.image-info {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px var(--shadow);
+    padding: 10px 15px;
+    font-size: 0.85em;
+    z-index: 100;
+}
+
+.image-info-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.image-info-item:last-child {
+    margin-bottom: 0;
+}
+
+.image-info-item i {
+    color: var(--primary);
+}
+
+.image-info-value {
+    font-weight: 600;
+}
