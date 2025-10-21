@@ -7,6 +7,8 @@
  * - Sharp image rendering without pixelation
  * - Dynamic resize handling
  * - High-quality image smoothing
+ * - Working mask system with rendering
+ * - Project type validation (bbox vs mask)
  */
 
 class CanvasManager {
@@ -21,6 +23,9 @@ class CanvasManager {
         this.imageId = null;
         this.annotations = [];
         this.selectedAnnotation = null;
+
+        // Project type ('bbox' or 'mask')
+        this.projectType = 'bbox';
 
         // Drawing state
         this.isDrawing = false;
@@ -58,6 +63,52 @@ class CanvasManager {
         this.setupEventListeners();
         this.setupCanvas();
         this.handleResize();
+    }
+
+    // Set project type and validate tools
+    setProjectType(type) {
+        this.projectType = type;
+        console.log('Project type set to:', type);
+
+        // Auto-select appropriate tool based on project type
+        if (type === 'bbox' && this.toolManager.getTool() === 'mask') {
+            this.toolManager.setTool('bbox');
+        } else if (type === 'mask' && this.toolManager.getTool() === 'bbox') {
+            this.toolManager.setTool('mask');
+        }
+
+        // Update UI to reflect available tools
+        this.updateToolAvailability();
+    }
+
+    // Check if current tool is valid for project type
+    isToolValid(tool) {
+        if (tool === 'select' || tool === 'pan') return true;
+        if (this.projectType === 'bbox' && tool === 'bbox') return true;
+        if (this.projectType === 'mask' && tool === 'mask') return true;
+        return false;
+    }
+
+    // Update UI to show/hide tools based on project type
+    updateToolAvailability() {
+        const bboxBtn = document.querySelector('[data-tool="bbox"]');
+        const maskBtn = document.querySelector('[data-tool="mask"]');
+
+        if (bboxBtn && maskBtn) {
+            if (this.projectType === 'bbox') {
+                bboxBtn.style.display = 'flex';
+                maskBtn.style.display = 'none';
+                // Show/hide mask controls
+                const maskControls = document.getElementById('maskControls');
+                if (maskControls) maskControls.style.display = 'none';
+            } else if (this.projectType === 'mask') {
+                bboxBtn.style.display = 'none';
+                maskBtn.style.display = 'flex';
+                // Show mask controls
+                const maskControls = document.getElementById('maskControls');
+                if (maskControls) maskControls.style.display = 'block';
+            }
+        }
     }
 
     setupCanvas() {
@@ -103,14 +154,13 @@ class CanvasManager {
         this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
         this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
         this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
+        this.canvas.addEventListener('mouseleave', this.handleMouseLeave.bind(this));
         this.canvas.addEventListener('wheel', this.handleWheel.bind(this), { passive: false });
         this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     }
 
     getMousePos(e) {
         const rect = this.canvas.getBoundingClientRect();
-
-        // Account for device pixel ratio
         return {
             x: (e.clientX - rect.left),
             y: (e.clientY - rect.top)
@@ -140,6 +190,12 @@ class CanvasManager {
 
         const tool = this.toolManager.getTool();
 
+        // Validate tool for project type
+        if (!this.isToolValid(tool) && tool !== 'pan' && tool !== 'select') {
+            this.ui.showToast(`Tool "${tool}" not available for ${this.projectType} projects`, 'warning');
+            return;
+        }
+
         // Pan tool
         if (tool === 'pan' || e.button === 1 || (e.button === 0 && e.ctrlKey)) {
             this.isPanning = true;
@@ -153,7 +209,7 @@ class CanvasManager {
             return;
         }
 
-        // Check resize handles
+        // Check resize handles (only for bbox)
         if (this.selectedAnnotation && this.selectedAnnotation.type === 'bbox') {
             const handle = this.getResizeHandle(pos.x, pos.y);
             if (handle) {
@@ -166,14 +222,14 @@ class CanvasManager {
         this.isDrawing = true;
 
         if (tool === 'mask') {
-            // Get actual canvas dimensions (not display dimensions)
-            const rect = this.canvas.getBoundingClientRect();
-            const scaleX = this.canvas.width / this.dpr / rect.width;
-            const scaleY = this.canvas.height / this.dpr / rect.height;
-            this.toolManager.initMaskCanvas(
-                this.image.width * scaleX,
-                this.image.height * scaleY
-            );
+            // Initialize mask canvas with image dimensions
+            this.toolManager.initMaskCanvas(this.image.width, this.image.height);
+
+            // Start drawing mask
+            const imgPos = this.canvasToImage(pos.x, pos.y);
+            const color = this.classes[this.currentClass]?.color || '#ff0000';
+            this.toolManager.drawMask(imgPos.x, imgPos.y, color);
+            this.redraw();
         }
     }
 
@@ -198,7 +254,7 @@ class CanvasManager {
 
         // Resizing
         if (this.resizeHandle) {
-            this.handleResize(pos.x, pos.y);
+            this.handleResizeDrag(pos.x, pos.y);
             return;
         }
 
@@ -213,24 +269,27 @@ class CanvasManager {
         if (tool === 'mask') {
             const imgPos = this.canvasToImage(pos.x, pos.y);
             const color = this.classes[this.currentClass]?.color || '#ff0000';
-            this.toolManager.drawMask(imgPos.x, imgPos.y, color, e.shiftKey);
+            this.toolManager.drawMask(imgPos.x, imgPos.y, color);
+            this.redraw();
         }
-
-        this.redraw();
 
         // Preview bbox
         if (tool === 'bbox') {
+            this.redraw();
+
             const imgStart = this.canvasToImage(this.startX, this.startY);
             const imgCurrent = this.canvasToImage(pos.x, pos.y);
 
             this.ctx.strokeStyle = this.classes[this.currentClass]?.color || '#ff0000';
-            this.ctx.lineWidth = 2 / this.zoom;
+            this.ctx.lineWidth = 2;
+            this.ctx.setLineDash([5, 5]);
             this.ctx.strokeRect(
                 imgStart.x * this.zoom + this.panX,
                 imgStart.y * this.zoom + this.panY,
                 (imgCurrent.x - imgStart.x) * this.zoom,
                                 (imgCurrent.y - imgStart.y) * this.zoom
             );
+            this.ctx.setLineDash([]);
         }
     }
 
@@ -277,14 +336,22 @@ class CanvasManager {
                 this.annotations.push({
                     type: 'mask',
                     class: this.classes[this.currentClass]?.id || 0,
-                    data: maskData
+                    data: maskData // Store as data URL
                 });
                 this.toolManager.clearMask();
             }
         }
 
         this.isDrawing = false;
+        this.toolManager.resetLastPosition();
         this.redraw();
+    }
+
+    handleMouseLeave(e) {
+        // Reset drawing state when mouse leaves canvas
+        if (this.isDrawing && this.toolManager.getTool() === 'mask') {
+            this.toolManager.resetLastPosition();
+        }
     }
 
     handleWheel(e) {
@@ -353,7 +420,7 @@ class CanvasManager {
         return null;
     }
 
-    handleResize(x, y) {
+    handleResizeDrag(x, y) {
         if (!this.selectedAnnotation || !this.originalBox) return;
 
         const imgPos = this.canvasToImage(x, y);
@@ -447,7 +514,6 @@ class CanvasManager {
     fitImageToCanvas() {
         if (!this.image) return;
 
-        // Get actual display dimensions
         const rect = this.canvas.getBoundingClientRect();
         const canvasWidth = rect.width;
         const canvasHeight = rect.height;
@@ -468,7 +534,6 @@ class CanvasManager {
     redraw() {
         if (!this.image) return;
 
-        // Get display dimensions
         const rect = this.canvas.getBoundingClientRect();
 
         // Clear with proper scaling
@@ -499,6 +564,16 @@ class CanvasManager {
             }
         });
 
+        // Draw current mask being drawn
+        if (this.isDrawing && this.toolManager.getTool() === 'mask') {
+            const previewCanvas = this.toolManager.getPreviewCanvas();
+            if (previewCanvas) {
+                this.ctx.globalAlpha = this.maskOpacity;
+                this.ctx.drawImage(previewCanvas, 0, 0);
+                this.ctx.globalAlpha = 1;
+            }
+        }
+
         if (this.selectedAnnotation && this.selectedAnnotation.type === 'bbox') {
             this.drawResizeHandles(this.selectedAnnotation);
         }
@@ -520,6 +595,9 @@ class CanvasManager {
         if (this.showLabels && cls) {
             this.ctx.fillStyle = color;
             this.ctx.font = `${14 / this.zoom}px Arial`;
+            const textWidth = this.ctx.measureText(cls.name).width;
+            this.ctx.fillRect(x, y - 20 / this.zoom, textWidth + 10 / this.zoom, 20 / this.zoom);
+            this.ctx.fillStyle = '#fff';
             this.ctx.fillText(cls.name, x + 5 / this.zoom, y - 5 / this.zoom);
         }
     }
@@ -528,9 +606,19 @@ class CanvasManager {
         const cls = this.classes.find(c => c.id === annotation.class);
         const color = cls?.color || '#ff0000';
 
-        this.ctx.globalAlpha = this.maskOpacity;
-        this.ctx.fillStyle = color;
-        this.ctx.globalAlpha = 1;
+        // Load mask image from data URL
+        if (typeof annotation.data === 'string') {
+            const img = new Image();
+            img.onload = () => {
+                this.ctx.globalAlpha = this.maskOpacity;
+                this.ctx.drawImage(img, 0, 0);
+                this.ctx.globalAlpha = 1;
+            };
+            // Only set src if not already loaded
+            if (!img.src) {
+                img.src = annotation.data;
+            }
+        }
     }
 
     drawResizeHandles(annotation) {
@@ -600,6 +688,7 @@ class CanvasManager {
 
                 yoloContent += `${ann.class} ${x_center.toFixed(6)} ${y_center.toFixed(6)} ${w.toFixed(6)} ${h.toFixed(6)}\n`;
             }
+            // Note: YOLO segmentation format would need polygon points, not pixel masks
         });
 
         return yoloContent;

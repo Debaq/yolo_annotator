@@ -554,3 +554,51 @@
     font-style: italic;
     font-size: 0.9em;
 }
+.brush-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: #ddd;
+    border-radius: 3px;
+    outline: none;
+}
+
+.brush-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #667eea;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.brush-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: #667eea;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.brush-slider:hover::-webkit-slider-thumb {
+    background: #5568d3;
+}
+
+.brush-slider:hover::-moz-range-thumb {
+    background: #5568d3;
+}
+
+#btnEraseMode.active {
+background: #e74c3c !important;
+color: white;
+}
+
+.mask-control-label i {
+    color: #667eea;
+    margin-right: 5px;
+}

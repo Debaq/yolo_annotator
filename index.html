@@ -100,6 +100,31 @@
                             <span data-i18n="tools.pan">Pan</span>
                         </div>
                     </div>
+                    <div id="maskControls" style="display: none; margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e0e0e0;">
+                    <div class="mask-control-group">
+                        <label class="mask-control-label" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 0.85em; font-weight: 600;">
+                            <span><i class="fas fa-circle"></i> Brush Size</span>
+                            <span id="brushSizeValue" style="background: #667eea; color: white; padding: 2px 8px; border-radius: 4px;">20px</span>
+                        </label>
+                        <input type="range" id="brushSizeSlider" min="5" max="100" value="20" class="brush-slider" style="width: 100%; cursor: pointer;">
+                    </div>
+
+                    <div class="mask-control-group" style="margin-top: 12px;">
+                        <button class="btn btn-sm" id="btnEraseMode" style="width: 100%; background: #6c757d; color: white;">
+                            <i class="fas fa-eraser"></i> <span id="eraseModeText">Erase Mode: OFF</span>
+                        </button>
+                    </div>
+
+                    <div class="mask-control-group" style="margin-top: 8px;">
+                        <button class="btn btn-sm btn-warning" id="btnClearMask" style="width: 100%;">
+                            <i class="fas fa-trash"></i> Clear Current Mask
+                        </button>
+                    </div>
+
+                    <div class="mask-control-info" style="margin-top: 12px; padding: 8px; background: white; border-radius: 4px; font-size: 0.75em; color: #6c757d;">
+                        <i class="fas fa-info-circle"></i> Click and drag to paint. Use erase mode to remove areas.
+                    </div>
+                </div>
                 </div>
 
                 <!-- Classes Section -->
@@ -510,5 +535,60 @@ function updateUIState() {
             }
         });
     </script>
+    <script>
+// Mask Controls Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+    const brushSizeSlider = document.getElementById('brushSizeSlider');
+    const brushSizeValue = document.getElementById('brushSizeValue');
+    const btnEraseMode = document.getElementById('btnEraseMode');
+    const eraseModeText = document.getElementById('eraseModeText');
+    const btnClearMask = document.getElementById('btnClearMask');
+
+    // Brush size slider
+    if (brushSizeSlider && brushSizeValue) {
+        brushSizeSlider.addEventListener('input', (e) => {
+            const size = e.target.value;
+            brushSizeValue.textContent = size + 'px';
+
+            if (window.app && window.app.canvasManager) {
+                window.app.canvasManager.toolManager.setBrushSize(parseInt(size));
+            }
+        });
+    }
+
+    // Erase mode toggle
+    if (btnEraseMode && eraseModeText) {
+        btnEraseMode.addEventListener('click', () => {
+            if (window.app && window.app.canvasManager) {
+                const toolManager = window.app.canvasManager.toolManager;
+                const newEraseMode = !toolManager.isEraseMode();
+                toolManager.setEraseMode(newEraseMode);
+
+                // Update UI
+                btnEraseMode.classList.toggle('active', newEraseMode);
+                eraseModeText.textContent = newEraseMode ? 'Erase Mode: ON' : 'Erase Mode: OFF';
+
+                // Update icon
+                const icon = btnEraseMode.querySelector('i');
+                if (icon) {
+                    icon.className = newEraseMode ? 'fas fa-paint-brush' : 'fas fa-eraser';
+                }
+            }
+        });
+    }
+
+    // Clear current mask
+    if (btnClearMask) {
+        btnClearMask.addEventListener('click', () => {
+            if (window.app && window.app.canvasManager) {
+                if (confirm('Clear the current mask being drawn?')) {
+                    window.app.canvasManager.toolManager.clearMask();
+                    window.app.canvasManager.redraw();
+                }
+            }
+        });
+    }
+});
+</script>
 </body>
 </html>
