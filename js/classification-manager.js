@@ -18,6 +18,7 @@ class ClassificationManager {
 
         // Project configuration
         this.classes = [];
+        this.currentClassIndex = 0; // For keyboard navigation (A/D keys)
 
         // UI Elements
         this.classificationUI = null;
@@ -99,10 +100,11 @@ class ClassificationManager {
 
         classList.innerHTML = this.classes.map((cls, index) => {
             const isSelected = this.labels.includes(cls.id);
+            const isCurrent = index === this.currentClassIndex;
             return `
-                <div class="class-item ${isSelected ? 'active' : ''}" data-class-id="${cls.id}">
+                <div class="class-item ${isSelected ? 'active' : ''} ${isCurrent ? 'highlighted' : ''}" data-class-id="${cls.id}" data-class-index="${index}">
                     <div class="class-color" style="background: ${cls.color}"></div>
-                    <span class="class-name">[${index}] ${cls.name}</span>
+                    <span class="class-name">[${index + 1}] ${cls.name}</span>
                     ${isSelected ? '<i class="fas fa-check" style="color: var(--success); margin-left: auto;"></i>' : ''}
                 </div>
             `;
@@ -136,6 +138,29 @@ class ClassificationManager {
         this.renderClassList();
         this.updateImageInfo();
         this.updateLabelsOverlay();
+    }
+
+    // Cycle to next class (for A/D keyboard navigation)
+    cycleClassNext() {
+        if (this.classes.length === 0) return;
+        this.currentClassIndex = (this.currentClassIndex + 1) % this.classes.length;
+        this.renderClassList();
+    }
+
+    // Cycle to previous class (for A/D keyboard navigation)
+    cycleClassPrevious() {
+        if (this.classes.length === 0) return;
+        this.currentClassIndex = (this.currentClassIndex - 1 + this.classes.length) % this.classes.length;
+        this.renderClassList();
+    }
+
+    // Toggle the currently highlighted class
+    toggleCurrentClass() {
+        if (this.classes.length === 0) return;
+        const currentClass = this.classes[this.currentClassIndex];
+        if (currentClass) {
+            this.toggleLabel(currentClass.id);
+        }
     }
 
     // Update the labels overlay on the image

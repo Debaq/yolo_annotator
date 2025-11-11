@@ -169,25 +169,9 @@ class YOLOAnnotator {
     }
 
     setupKeyboardShortcuts() {
-        // Number key buffer for multi-digit class selection
-        this.numberBuffer = '';
-        this.numberBufferTimeout = null;
-
         document.addEventListener('keydown', (e) => {
             // Ignore if typing in input
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-            // Arrow keys: Navigate images (always available)
-            if (e.key === 'ArrowLeft') {
-                e.preventDefault();
-                this.navigatePrevious();
-                return;
-            }
-            if (e.key === 'ArrowRight') {
-                e.preventDefault();
-                this.navigateNext();
-                return;
-            }
 
             // S: Save (always available)
             if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -198,13 +182,72 @@ class YOLOAnnotator {
 
             // Classification mode shortcuts
             if (this.annotationMode === 'classification') {
-                // Numbers 0-9: select class (with buffer for multi-digit)
-                if (e.key >= '0' && e.key <= '9') {
+                // Arrow keys disabled in classification mode to prevent accidental navigation
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
                     e.preventDefault();
-                    this.handleNumberKeyForClassification(e.key);
                     return;
                 }
+
+                // A: Cycle to previous class
+                if (e.key === 'a' || e.key === 'A') {
+                    e.preventDefault();
+                    this.classificationManager.cycleClassPrevious();
+                    return;
+                }
+
+                // D: Cycle to next class
+                if (e.key === 'd' || e.key === 'D') {
+                    e.preventDefault();
+                    this.classificationManager.cycleClassNext();
+                    return;
+                }
+
+                // Enter: Toggle current class and navigate (if single-label)
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.classificationManager.toggleCurrentClass();
+
+                    // If single-label mode, automatically move to next image
+                    if (!this.classificationManager.isMultiLabel) {
+                        // Small delay to show the selection before navigating
+                        setTimeout(() => {
+                            this.navigateNext();
+                        }, 150);
+                    }
+                    return;
+                }
+
+                // Numbers 1-9: select class directly (1-based indexing)
+                if (e.key >= '1' && e.key <= '9') {
+                    e.preventDefault();
+                    const index = parseInt(e.key) - 1; // Convert to 0-based index
+                    if (index < this.classificationManager.classes.length) {
+                        const classId = this.classificationManager.classes[index].id;
+                        this.classificationManager.toggleLabel(classId);
+
+                        // If single-label mode, automatically move to next image
+                        if (!this.classificationManager.isMultiLabel) {
+                            setTimeout(() => {
+                                this.navigateNext();
+                            }, 150);
+                        }
+                    }
+                    return;
+                }
+
                 return; // No other shortcuts in classification mode
+            }
+
+            // Arrow keys: Navigate images (only in canvas mode)
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                this.navigatePrevious();
+                return;
+            }
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                this.navigateNext();
+                return;
             }
 
             // Canvas mode shortcuts (detection, segmentation, etc.)
@@ -255,27 +298,28 @@ class YOLOAnnotator {
         });
     }
 
-    handleNumberKeyForClassification(key) {
-        // Add digit to buffer
-        this.numberBuffer += key;
-
-        // Clear existing timeout
-        if (this.numberBufferTimeout) {
-            clearTimeout(this.numberBufferTimeout);
-        }
-
-        // Set new timeout (400ms delay for multi-digit input)
-        this.numberBufferTimeout = setTimeout(() => {
-            const classIndex = parseInt(this.numberBuffer);
-            this.numberBuffer = '';
-
-            // Check if class exists
-            if (classIndex >= 0 && classIndex < this.classificationManager.classes.length) {
-                const classId = this.classificationManager.classes[classIndex].id;
-                this.classificationManager.toggleLabel(classId);
-            }
-        }, 400);
-    }
+    // DEPRECATED: No longer used - classification now uses direct number keys 1-9
+    // handleNumberKeyForClassification(key) {
+    //     // Add digit to buffer
+    //     this.numberBuffer += key;
+    //
+    //     // Clear existing timeout
+    //     if (this.numberBufferTimeout) {
+    //         clearTimeout(this.numberBufferTimeout);
+    //     }
+    //
+    //     // Set new timeout (400ms delay for multi-digit input)
+    //     this.numberBufferTimeout = setTimeout(() => {
+    //         const classIndex = parseInt(this.numberBuffer);
+    //         this.numberBuffer = '';
+    //
+    //         // Check if class exists
+    //         if (classIndex >= 0 && classIndex < this.classificationManager.classes.length) {
+    //             const classId = this.classificationManager.classes[classIndex].id;
+    //             this.classificationManager.toggleLabel(classId);
+    //         }
+    //     }, 400);
+    // }
 
     async loadProjects() {
         const projects = await this.db.getAllProjects();

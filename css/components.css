@@ -210,6 +210,19 @@
     font-weight: 600;
 }
 
+.class-item.highlighted {
+    border-color: #fbbf24;
+    border-width: 3px;
+    background: rgba(251, 191, 36, 0.1);
+    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2);
+}
+
+.class-item.highlighted.active {
+    border-color: var(--primary);
+    background: var(--primary);
+    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.3);
+}
+
 .class-color {
     width: 16px;
     height: 16px;
