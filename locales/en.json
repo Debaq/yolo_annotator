@@ -5,7 +5,7 @@
     "title": "Annotix",
     "subtitle": "Professional annotation tool",
     "branding": {
-      "fablab": "FabLab TecMedHub",
+      "fablab": "TecMedHub",
       "university": "Universidad Austral de Chile - Puerto Montt Campus"
     }
   },
@@ -20,11 +20,13 @@
   "tools": {
     "title": "Tools",
     "bbox": "Box",
+    "obb": "OBB",
     "mask": "Mask",
     "select": "Select",
     "pan": "Pan",
     "tooltips": {
       "bbox": "Bounding Box (B)",
+      "obb": "Oriented Box (O)",
       "mask": "Mask (M)",
       "select": "Select (V)",
       "pan": "Pan (H)"
@@ -132,11 +134,66 @@
     "name": "Project Name",
     "namePlaceholder": "My Annotix Project",
     "type": "Annotation Type",
-    "typeBbox": "Bounding Box",
-    "typeMask": "Segmentation (Mask)",
+    "typeSelectHelper": "Select the annotation type based on your training goal",
+    "types": {
+      "classification": {
+        "name": "Simple Classification",
+        "description": "Assign a single label to each complete image",
+        "useCases": "Identify what the image contains (e.g., cat, dog, car)",
+        "models": "ResNet, VGG, EfficientNet, MobileNet",
+        "difficulty": "Beginner"
+      },
+      "multiLabel": {
+        "name": "Multi-Label Classification",
+        "description": "Assign multiple labels to each image",
+        "useCases": "Image with several elements (e.g., park + dog + sky)",
+        "models": "ResNet, VGG with multi-label output",
+        "difficulty": "Beginner"
+      },
+      "detection": {
+        "name": "Object Detection",
+        "description": "Locate objects with rectangular boxes (bounding boxes)",
+        "useCases": "Find and locate specific objects in the image",
+        "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+        "difficulty": "Intermediate"
+      },
+      "segmentation": {
+        "name": "Semantic Segmentation",
+        "description": "Classify each pixel of the image by class",
+        "useCases": "Separate regions (e.g., road, sky, buildings)",
+        "models": "U-Net, DeepLab, FCN",
+        "difficulty": "Advanced"
+      },
+      "instanceSeg": {
+        "name": "Instance Segmentation",
+        "description": "Outline each individual object",
+        "useCases": "Separate individual objects at pixel level",
+        "models": "Mask R-CNN, YOLACT, YOLOv8-seg",
+        "difficulty": "Advanced"
+      },
+      "keypoints": {
+        "name": "Keypoints",
+        "description": "Mark specific points on objects",
+        "useCases": "Pose estimation, facial recognition, anatomy",
+        "models": "OpenPose, HRNet, MediaPipe",
+        "difficulty": "Intermediate"
+      },
+      "obb": {
+        "name": "Oriented Boxes (OBB)",
+        "description": "Bounding boxes with free rotation",
+        "useCases": "Angled text, aerial objects, satellites",
+        "models": "Rotated-YOLO, RRPN",
+        "difficulty": "Advanced"
+      }
+    },
     "initialClasses": "Initial Classes (optional)",
     "classesPlaceholder": "class1, class2, class3",
     "classesHelp": "Comma separated. You can add more later.",
+    "imageDimensions": "Image Dimensions",
+    "dimensionsAuto": "Automatic - Accept any size",
+    "dimensionsFixed": "Fixed - All images will be resized",
+    "targetSize": "Target size",
+    "resizeStrategy": "Strategy",
     "enterName": "Enter a name for the project",
     "created": "Project \"{name}\" created",
     "loaded": "Project \"{name}\" loaded",
@@ -184,5 +241,89 @@
   "imageInfo": {
     "noName": "No name",
     "dimensions": "Dimensions"
+  },
+  "preprocessing": {
+    "title": "Preprocess Images",
+    "detected": "Detected {count} non-square images",
+    "description": "Images will be adjusted to a square size to optimize training. Choose the resizing strategy:",
+    "targetSize": "Target size (pixels)",
+    "recommended": "Recommended: {size}px",
+    "strategy": "Resizing strategy",
+    "strategies": {
+      "resize": {
+        "name": "Resize + Padding",
+        "description": "Scales down the image and adds padding (optimizes space and memory)"
+      },
+      "padding": {
+        "name": "Padding Only",
+        "description": "Keeps original size and adds padding (better quality)"
+      }
+    },
+    "options": {
+      "apply": "Apply preprocessing",
+      "skip": "Upload without preprocessing"
+    },
+    "progress": "Processing image {current} of {total}...",
+    "complete": "{count} images preprocessed successfully",
+    "preview": "Preview",
+    "original": "Original",
+    "processed": "Processed",
+    "aspectRatio": "Original aspect ratio preserved",
+    "paddingInfo": "Symmetric black padding will be added"
+  },
+  "classification": {
+    "selectOne": "Select the correct label",
+    "selectMultiple": "Select all labels that apply",
+    "singleHint": "You can only select one label",
+    "multiHint": "You can select multiple labels",
+    "noLabels": "No labels assigned",
+    "labeled": "Labeled"
+  },
+  "augmentation": {
+    "title": "Data Augmentation",
+    "batchButton": "Data Augmentation",
+    "augmentImage": "Apply augmentation",
+    "variationsCount": "Number of variations",
+    "variationsCountHelp": "How many augmented images to create? (1-20)",
+    "generationMode": "Generation mode",
+    "modeManual": "Manual (fixed configuration)",
+    "modeRandom": "Random (configurable ranges)",
+    "modeManualHelp": "Apply the same configuration N times",
+    "modeRandomHelp": "Generate N variations with random values within specified ranges",
+    "geometricTransforms": "Geometric Transformations",
+    "flipHorizontal": "Flip Horizontal",
+    "flipVertical": "Flip Vertical",
+    "rotation": "Rotation",
+    "noRotation": "No rotation",
+    "customRotation": "Custom rotation",
+    "colorAdjustments": "Color Adjustments",
+    "brightness": "Brightness",
+    "contrast": "Contrast",
+    "saturation": "Saturation",
+    "randomOptions": "Random Options",
+    "randomFlip": "Random flip (horizontal/vertical)",
+    "randomRotation": "Random rotation",
+    "randomColor": "Random color adjustments",
+    "rotationRange": "Rotation range (degrees)",
+    "brightnessRange": "Brightness range",
+    "contrastRange": "Contrast range",
+    "saturationRange": "Saturation range",
+    "min": "Min",
+    "max": "Max",
+    "keepAnnotations": "Keep transformed annotations",
+    "keepAnnotationsHelp": "Bounding boxes will be automatically transformed with the image",
+    "maskProjectWarning": "Mask Project",
+    "maskProjectWarningText": "Annotations will NOT be preserved. You'll need to manually paint masks on each augmented image.",
+    "apply": "Apply",
+    "processing": "Processing augmentation...",
+    "generatingVariations": "Generating {count} variations...",
+    "variationsSuccess": "{count} variations created successfully",
+    "success": "Augmented image created successfully",
+    "error": "Error applying augmentation",
+    "batchProcessing": "Applying augmentation to {count} images...",
+    "batchRandomProcessing": "Generating {variations} variations for {images} images ({total} total)...",
+    "batchSuccess": "{count} augmented images created successfully",
+    "batchRandomSuccess": "{count} random variations created successfully",
+    "batchError": "Error applying batch augmentation"
   }
 }

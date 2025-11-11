@@ -41,6 +41,7 @@ class CanvasManager {
         this.panY = 0;
         this.minZoom = 0.1;
         this.maxZoom = 5;
+        this.imageRotation = 0; // Image rotation in degrees
 
         // Resize handle state
         this.resizeHandle = null;
@@ -52,6 +53,10 @@ class CanvasManager {
         this.dragStartY = 0;
         this.dragOffsetX = 0;
         this.dragOffsetY = 0;
+
+        // Rotation handle state (for OBB)
+        this.isRotating = false;
+        this.rotationStartAngle = 0;
 
         // Tool manager
         this.toolManager = new ToolManager();
@@ -85,11 +90,22 @@ class CanvasManager {
         this.projectType = type;
         console.log('Project type set to:', type);
 
+        // Map project types to available tools
+        const toolMapping = {
+            'classification': null,      // No canvas tools needed
+            'multiLabel': null,          // No canvas tools needed
+            'detection': 'bbox',         // Bounding boxes
+            'segmentation': 'mask',      // Semantic segmentation
+            'instanceSeg': 'mask',       // Instance segmentation
+            'keypoints': null,           // Not yet implemented
+            'obb': 'obb'                 // Oriented bounding boxes
+        };
+
+        const recommendedTool = toolMapping[type];
+
         // Auto-select appropriate tool based on project type
-        if (type === 'bbox' && this.toolManager.getTool() === 'mask') {
-            this.toolManager.setTool('bbox');
-        } else if (type === 'mask' && this.toolManager.getTool() === 'bbox') {
-            this.toolManager.setTool('mask');
+        if (recommendedTool && this.toolManager.getTool() !== recommendedTool) {
+            this.toolManager.setTool(recommendedTool);
         }
 
         // Update UI to reflect available tools
@@ -99,30 +115,56 @@ class CanvasManager {
     // Check if current tool is valid for project type
     isToolValid(tool) {
         if (tool === 'select' || tool === 'pan') return true;
-        if (this.projectType === 'bbox' && tool === 'bbox') return true;
-        if (this.projectType === 'mask' && tool === 'mask') return true;
-        return false;
+
+        // Tool validation based on project type
+        const validTools = {
+            'classification': ['select', 'pan'],
+            'multiLabel': ['select', 'pan'],
+            'detection': ['bbox', 'select', 'pan'],
+            'segmentation': ['mask', 'select', 'pan'],
+            'instanceSeg': ['mask', 'select', 'pan'],
+            'keypoints': ['select', 'pan'],  // Not yet implemented
+            'obb': ['obb', 'select', 'pan']  // Oriented bounding boxes
+        };
+
+        const allowed = validTools[this.projectType] || [];
+        return allowed.includes(tool);
     }
 
     // Update UI to show/hide tools based on project type
     updateToolAvailability() {
         const bboxBtn = document.querySelector('[data-tool="bbox"]');
+        const obbBtn = document.querySelector('[data-tool="obb"]');
         const maskBtn = document.querySelector('[data-tool="mask"]');
         const eraseBtn = document.getElementById('btnEraseMode');
         const maskControls = document.getElementById('maskControls');
 
-        if (bboxBtn && maskBtn) {
-            if (this.projectType === 'bbox') {
-                bboxBtn.style.display = 'flex';
-                maskBtn.style.display = 'none';
-                if (eraseBtn) eraseBtn.style.display = 'none';
-                if (maskControls) maskControls.style.display = 'none';
-            } else if (this.projectType === 'mask') {
-                bboxBtn.style.display = 'none';
-                maskBtn.style.display = 'flex';
-                if (eraseBtn) eraseBtn.style.display = 'flex';
-                if (maskControls) maskControls.style.display = 'flex';
-            }
+        if (!bboxBtn || !maskBtn) return;
+
+        // Determine which tools to show based on project type
+        const showBbox = ['detection'].includes(this.projectType);
+        const showObb = ['obb'].includes(this.projectType);
+        const showMask = ['segmentation', 'instanceSeg'].includes(this.projectType);
+
+        bboxBtn.style.display = showBbox ? 'flex' : 'none';
+        if (obbBtn) obbBtn.style.display = showObb ? 'flex' : 'none';
+        maskBtn.style.display = showMask ? 'flex' : 'none';
+
+        if (eraseBtn) {
+            eraseBtn.style.display = showMask ? 'flex' : 'none';
+        }
+
+        if (maskControls) {
+            maskControls.style.display = showMask ? 'flex' : 'none';
+        }
+
+        // Hide annotation tools for classification projects
+        if (['classification', 'multiLabel', 'keypoints'].includes(this.projectType)) {
+            bboxBtn.style.display = 'none';
+            if (obbBtn) obbBtn.style.display = 'none';
+            maskBtn.style.display = 'none';
+            if (eraseBtn) eraseBtn.style.display = 'none';
+            if (maskControls) maskControls.style.display = 'none';
         }
     }
 
@@ -183,13 +225,29 @@ class CanvasManager {
     }
 
     canvasToImage(x, y) {
-        return {
-            x: (x - this.panX) / this.zoom,
-            y: (y - this.panY) / this.zoom
-        };
+        // First: remove zoom and pan
+        let imgX = (x - this.panX) / this.zoom;
+        let imgY = (y - this.panY) / this.zoom;
+
+        // Second: apply INVERSE rotation to get coordinates in unrotated image space
+        if (this.imageRotation !== 0 && this.image) {
+            const centerX = this.image.width / 2;
+            const centerY = this.image.height / 2;
+            const angleRad = -(this.imageRotation * Math.PI) / 180; // Negative for inverse
+
+            const dx = imgX - centerX;
+            const dy = imgY - centerY;
+
+            imgX = centerX + dx * Math.cos(angleRad) - dy * Math.sin(angleRad);
+            imgY = centerY + dx * Math.sin(angleRad) + dy * Math.cos(angleRad);
+        }
+
+        return { x: imgX, y: imgY };
     }
 
     imageToCanvas(x, y) {
+        // Simply apply zoom and pan
+        // Rotation is handled by the canvas context transform
         return {
             x: x * this.zoom + this.panX,
             y: y * this.zoom + this.panY
@@ -221,7 +279,27 @@ class CanvasManager {
         // Select tool
         if (tool === 'select') {
             if (this.selectedAnnotation) {
-                // Check resize handles first (only for bbox)
+                // Check rotation handle first (only for OBB)
+                if (this.selectedAnnotation.type === 'obb') {
+                    if (this.getRotationHandle(pos.x, pos.y)) {
+                        this.isRotating = true;
+                        const imgPos = this.canvasToImage(pos.x, pos.y);
+                        const { cx, cy } = this.selectedAnnotation.data;
+                        this.rotationStartAngle = Math.atan2(imgPos.y - cy, imgPos.x - cx) * 180 / Math.PI;
+                        this.canvas.style.cursor = 'grab';
+                        return;
+                    }
+
+                    // Check resize handles for OBB
+                    const obbHandle = this.getOBBResizeHandle(pos.x, pos.y);
+                    if (obbHandle) {
+                        this.resizeHandle = obbHandle;
+                        this.originalBox = { ...this.selectedAnnotation.data };
+                        return;
+                    }
+                }
+
+                // Check resize handles (only for bbox)
                 if (this.selectedAnnotation.type === 'bbox') {
                     const handle = this.getResizeHandle(pos.x, pos.y);
                     if (handle) {
@@ -233,23 +311,42 @@ class CanvasManager {
 
                 // Check if clicking inside selected annotation to move it
                 const imgPos = this.canvasToImage(pos.x, pos.y);
-                let bx, by, width, height;
 
                 if (this.selectedAnnotation.type === 'bbox') {
-                    ({ x: bx, y: by, width, height } = this.selectedAnnotation.data);
+                    const { x: bx, y: by, width, height } = this.selectedAnnotation.data;
+                    if (imgPos.x >= bx && imgPos.x <= bx + width &&
+                        imgPos.y >= by && imgPos.y <= by + height) {
+                        this.isDraggingBox = true;
+                        this.dragStartX = imgPos.x;
+                        this.dragStartY = imgPos.y;
+                        this.dragOffsetX = imgPos.x - bx;
+                        this.dragOffsetY = imgPos.y - by;
+                        this.canvas.style.cursor = 'move';
+                        return;
+                    }
+                } else if (this.selectedAnnotation.type === 'obb') {
+                    if (this.isPointInOBB(imgPos.x, imgPos.y, this.selectedAnnotation)) {
+                        this.isDraggingBox = true;
+                        this.dragStartX = imgPos.x;
+                        this.dragStartY = imgPos.y;
+                        const { cx, cy } = this.selectedAnnotation.data;
+                        this.dragOffsetX = imgPos.x - cx;
+                        this.dragOffsetY = imgPos.y - cy;
+                        this.canvas.style.cursor = 'move';
+                        return;
+                    }
                 } else if (this.selectedAnnotation.type === 'mask' && typeof this.selectedAnnotation.data === 'object') {
-                    ({ x: bx, y: by, width, height } = this.selectedAnnotation.data);
-                }
-
-                if (bx !== undefined && imgPos.x >= bx && imgPos.x <= bx + width &&
-                    imgPos.y >= by && imgPos.y <= by + height) {
-                    this.isDraggingBox = true;
-                    this.dragStartX = imgPos.x;
-                    this.dragStartY = imgPos.y;
-                    this.dragOffsetX = imgPos.x - bx;
-                    this.dragOffsetY = imgPos.y - by;
-                    this.canvas.style.cursor = 'move';
-                    return;
+                    const { x: mx, y: my, width, height } = this.selectedAnnotation.data;
+                    if (imgPos.x >= mx && imgPos.x <= mx + width &&
+                        imgPos.y >= my && imgPos.y <= my + height) {
+                        this.isDraggingBox = true;
+                        this.dragStartX = imgPos.x;
+                        this.dragStartY = imgPos.y;
+                        this.dragOffsetX = imgPos.x - mx;
+                        this.dragOffsetY = imgPos.y - my;
+                        this.canvas.style.cursor = 'move';
+                        return;
+                    }
                 }
             }
 
@@ -308,11 +405,38 @@ class CanvasManager {
             return;
         }
 
+        // Rotating OBB
+        if (this.isRotating && this.selectedAnnotation && this.selectedAnnotation.type === 'obb') {
+            const imgPos = this.canvasToImage(pos.x, pos.y);
+            const { cx, cy } = this.selectedAnnotation.data;
+
+            // Calculate current angle
+            const currentAngle = Math.atan2(imgPos.y - cy, imgPos.x - cx) * 180 / Math.PI;
+            const angleDiff = currentAngle - this.rotationStartAngle;
+
+            // Update angle (keep original angle and add difference)
+            this.selectedAnnotation.data.angle = (this.selectedAnnotation.data.angle + angleDiff + 360) % 360;
+            this.rotationStartAngle = currentAngle;
+
+            this.markUnsavedChanges();
+            this.redraw();
+            return;
+        }
+
         // Dragging box
         if (this.isDraggingBox && this.selectedAnnotation) {
             const imgPos = this.canvasToImage(pos.x, pos.y);
-            this.selectedAnnotation.data.x = imgPos.x - this.dragOffsetX;
-            this.selectedAnnotation.data.y = imgPos.y - this.dragOffsetY;
+
+            if (this.selectedAnnotation.type === 'obb') {
+                // Move OBB by updating center
+                this.selectedAnnotation.data.cx = imgPos.x - this.dragOffsetX;
+                this.selectedAnnotation.data.cy = imgPos.y - this.dragOffsetY;
+            } else {
+                // Move bbox normally
+                this.selectedAnnotation.data.x = imgPos.x - this.dragOffsetX;
+                this.selectedAnnotation.data.y = imgPos.y - this.dragOffsetY;
+            }
+
             this.markUnsavedChanges();
             this.redraw();
             return;
@@ -339,23 +463,26 @@ class CanvasManager {
             this.redraw();
         }
 
-        // Preview bbox
-        if (tool === 'bbox') {
+        // Preview bbox and obb
+        if (tool === 'bbox' || tool === 'obb') {
             this.redraw();
 
-            const imgStart = this.canvasToImage(this.startX, this.startY);
-            const imgCurrent = this.canvasToImage(pos.x, pos.y);
+            // Draw preview in SCREEN coordinates (after all transformations)
+            // This way it always appears under the mouse cursor
+            this.ctx.save();
+            this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);  // Reset to screen coordinates
 
             this.ctx.strokeStyle = this.classes[this.currentClass]?.color || '#ff0000';
             this.ctx.lineWidth = 2;
             this.ctx.setLineDash([5, 5]);
             this.ctx.strokeRect(
-                imgStart.x * this.zoom + this.panX,
-                imgStart.y * this.zoom + this.panY,
-                (imgCurrent.x - imgStart.x) * this.zoom,
-                                (imgCurrent.y - imgStart.y) * this.zoom
+                this.startX,
+                this.startY,
+                pos.x - this.startX,
+                pos.y - this.startY
             );
             this.ctx.setLineDash([]);
+            this.ctx.restore();
         }
     }
 
@@ -363,6 +490,12 @@ class CanvasManager {
         if (this.isPanning) {
             this.isPanning = false;
             this.canvas.style.cursor = 'grab';
+            return;
+        }
+
+        if (this.isRotating) {
+            this.isRotating = false;
+            this.canvas.style.cursor = 'default';
             return;
         }
 
@@ -396,9 +529,37 @@ class CanvasManager {
                     class: this.classes[this.currentClass]?.id || 0,
                     data: {
                         x: Math.min(imgStart.x, imgEnd.x),
-                                      y: Math.min(imgStart.y, imgEnd.y),
-                                      width,
-                                      height
+                        y: Math.min(imgStart.y, imgEnd.y),
+                        width,
+                        height
+                    }
+                });
+                this.markUnsavedChanges();
+            }
+        } else if (tool === 'obb') {
+            // Calculate width/height from SCREEN coordinates (visual rectangle)
+            const screenWidth = Math.abs(pos.x - this.startX);
+            const screenHeight = Math.abs(pos.y - this.startY);
+
+            // Convert to image space (accounting for zoom only, not rotation)
+            const width = screenWidth / this.zoom;
+            const height = screenHeight / this.zoom;
+
+            if (width > 5 && height > 5) {
+                // Calculate center point in image coordinates
+                const centerX = (this.startX + pos.x) / 2;
+                const centerY = (this.startY + pos.y) / 2;
+                const imgCenter = this.canvasToImage(centerX, centerY);
+
+                this.annotations.push({
+                    type: 'obb',
+                    class: this.classes[this.currentClass]?.id || 0,
+                    data: {
+                        cx: imgCenter.x,  // center x (in unrotated image space)
+                        cy: imgCenter.y,  // center y (in unrotated image space)
+                        width,            // width from visual rectangle
+                        height,           // height from visual rectangle
+                        angle: -this.imageRotation  // Negative angle to compensate image rotation
                     }
                 });
                 this.markUnsavedChanges();
@@ -481,6 +642,12 @@ class CanvasManager {
                     this.redraw();
                     return;
                 }
+            } else if (ann.type === 'obb') {
+                if (this.isPointInOBB(imgPos.x, imgPos.y, ann)) {
+                    this.selectedAnnotation = ann;
+                    this.redraw();
+                    return;
+                }
             } else if (ann.type === 'mask' && typeof ann.data === 'object' && ann.data.x !== undefined) {
                 const { x: mx, y: my, width, height } = ann.data;
                 if (imgPos.x >= mx && imgPos.x <= mx + width &&
@@ -524,10 +691,144 @@ class CanvasManager {
         return null;
     }
 
+    // Get resize handle for OBB (returns handle name or null)
+    getOBBResizeHandle(x, y) {
+        if (!this.selectedAnnotation || this.selectedAnnotation.type !== 'obb') return null;
+
+        const imgPos = this.canvasToImage(x, y);
+        const { cx, cy, width, height, angle } = this.selectedAnnotation.data;
+        const angleRad = (-angle * Math.PI) / 180; // Negative for inverse rotation
+
+        // Transform point to OBB's local coordinate system
+        const dx = imgPos.x - cx;
+        const dy = imgPos.y - cy;
+
+        const localX = dx * Math.cos(angleRad) - dy * Math.sin(angleRad);
+        const localY = dx * Math.sin(angleRad) + dy * Math.cos(angleRad);
+
+        const handleSize = 8 / this.zoom;
+
+        // Define handles in local coordinates
+        const handles = {
+            nw: { x: -width / 2, y: -height / 2 },
+            ne: { x: width / 2, y: -height / 2 },
+            se: { x: width / 2, y: height / 2 },
+            sw: { x: -width / 2, y: height / 2 },
+            n: { x: 0, y: -height / 2 },
+            e: { x: width / 2, y: 0 },
+            s: { x: 0, y: height / 2 },
+            w: { x: -width / 2, y: 0 }
+        };
+
+        for (const [name, pos] of Object.entries(handles)) {
+            if (Math.abs(localX - pos.x) < handleSize &&
+                Math.abs(localY - pos.y) < handleSize) {
+                return name;
+            }
+        }
+
+        return null;
+    }
+
+    // Check if clicking on rotation handle (for OBB)
+    getRotationHandle(x, y) {
+        if (!this.selectedAnnotation || this.selectedAnnotation.type !== 'obb') return false;
+
+        const imgPos = this.canvasToImage(x, y);
+        const { cx, cy, width, height, angle } = this.selectedAnnotation.data;
+
+        // Calculate rotation handle position
+        const handleDistance = Math.max(width, height) / 2 + 30 / this.zoom;
+        const angleRad = (angle * Math.PI) / 180;
+
+        // Handle is at (0, -handleDistance) in local coords
+        // Transform to global coords using rotation matrix
+        const localX = 0;
+        const localY = -handleDistance;
+
+        const handleX = cx + localX * Math.cos(angleRad) - localY * Math.sin(angleRad);
+        const handleY = cy + localX * Math.sin(angleRad) + localY * Math.cos(angleRad);
+
+        const handleSize = 10 / this.zoom;
+        const distance = Math.sqrt(Math.pow(imgPos.x - handleX, 2) + Math.pow(imgPos.y - handleY, 2));
+
+        return distance < handleSize;
+    }
+
+    // Check if point is inside rotated OBB
+    isPointInOBB(x, y, obb) {
+        const { cx, cy, width, height, angle } = obb.data;
+        const angleRad = (-angle * Math.PI) / 180; // Negative for inverse rotation
+
+        // Transform point to OBB's local coordinate system
+        const dx = x - cx;
+        const dy = y - cy;
+
+        const localX = dx * Math.cos(angleRad) - dy * Math.sin(angleRad);
+        const localY = dx * Math.sin(angleRad) + dy * Math.cos(angleRad);
+
+        // Check if point is inside unrotated box
+        return Math.abs(localX) <= width / 2 && Math.abs(localY) <= height / 2;
+    }
+
+    handleOBBResize(x, y) {
+        const box = this.selectedAnnotation.data;
+        const { cx, cy, angle } = this.originalBox;
+        const angleRad = (-angle * Math.PI) / 180;
+
+        // Transform mouse position to local coordinates
+        const dx = x - cx;
+        const dy = y - cy;
+        const localX = dx * Math.cos(angleRad) - dy * Math.sin(angleRad);
+        const localY = dx * Math.sin(angleRad) + dy * Math.cos(angleRad);
+
+        // Handle resizing based on which handle is being dragged
+        switch (this.resizeHandle) {
+            case 'se': // Southeast
+                box.width = Math.max(10, localX * 2);
+                box.height = Math.max(10, localY * 2);
+                break;
+            case 'nw': // Northwest
+                box.width = Math.max(10, -localX * 2);
+                box.height = Math.max(10, -localY * 2);
+                break;
+            case 'ne': // Northeast
+                box.width = Math.max(10, localX * 2);
+                box.height = Math.max(10, -localY * 2);
+                break;
+            case 'sw': // Southwest
+                box.width = Math.max(10, -localX * 2);
+                box.height = Math.max(10, localY * 2);
+                break;
+            case 'n': // North
+                box.height = Math.max(10, -localY * 2);
+                break;
+            case 's': // South
+                box.height = Math.max(10, localY * 2);
+                break;
+            case 'e': // East
+                box.width = Math.max(10, localX * 2);
+                break;
+            case 'w': // West
+                box.width = Math.max(10, -localX * 2);
+                break;
+        }
+
+        this.markUnsavedChanges();
+        this.redraw();
+    }
+
     handleResizeDrag(x, y) {
         if (!this.selectedAnnotation || !this.originalBox) return;
 
         const imgPos = this.canvasToImage(x, y);
+
+        // Handle OBB resizing separately
+        if (this.selectedAnnotation.type === 'obb') {
+            this.handleOBBResize(imgPos.x, imgPos.y);
+            return;
+        }
+
         const box = this.selectedAnnotation.data;
         const orig = this.originalBox;
 
@@ -665,6 +966,13 @@ class CanvasManager {
                     this.fitImageToCanvas();
                     this.annotations = [];
                     this.selectedAnnotation = null;
+
+                    // Show rotation controls
+                    const rotationControls = document.getElementById('rotationControls');
+                    if (rotationControls) {
+                        rotationControls.style.display = 'flex';
+                    }
+
                     this.redraw();
                     resolve();
                 };
@@ -697,6 +1005,20 @@ class CanvasManager {
         this.panY = (canvasHeight - this.image.height * this.zoom) / 2;
     }
 
+    setImageRotation(angle) {
+        this.imageRotation = angle % 360;
+        this.redraw();
+    }
+
+    getImageRotation() {
+        return this.imageRotation;
+    }
+
+    resetImageRotation() {
+        this.imageRotation = 0;
+        this.redraw();
+    }
+
     redraw() {
         if (!this.image) return;
 
@@ -716,6 +1038,15 @@ class CanvasManager {
         this.ctx.translate(this.panX, this.panY);
         this.ctx.scale(this.zoom, this.zoom);
 
+        // Apply image rotation around center
+        if (this.imageRotation !== 0) {
+            const centerX = this.image.width / 2;
+            const centerY = this.image.height / 2;
+            this.ctx.translate(centerX, centerY);
+            this.ctx.rotate((this.imageRotation * Math.PI) / 180);
+            this.ctx.translate(-centerX, -centerY);
+        }
+
         // Draw image with high quality
         this.ctx.imageSmoothingEnabled = true;
         this.ctx.imageSmoothingQuality = 'high';
@@ -730,6 +1061,8 @@ class CanvasManager {
         this.annotations.forEach(ann => {
             if (ann.type === 'bbox') {
                 this.drawBbox(ann);
+            } else if (ann.type === 'obb') {
+                this.drawObb(ann);
             } else if (ann.type === 'mask') {
                 this.drawMaskAnnotation(ann);
             }
@@ -791,13 +1124,112 @@ class CanvasManager {
         this.ctx.strokeRect(x, y, width, height);
 
         if (this.showLabels && cls) {
+            // Find class index for numbering
+            const classIndex = this.classes.findIndex(c => c.id === cls.id);
+            const classNumber = classIndex >= 0 && classIndex < 9 ? `[${classIndex + 1}] ` : '';
+            const labelText = `${classNumber}${cls.name}`;
+
             this.ctx.fillStyle = color;
             this.ctx.font = `${14 / this.zoom}px Arial`;
-            const textWidth = this.ctx.measureText(cls.name).width;
+            const textWidth = this.ctx.measureText(labelText).width;
             this.ctx.fillRect(x, y - 20 / this.zoom, textWidth + 10 / this.zoom, 20 / this.zoom);
             this.ctx.fillStyle = '#fff';
-            this.ctx.fillText(cls.name, x + 5 / this.zoom, y - 5 / this.zoom);
+            this.ctx.fillText(labelText, x + 5 / this.zoom, y - 5 / this.zoom);
         }
+    }
+
+    drawObb(annotation) {
+        const cls = this.classes.find(c => c.id === annotation.class);
+        const color = cls?.color || '#ff0000';
+        const { cx, cy, width, height, angle } = annotation.data;
+
+        const isSelected = annotation === this.selectedAnnotation;
+
+        // Save context and translate to center
+        this.ctx.save();
+        this.ctx.translate(cx, cy);
+        this.ctx.rotate((angle * Math.PI) / 180);
+
+        // Draw rotated rectangle (centered at origin)
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = (isSelected ? 3 : 2) / this.zoom;
+        this.ctx.strokeRect(-width / 2, -height / 2, width, height);
+
+        // Draw label (rotated with the box) - BEFORE handles so label doesn't overlap
+        if (this.showLabels && cls) {
+            // Find class index for numbering
+            const classIndex = this.classes.findIndex(c => c.id === cls.id);
+            const classNumber = classIndex >= 0 && classIndex < 9 ? `[${classIndex + 1}] ` : '';
+            const labelText = `${classNumber}${cls.name}`;
+
+            // Label at top-left corner in local coordinates
+            const labelX = -width / 2;
+            const labelY = -height / 2;
+
+            this.ctx.fillStyle = color;
+            this.ctx.font = `${14 / this.zoom}px Arial`;
+            const textWidth = this.ctx.measureText(labelText).width;
+            this.ctx.fillRect(labelX, labelY - 20 / this.zoom, textWidth + 10 / this.zoom, 20 / this.zoom);
+            this.ctx.fillStyle = '#fff';
+            this.ctx.fillText(labelText, labelX + 5 / this.zoom, labelY - 5 / this.zoom);
+        }
+
+        // Draw resize and rotation handles if selected
+        if (isSelected) {
+            // Draw 8 resize handles at corners and edges (in local coords)
+            const handleSize = 6 / this.zoom;
+            const handles = [
+                { x: -width / 2, y: -height / 2 }, // nw
+                { x: width / 2, y: -height / 2 },  // ne
+                { x: width / 2, y: height / 2 },   // se
+                { x: -width / 2, y: height / 2 },  // sw
+                { x: 0, y: -height / 2 },          // n
+                { x: width / 2, y: 0 },            // e
+                { x: 0, y: height / 2 },           // s
+                { x: -width / 2, y: 0 }            // w
+            ];
+
+            this.ctx.fillStyle = '#fff';
+            this.ctx.strokeStyle = color;
+            this.ctx.lineWidth = 2 / this.zoom;
+
+            handles.forEach(handle => {
+                this.ctx.fillRect(
+                    handle.x - handleSize,
+                    handle.y - handleSize,
+                    handleSize * 2,
+                    handleSize * 2
+                );
+                this.ctx.strokeRect(
+                    handle.x - handleSize,
+                    handle.y - handleSize,
+                    handleSize * 2,
+                    handleSize * 2
+                );
+            });
+
+            // Draw rotation handle
+            const handleDistance = Math.max(width, height) / 2 + 30 / this.zoom;
+            this.ctx.fillStyle = color;
+            this.ctx.beginPath();
+            this.ctx.arc(0, -handleDistance, 6 / this.zoom, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.strokeStyle = '#fff';
+            this.ctx.lineWidth = 2 / this.zoom;
+            this.ctx.stroke();
+
+            // Draw line to rotation handle
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, -height / 2);
+            this.ctx.lineTo(0, -handleDistance);
+            this.ctx.strokeStyle = color;
+            this.ctx.lineWidth = 2 / this.zoom;
+            this.ctx.setLineDash([5 / this.zoom, 5 / this.zoom]);
+            this.ctx.stroke();
+            this.ctx.setLineDash([]);
+        }
+
+        this.ctx.restore();
     }
 
     drawMaskAnnotation(annotation) {
@@ -918,6 +1350,19 @@ class CanvasManager {
         this.zoom = 1;
         this.panX = 0;
         this.panY = 0;
+        this.imageRotation = 0;
+
+        // Hide rotation controls
+        const rotationControls = document.getElementById('rotationControls');
+        if (rotationControls) {
+            rotationControls.style.display = 'none';
+        }
+
+        // Reset rotation slider
+        const rotationSlider = document.getElementById('rotationSlider');
+        const rotationValue = document.getElementById('rotationValue');
+        if (rotationSlider) rotationSlider.value = 0;
+        if (rotationValue) rotationValue.textContent = '0°';
 
         this.ctx.save();
         this.ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -979,12 +1424,22 @@ class CanvasManager {
                 card.classList.add('selected');
             }
 
-            // Get bounds for both bbox and mask
-            let x, y, width, height;
+            // Get bounds for bbox, obb, and mask
+            let x, y, width, height, cx, cy, angle;
+            let typeLabel = '';
+
             if (ann.type === 'bbox') {
                 ({ x, y, width, height } = ann.data);
+                typeLabel = 'Box';
+            } else if (ann.type === 'obb') {
+                ({ cx, cy, width, height, angle } = ann.data);
+                // Calculate bounding rect for thumbnail (approximate)
+                x = cx - width / 2;
+                y = cy - height / 2;
+                typeLabel = `OBB ${Math.round(angle)}°`;
             } else if (ann.type === 'mask' && typeof ann.data === 'object' && ann.data.x !== undefined) {
                 ({ x, y, width, height } = ann.data);
+                typeLabel = 'Mask';
             } else {
                 return; // Skip old format masks
             }
@@ -996,6 +1451,7 @@ class CanvasManager {
                         <div class="annotation-class-label" style="background: ${color}">
                             ${className}
                         </div>
+                        <div class="annotation-type-badge">${typeLabel}</div>
                         <button class="annotation-delete-btn" data-action="delete">
                             <i class="fas fa-trash"></i>
                         </button>

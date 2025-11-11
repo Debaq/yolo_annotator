@@ -602,3 +602,199 @@ color: white;
     color: #667eea;
     margin-right: 5px;
 }
+
+/* Project Type Selector Cards */
+.project-type-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 450px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.project-type-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border: 2px solid var(--gray-light);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.project-type-card:hover {
+    border-color: var(--primary);
+    background: #f8f9fa;
+    box-shadow: 0 2px 8px rgba(103, 126, 234, 0.15);
+}
+
+.project-type-card input[type="radio"] {
+    margin-top: 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.project-type-card input[type="radio"]:checked ~ .type-card-content {
+    color: var(--primary);
+}
+
+.project-type-card input[type="radio"]:checked ~ .type-card-content .type-name {
+    color: var(--primary);
+}
+
+.type-card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.type-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.type-name {
+    font-size: 1.05em;
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.type-difficulty {
+    font-size: 0.75em;
+    font-weight: 600;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.type-description {
+    margin: 0;
+    font-size: 0.9em;
+    color: var(--gray-dark);
+    line-height: 1.4;
+}
+
+.type-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.type-detail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 0.85em;
+    color: #555;
+}
+
+.type-detail-item i {
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.type-detail-item span {
+    line-height: 1.4;
+}
+
+.form-helper-text {
+    margin: 0;
+    padding: 0;
+    font-size: 0.9em;
+    color: #666;
+}
+
+/* ============================================
+   CLASSIFICATION UI
+   ============================================ */
+
+.classification-ui {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.classification-image-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray-lighter);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    min-height: 400px;
+}
+
+.classification-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: none;
+}
+
+.classification-no-image {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    color: var(--gray);
+    text-align: center;
+}
+
+.classification-no-image i {
+    opacity: 0.3;
+}
+
+.classification-no-image p {
+    margin: 0;
+    font-size: 1.1em;
+    opacity: 0.6;
+}
+
+/* Labels overlay on image */
+.classification-labels-overlay {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-width: calc(100% - 30px);
+    z-index: 10;
+}
+
+.classification-label-badge {
+    padding: 8px 16px;
+    border-radius: 20px;
+    color: white;
+    font-weight: 600;
+    font-size: 1em;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    animation: fadeInScale 0.3s ease;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+

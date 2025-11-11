@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Annotix - FabLab TecMedHub</title>
+    <title>Annotix - TecMedHub</title>
 
     <!-- External Libraries -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -96,6 +96,9 @@
                     <button class="btn btn-primary btn-block" id="btnLoadImages">
                         <i class="fas fa-folder-open"></i> <span data-i18n="images.load">Cargar Imágenes</span>
                     </button>
+                    <button class="btn btn-outline btn-block" id="btnBatchAugmentation" style="margin-top: 8px;" disabled>
+                        <i class="fas fa-wand-magic-sparkles"></i> <span data-i18n="augmentation.batchButton">Data Augmentation</span>
+                    </button>
                 </div>
 
                 <!-- Gallery Filters -->
@@ -137,6 +140,16 @@
                     </div>
                 </div>
 
+                <!-- Rotation Controls -->
+                <div class="rotation-controls" id="rotationControls" style="display: none;">
+                    <i class="fas fa-rotate"></i>
+                    <input type="range" id="rotationSlider" min="0" max="360" value="0" step="1" class="rotation-slider">
+                    <span id="rotationValue">0°</span>
+                    <button class="control-btn-small" id="btnResetRotation" title="Reset">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                </div>
+
                 <!-- Floating Tools Menu -->
                 <div class="floating-tools">
                     <!-- Tools Section -->
@@ -144,10 +157,13 @@
                         <div class="tool-btn active" data-tool="bbox" data-i18n-title="tools.tooltips.bbox">
                             <i class="fas fa-vector-square"></i>
                         </div>
+                        <div class="tool-btn" data-tool="obb" data-i18n-title="tools.tooltips.obb" style="display: none;">
+                            <i class="fas fa-vector-square"></i>
+                        </div>
                         <div class="tool-btn" data-tool="mask" data-i18n-title="tools.tooltips.mask" style="display: none;">
                             <i class="fas fa-paint-brush"></i>
                         </div>
-                        <div class="tool-btn" id="btnEraseMode" data-i18n-title="Borrador" style="display: none;">
+                        <div class="tool-btn" id="btnEraseMode" data-i18n-title="tools.eraseMode" title="Borrador" style="display: none;">
                             <i class="fas fa-eraser"></i>
                         </div>
                         <div class="tool-btn" data-tool="select" data-i18n-title="tools.tooltips.select">
@@ -293,8 +309,10 @@
     <script src="js/database-manager.js"></script>
     <script src="js/ui-manager.js"></script>
     <script src="js/tool-manager.js"></script>
+    <script src="js/image-preprocessor.js"></script>
     <script src="js/project-manager.js"></script>
     <script src="js/canvas-manager.js"></script>
+    <script src="js/classification-manager.js"></script>
     <script src="js/gallery-manager.js"></script>
     <script src="js/app.js"></script>
 
@@ -388,6 +406,7 @@ function updateUIState() {
         const btnUndo = document.getElementById('btnUndo');
         const btnClear = document.getElementById('btnClear');
         const btnDownloadZip = document.getElementById('btnDownloadZip');
+        const btnBatchAugmentation = document.getElementById('btnBatchAugmentation');
 
         if (btnSave) {
             btnSave.disabled = !hasImage || !hasAnnotations || !hasProject;
@@ -404,6 +423,7 @@ function updateUIState() {
         if (btnUndo) btnUndo.disabled = !hasAnnotations;
         if (btnClear) btnClear.disabled = !hasAnnotations;
         if (btnDownloadZip) btnDownloadZip.disabled = !hasProject;
+        if (btnBatchAugmentation) btnBatchAugmentation.disabled = !hasProject;
 
         // Update image info
         const imageInfo = document.getElementById('imageInfo');

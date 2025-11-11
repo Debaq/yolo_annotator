@@ -314,3 +314,24 @@ window.i18n.updateDOM()
 - Consider implementing auto-save functionality
 - Large images may cause performance issues; consider implementing tiling or downsampling
 - Project deletion also deletes all associated images (no confirmation cascade warning)
+
+## Workflow Instructions for Claude Code
+
+**IMPORTANT: Follow these guidelines strictly when working on this project:**
+
+1. **NO extensive summaries**: When completing tasks, provide only bullet points of what was changed. Do NOT write lengthy final summaries or explanations.
+
+2. **NO documentation files**: Do NOT create or update:
+   - README.md or similar documentation files
+   - Markdown files with change logs or summaries
+   - Information/documentation artifacts
+
+3. **NO README updates**: Never update the README.md file unless explicitly requested by the user.
+
+4. **NO server management**: Do NOT:
+   - Launch local development servers (python -m http.server, etc.)
+   - Check if the application is running
+   - Verify the application with Node.js or any runtime
+   - The user handles all server and runtime operations themselves
+
+5. **Focus on code**: Your job is to modify code files, not to document or test the application end-to-end. Make the requested changes and report only the essential modifications in bullet-point format.

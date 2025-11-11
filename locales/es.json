@@ -5,7 +5,7 @@
     "title": "Annotix",
     "subtitle": "Herramienta profesional de anotación",
     "branding": {
-      "fablab": "FabLab TecMedHub",
+      "fablab": "TecMedHub",
       "university": "Universidad Austral de Chile - Sede Puerto Montt"
     }
   },
@@ -20,11 +20,14 @@
   "tools": {
     "title": "Herramientas",
     "bbox": "Box",
+    "obb": "OBB",
     "mask": "Mask",
     "select": "Select",
     "pan": "Pan",
+    "eraseMode": "Borrador",
     "tooltips": {
       "bbox": "Bounding Box (B)",
+      "obb": "Oriented Box (O)",
       "mask": "Máscara (M)",
       "select": "Seleccionar (V)",
       "pan": "Pan (H)"
@@ -138,11 +141,66 @@
     "name": "Nombre del Proyecto",
     "namePlaceholder": "Mi Proyecto Annotix",
     "type": "Tipo de Anotación",
-    "typeBbox": "Bounding Box",
-    "typeMask": "Segmentación (Mask)",
+    "typeSelectHelper": "Selecciona el tipo de anotación según tu objetivo de entrenamiento",
+    "types": {
+      "classification": {
+        "name": "Clasificación Simple",
+        "description": "Asignar una sola etiqueta a cada imagen completa",
+        "useCases": "Identificar qué contiene la imagen (ej: gato, perro, coche)",
+        "models": "ResNet, VGG, EfficientNet, MobileNet",
+        "difficulty": "Principiante"
+      },
+      "multiLabel": {
+        "name": "Clasificación Multi-Etiqueta",
+        "description": "Asignar múltiples etiquetas a cada imagen",
+        "useCases": "Imagen con varios elementos (ej: parque + perro + cielo)",
+        "models": "ResNet, VGG con salida multi-label",
+        "difficulty": "Principiante"
+      },
+      "detection": {
+        "name": "Detección de Objetos",
+        "description": "Localizar objetos con cajas rectangulares (bounding boxes)",
+        "useCases": "Encontrar y ubicar objetos específicos en la imagen",
+        "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+        "difficulty": "Intermedio"
+      },
+      "segmentation": {
+        "name": "Segmentación Semántica",
+        "description": "Clasificar cada píxel de la imagen por clase",
+        "useCases": "Separar regiones (ej: carretera, cielo, edificios)",
+        "models": "U-Net, DeepLab, FCN",
+        "difficulty": "Avanzado"
+      },
+      "instanceSeg": {
+        "name": "Segmentación de Instancias",
+        "description": "Delinear contorno de cada objeto individual",
+        "useCases": "Separar objetos individuales a nivel de píxel",
+        "models": "Mask R-CNN, YOLACT, YOLOv8-seg",
+        "difficulty": "Avanzado"
+      },
+      "keypoints": {
+        "name": "Puntos Clave",
+        "description": "Marcar puntos específicos en objetos",
+        "useCases": "Pose estimation, reconocimiento facial, anatomía",
+        "models": "OpenPose, HRNet, MediaPipe",
+        "difficulty": "Intermedio"
+      },
+      "obb": {
+        "name": "Cajas Rotadas (OBB)",
+        "description": "Bounding boxes con rotación libre",
+        "useCases": "Texto en ángulos, objetos aéreos, satélites",
+        "models": "Rotated-YOLO, RRPN",
+        "difficulty": "Avanzado"
+      }
+    },
     "initialClasses": "Clases Iniciales (opcional)",
     "classesPlaceholder": "clase1, clase2, clase3",
     "classesHelp": "Separadas por comas. Puedes agregar más después.",
+    "imageDimensions": "Dimensiones de Imágenes",
+    "dimensionsAuto": "Automático - Acepta cualquier tamaño",
+    "dimensionsFixed": "Fijo - Todas las imágenes se redimensionarán",
+    "targetSize": "Tamaño objetivo",
+    "resizeStrategy": "Estrategia",
     "enterName": "Ingresa un nombre para el proyecto",
     "created": "Proyecto \"{name}\" creado",
     "loaded": "Proyecto \"{name}\" cargado",
@@ -191,5 +249,89 @@
   "imageInfo": {
     "noName": "Sin nombre",
     "dimensions": "Dimensiones"
+  },
+  "preprocessing": {
+    "title": "Preprocesar Imágenes",
+    "detected": "Detectadas {count} imágenes no cuadradas",
+    "description": "Las imágenes se ajustarán a un tamaño cuadrado para optimizar el entrenamiento. Elige la estrategia de redimensionamiento:",
+    "targetSize": "Tamaño objetivo (píxeles)",
+    "recommended": "Recomendado: {size}px",
+    "strategy": "Estrategia de redimensionamiento",
+    "strategies": {
+      "resize": {
+        "name": "Redimensionar + Padding",
+        "description": "Reduce la imagen y añade padding (optimiza espacio y memoria)"
+      },
+      "padding": {
+        "name": "Solo Padding",
+        "description": "Mantiene tamaño original y añade padding (mejor calidad)"
+      }
+    },
+    "options": {
+      "apply": "Aplicar preprocesamiento",
+      "skip": "Subir sin preprocesar"
+    },
+    "progress": "Procesando imagen {current} de {total}...",
+    "complete": "{count} imágenes preprocesadas correctamente",
+    "preview": "Vista previa",
+    "original": "Original",
+    "processed": "Procesada",
+    "aspectRatio": "Aspect ratio original preservado",
+    "paddingInfo": "Se añadirá padding negro simétrico"
+  },
+  "classification": {
+    "selectOne": "Selecciona la etiqueta correcta",
+    "selectMultiple": "Selecciona las etiquetas que aplican",
+    "singleHint": "Solo puedes seleccionar una etiqueta",
+    "multiHint": "Puedes seleccionar múltiples etiquetas",
+    "noLabels": "Sin etiquetas asignadas",
+    "labeled": "Etiquetada"
+  },
+  "augmentation": {
+    "title": "Data Augmentation",
+    "batchButton": "Data Augmentation",
+    "augmentImage": "Aplicar augmentation",
+    "variationsCount": "Número de variaciones",
+    "variationsCountHelp": "¿Cuántas imágenes aumentadas crear? (1-20)",
+    "generationMode": "Modo de generación",
+    "modeManual": "Manual (configuración fija)",
+    "modeRandom": "Aleatorio (rangos configurables)",
+    "modeManualHelp": "Aplicar la misma configuración N veces",
+    "modeRandomHelp": "Generar N variaciones con valores aleatorios dentro de los rangos especificados",
+    "geometricTransforms": "Transformaciones Geométricas",
+    "flipHorizontal": "Voltear Horizontal",
+    "flipVertical": "Voltear Vertical",
+    "rotation": "Rotación",
+    "noRotation": "Sin rotación",
+    "customRotation": "Rotación personalizada",
+    "colorAdjustments": "Ajustes de Color",
+    "brightness": "Brillo",
+    "contrast": "Contraste",
+    "saturation": "Saturación",
+    "randomOptions": "Opciones Aleatorias",
+    "randomFlip": "Flip aleatorio (horizontal/vertical)",
+    "randomRotation": "Rotación aleatoria",
+    "randomColor": "Ajustes de color aleatorios",
+    "rotationRange": "Rango de rotación (grados)",
+    "brightnessRange": "Rango de brillo",
+    "contrastRange": "Rango de contraste",
+    "saturationRange": "Rango de saturación",
+    "min": "Mín",
+    "max": "Máx",
+    "keepAnnotations": "Conservar anotaciones transformadas",
+    "keepAnnotationsHelp": "Las cajas se transformarán automáticamente con la imagen",
+    "maskProjectWarning": "Proyecto de máscaras",
+    "maskProjectWarningText": "Las anotaciones NO se conservarán. Deberás pintar las máscaras manualmente en cada imagen aumentada.",
+    "apply": "Aplicar",
+    "processing": "Procesando augmentation...",
+    "generatingVariations": "Generando {count} variaciones...",
+    "variationsSuccess": "{count} variaciones creadas correctamente",
+    "success": "Imagen aumentada creada correctamente",
+    "error": "Error al aplicar augmentation",
+    "batchProcessing": "Aplicando augmentation a {count} imágenes...",
+    "batchRandomProcessing": "Generando {variations} variaciones para {images} imágenes ({total} total)...",
+    "batchSuccess": "{count} imágenes aumentadas creadas correctamente",
+    "batchRandomSuccess": "{count} variaciones aleatorias creadas correctamente",
+    "batchError": "Error al aplicar augmentation por lotes"
   }
 }

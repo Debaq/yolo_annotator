@@ -10,11 +10,12 @@ class ProjectManager {
         this.currentProject = null;
     }
 
-    async createProject(name, type, classes) {
+    async createProject(name, type, classes, preprocessingConfig = { enabled: false }) {
         const project = {
             name,
             type, // 'bbox' or 'mask'
             classes,
+            preprocessingConfig, // Image preprocessing configuration
             createdAt: Date.now(),
             updatedAt: Date.now()
         };
@@ -22,10 +23,10 @@ class ProjectManager {
         try {
             const id = await this.db.saveProject(project);
             project.id = id;
-            
+
             const msg = window.i18n.t('project.created', { name });
             this.ui.showToast(msg, 'success');
-            
+
             return project;
         } catch (error) {
             console.error('Error creating project:', error);
