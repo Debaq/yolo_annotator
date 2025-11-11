@@ -413,43 +413,40 @@ class YOLOAnnotator {
 
     // Update UI elements visibility based on annotation mode
     updateUIForMode() {
-        const toolsBar = document.querySelector('.tools-bar');
+        const floatingTools = document.querySelector('.floating-tools');
         const annotationsBar = document.getElementById('annotationsBar');
 
         if (this.annotationMode === 'classification') {
             // Hide ALL drawing/editing tools in classification mode
-            if (toolsBar) {
-                // Hide all annotation tools
-                const bboxBtn = toolsBar.querySelector('[data-tool="bbox"]');
-                const obbBtn = toolsBar.querySelector('[data-tool="obb"]');
-                const maskBtn = toolsBar.querySelector('[data-tool="mask"]');
-                const selectBtn = toolsBar.querySelector('[data-tool="select"]');
-                const panBtn = toolsBar.querySelector('[data-tool="pan"]');
+            if (floatingTools) {
+                // Get all tool sections
+                const toolSections = floatingTools.querySelectorAll('.floating-section');
+
+                // Hide first section (drawing tools: bbox, obb, mask, select, pan)
+                if (toolSections[0]) {
+                    toolSections[0].style.display = 'none';
+                }
+
+                // Keep zoom section visible (second section)
+                if (toolSections[1]) {
+                    toolSections[1].style.display = 'flex';
+                }
+
+                // Hide third section if exists (toggle buttons)
+                if (toolSections[2]) {
+                    toolSections[2].style.display = 'none';
+                }
+
+                // Also hide individual controls
                 const maskControls = document.getElementById('maskControls');
                 const rotationControls = document.getElementById('rotationControls');
-                const eraseBtn = document.getElementById('btnEraseMode');
                 const toggleLabelsBtn = document.getElementById('btnToggleLabels');
                 const toggleGridBtn = document.getElementById('btnToggleGrid');
 
-                // Hide all annotation tools
-                if (bboxBtn) bboxBtn.style.display = 'none';
-                if (obbBtn) obbBtn.style.display = 'none';
-                if (maskBtn) maskBtn.style.display = 'none';
-                if (selectBtn) selectBtn.style.display = 'none';
-                if (panBtn) panBtn.style.display = 'none';
                 if (maskControls) maskControls.style.display = 'none';
                 if (rotationControls) rotationControls.style.display = 'none';
-                if (eraseBtn) eraseBtn.style.display = 'none';
                 if (toggleLabelsBtn) toggleLabelsBtn.style.display = 'none';
                 if (toggleGridBtn) toggleGridBtn.style.display = 'none';
-
-                // Keep zoom controls visible
-                const zoomIn = document.getElementById('btnZoomIn');
-                const zoomOut = document.getElementById('btnZoomOut');
-                const zoomReset = document.getElementById('btnZoomReset');
-                if (zoomIn) zoomIn.style.display = 'flex';
-                if (zoomOut) zoomOut.style.display = 'flex';
-                if (zoomReset) zoomReset.style.display = 'flex';
             }
 
             // Hide annotations bar (bottom panel)
@@ -457,18 +454,21 @@ class YOLOAnnotator {
 
         } else {
             // Show all tools for canvas mode
-            if (toolsBar) {
+            if (floatingTools) {
+                const toolSections = floatingTools.querySelectorAll('.floating-section');
+
+                // Show all sections
+                toolSections.forEach(section => {
+                    section.style.display = 'flex';
+                });
+
                 // Show toggle buttons
                 const toggleLabelsBtn = document.getElementById('btnToggleLabels');
                 const toggleGridBtn = document.getElementById('btnToggleGrid');
                 if (toggleLabelsBtn) toggleLabelsBtn.style.display = 'flex';
                 if (toggleGridBtn) toggleGridBtn.style.display = 'flex';
 
-                // Show tool buttons
-                const tools = toolsBar.querySelectorAll('[data-tool]');
-                tools.forEach(tool => tool.style.display = 'flex');
-
-                // Let CanvasManager handle specific tool visibility
+                // Let CanvasManager handle specific tool visibility based on project type
                 this.canvasManager.updateToolAvailability();
             }
 
