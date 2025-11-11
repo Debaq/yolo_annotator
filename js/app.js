@@ -19,6 +19,7 @@ class YOLOAnnotator {
         this.autoSaveEnabled = true;
         this.autoSaveDelay = 3000; // 3 seconds after last change
         this.autoSaveTimer = null;
+        this.periodicAutoSaveInterval = 30000; // 30 seconds periodic autosave
     }
 
     async init() {
@@ -54,6 +55,9 @@ class YOLOAnnotator {
 
             // Initialize button states
             this.updateButtonStates();
+
+            // Start periodic auto-save
+            this.startPeriodicAutoSave();
 
             this.ui.showToast(window.i18n.t('notifications.appStarted'), 'success');
             console.log('Application initialized successfully');
@@ -972,11 +976,54 @@ class YOLOAnnotator {
     }
 
     async autoSave() {
-        if (!this.canvasManager.hasUnsavedChanges) return;
-        if (!this.canvasManager.image || !this.projectManager.currentProject) return;
+        if (this.annotationMode === 'classification') {
+            if (!this.classificationManager.hasUnsavedChanges) return;
+            if (!this.classificationManager.image || !this.projectManager.currentProject) return;
+        } else {
+            if (!this.canvasManager.hasUnsavedChanges) return;
+            if (!this.canvasManager.image || !this.projectManager.currentProject) return;
+        }
 
         console.log('Auto-saving...');
         await this.saveCurrentImage(true); // true = silent save
+    }
+
+    startPeriodicAutoSave() {
+        // Clear existing interval if any
+        if (this.autoSaveInterval) {
+            clearInterval(this.autoSaveInterval);
+        }
+
+        // Set up periodic auto-save every 30 seconds
+        this.autoSaveInterval = setInterval(async () => {
+            if (!this.autoSaveEnabled) return;
+
+            let hasChanges = false;
+            if (this.annotationMode === 'classification') {
+                hasChanges = this.classificationManager.hasUnsavedChanges &&
+                            this.classificationManager.imageId &&
+                            this.projectManager.currentProject;
+            } else {
+                hasChanges = this.canvasManager.hasUnsavedChanges &&
+                            this.canvasManager.imageId &&
+                            this.projectManager.currentProject;
+            }
+
+            if (hasChanges) {
+                console.log('Periodic auto-save triggered...');
+                await this.saveCurrentImage(true); // true = silent save
+            }
+        }, this.periodicAutoSaveInterval);
+
+        console.log('Periodic auto-save started (every', this.periodicAutoSaveInterval / 1000, 'seconds)');
+    }
+
+    stopPeriodicAutoSave() {
+        if (this.autoSaveInterval) {
+            clearInterval(this.autoSaveInterval);
+            this.autoSaveInterval = null;
+            console.log('Periodic auto-save stopped');
+        }
     }
 
     async saveCurrentImage(silent = false) {

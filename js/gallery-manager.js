@@ -154,6 +154,23 @@ class GalleryManager {
     async loadImage(imageId) {
         try {
             console.log('Loading image:', imageId);
+
+            // IMPORTANT: Save current image before loading a new one
+            // This prevents losing unsaved changes when navigating between images
+            if (this.app.annotationMode === 'classification') {
+                if (this.app.classificationManager.hasUnsavedChanges &&
+                    this.app.classificationManager.imageId) {
+                    console.log('Auto-saving classification changes before loading new image...');
+                    await this.app.saveCurrentImage(true); // true = silent save
+                }
+            } else {
+                if (this.app.canvasManager.hasUnsavedChanges &&
+                    this.app.canvasManager.imageId) {
+                    console.log('Auto-saving canvas changes before loading new image...');
+                    await this.app.saveCurrentImage(true); // true = silent save
+                }
+            }
+
             const imageData = await this.db.getImage(imageId);
 
             if (!imageData) {
