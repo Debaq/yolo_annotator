@@ -598,17 +598,13 @@ class YOLOAnnotator {
                 <label class="form-label">${window.i18n.t('project.name')}</label>
                 <input type="text" id="projectName" class="form-control" placeholder="${window.i18n.t('project.namePlaceholder')}">
             </div>
+
             <div class="form-group">
                 <label class="form-label">${window.i18n.t('project.type')}</label>
-                <p class="form-helper-text" style="margin-bottom: 12px; color: #666; font-size: 0.9em;">
-                    ${window.i18n.t('project.typeSelectHelper')}
-                </p>
-                <div class="project-type-selector">
+                <div class="project-type-grid">
                     ${projectTypes.map(type => {
                         const name = window.i18n.t(`project.types.${type.key}.name`);
                         const description = window.i18n.t(`project.types.${type.key}.description`);
-                        const useCases = window.i18n.t(`project.types.${type.key}.useCases`);
-                        const models = window.i18n.t(`project.types.${type.key}.models`);
                         const difficulty = window.i18n.t(`project.types.${type.key}.difficulty`);
 
                         const difficultyColor =
@@ -616,67 +612,68 @@ class YOLOAnnotator {
                             difficulty === 'Intermedio' || difficulty === 'Intermediate' ? '#f59e0b' : '#ef4444';
 
                         return `
-                            <label class="project-type-card">
+                            <label class="project-type-card-compact">
                                 <input type="radio" name="projectType" value="${type.id}" ${type.id === 'detection' ? 'checked' : ''}>
-                                <div class="type-card-content">
-                                    <div class="type-card-header">
+                                <div class="type-card-compact-content">
+                                    <div class="type-card-compact-header">
                                         <strong class="type-name">${name}</strong>
-                                        <span class="type-difficulty" style="background: ${difficultyColor}">${difficulty}</span>
+                                        <span class="type-difficulty-badge" style="background: ${difficultyColor}"></span>
                                     </div>
-                                    <p class="type-description">${description}</p>
-                                    <div class="type-details">
-                                        <div class="type-detail-item">
-                                            <i class="fas fa-lightbulb" style="color: #f59e0b;"></i>
-                                            <span>${useCases}</span>
-                                        </div>
-                                        <div class="type-detail-item">
-                                            <i class="fas fa-brain" style="color: #8b5cf6;"></i>
-                                            <span>${models}</span>
-                                        </div>
-                                    </div>
+                                    <p class="type-description-compact">${description}</p>
                                 </div>
                             </label>
                         `;
                     }).join('')}
                 </div>
             </div>
+
             <div class="form-group">
                 <label class="form-label">${window.i18n.t('project.initialClasses')}</label>
                 <input type="text" id="projectClasses" class="form-control" placeholder="${window.i18n.t('project.classesPlaceholder')}">
                 <small class="text-muted">${window.i18n.t('project.classesHelp')}</small>
             </div>
+
             <div class="form-group">
                 <label class="form-label">${window.i18n.t('project.imageDimensions')}</label>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <label style="display: flex; align-items: center; cursor: pointer;">
-                        <input type="radio" name="dimensionMode" value="auto" checked style="margin-right: 8px;">
-                        ${window.i18n.t('project.dimensionsAuto')}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <label class="dimension-mode-option">
+                        <input type="radio" name="dimensionMode" value="auto" checked>
+                        <div>
+                            <i class="fas fa-magic"></i>
+                            ${window.i18n.t('project.dimensionsAuto')}
+                        </div>
                     </label>
-                    <label style="display: flex; align-items: center; cursor: pointer;">
-                        <input type="radio" name="dimensionMode" value="fixed" style="margin-right: 8px;">
-                        ${window.i18n.t('project.dimensionsFixed')}
+                    <label class="dimension-mode-option">
+                        <input type="radio" name="dimensionMode" value="fixed">
+                        <div>
+                            <i class="fas fa-crop"></i>
+                            ${window.i18n.t('project.dimensionsFixed')}
+                        </div>
                     </label>
                 </div>
             </div>
-            <div class="form-group" id="fixedDimensionsOptions" style="display: none; margin-left: 30px; padding: 15px; background: #f8f9fa; border-radius: 6px;">
-                <div style="margin-bottom: 15px;">
-                    <label class="form-label">${window.i18n.t('project.targetSize')}</label>
-                    <select id="projectTargetSize" class="form-control form-select">
-                        ${sizeOptions.map(size => `
-                            <option value="${size}" ${size === 640 ? 'selected' : ''}>${size}x${size}px</option>
-                        `).join('')}
-                    </select>
-                </div>
-                <div>
-                    <label class="form-label">${window.i18n.t('project.resizeStrategy')}</label>
-                    <select id="projectStrategy" class="form-control form-select">
-                        <option value="resize">${window.i18n.t('preprocessing.strategies.resize.name')}</option>
-                        <option value="padding">${window.i18n.t('preprocessing.strategies.padding.name')}</option>
-                    </select>
+
+            <div class="form-group" id="fixedDimensionsOptions" style="display: none;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label class="form-label" style="font-size: 0.85em;">${window.i18n.t('project.targetSize')}</label>
+                        <select id="projectTargetSize" class="form-control form-select">
+                            ${sizeOptions.map(size => `
+                                <option value="${size}" ${size === 640 ? 'selected' : ''}>${size}px</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-size: 0.85em;">${window.i18n.t('project.resizeStrategy')}</label>
+                        <select id="projectStrategy" class="form-control form-select">
+                            <option value="resize">${window.i18n.t('preprocessing.strategies.resize.name')}</option>
+                            <option value="padding">${window.i18n.t('preprocessing.strategies.padding.name')}</option>
+                        </select>
+                    </div>
                 </div>
             </div>
         `;
-        
+
         this.ui.showModal(window.i18n.t('project.new'), content, [
             {
                 text: window.i18n.t('actions.cancel'),

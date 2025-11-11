@@ -726,6 +726,111 @@ color: white;
     color: #666;
 }
 
+/* Compact Project Type Grid Layout */
+.project-type-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.project-type-card-compact {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+    border: 2px solid var(--gray-light);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.project-type-card-compact:hover {
+    border-color: var(--primary);
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.project-type-card-compact input[type="radio"] {
+    margin-top: 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.project-type-card-compact input[type="radio"]:checked + .type-card-compact-content {
+    color: var(--primary);
+}
+
+.project-type-card-compact input[type="radio"]:checked + .type-card-compact-content .type-name {
+    color: var(--primary);
+}
+
+.type-card-compact-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.type-card-compact-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.type-difficulty-badge {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.type-description-compact {
+    margin: 0;
+    font-size: 0.85em;
+    color: var(--gray-dark);
+    line-height: 1.3;
+}
+
+/* Dimension Mode Options */
+.dimension-mode-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    border: 2px solid var(--gray-light);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.dimension-mode-option:hover {
+    border-color: var(--primary);
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.dimension-mode-option input[type="radio"] {
+    cursor: pointer;
+}
+
+.dimension-mode-option input[type="radio"]:checked + div {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.dimension-mode-option div {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9em;
+}
+
+.dimension-mode-option i {
+    font-size: 1.1em;
+}
+
 /* ============================================
    CLASSIFICATION UI
    ============================================ */
