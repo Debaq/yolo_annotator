@@ -136,8 +136,10 @@ class GalleryManager {
             this.canvasManager.imageId = imageId;
             this.canvasManager.imageName = imageData.name;
             this.canvasManager.annotations = imageData.annotations || [];
+            this.canvasManager.clearUnsavedChanges();
             this.canvasManager.redraw();
-            
+            this.canvasManager.updateAnnotationsBar();
+
             // Update gallery display
             this.render();
             

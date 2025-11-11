@@ -40,17 +40,17 @@
 
 /* Botones Generales */
 .btn {
-    padding: 8px 14px;
+    padding: 6px 12px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 0.85em;
+    font-size: 0.8em;
     font-weight: 500;
     transition: var(--transition);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 5px;
     text-align: center;
 }
 
@@ -140,12 +140,12 @@
 .tool-selector {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 12px;
+    gap: 6px;
+    margin-bottom: 8px;
 }
 
 .tool-btn {
-    padding: 10px;
+    padding: 8px;
     border: 2px solid var(--border);
     background: var(--white);
     border-radius: 8px;
@@ -479,27 +479,27 @@
 .stats-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 12px;
+    gap: 6px;
+    margin-bottom: 8px;
 }
 
 .stat-card {
     background: var(--gray-light);
-    padding: 10px;
+    padding: 8px 6px;
     border-radius: 6px;
     text-align: center;
 }
 
 .stat-value {
-    font-size: 1.8em;
+    font-size: 1.5em;
     font-weight: 700;
     color: var(--primary);
     line-height: 1;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
 }
 
 .stat-label {
-    font-size: 0.75em;
+    font-size: 0.7em;
     color: var(--gray);
     font-weight: 500;
     text-transform: uppercase;
@@ -507,16 +507,16 @@
 
 /* Progress Bar */
 .progress-container {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 }
 
 .progress-bar {
     width: 100%;
-    height: 8px;
+    height: 6px;
     background: var(--gray-light);
     border-radius: 10px;
     overflow: hidden;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 
 .progress-fill {

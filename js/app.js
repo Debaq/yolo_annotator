@@ -12,7 +12,9 @@ class YOLOAnnotator {
         this.galleryManager = null;
         
         this.autoSaveInterval = null;
-        this.autoSaveEnabled = false;
+        this.autoSaveEnabled = true;
+        this.autoSaveDelay = 3000; // 3 seconds after last change
+        this.autoSaveTimer = null;
     }
 
     async init() {
@@ -42,7 +44,10 @@ class YOLOAnnotator {
             
             // Setup keyboard shortcuts
             this.setupKeyboardShortcuts();
-            
+
+            // Initialize button states
+            this.updateButtonStates();
+
             this.ui.showToast(window.i18n.t('notifications.appStarted'), 'success');
             console.log('Application initialized successfully');
         } catch (error) {
@@ -73,7 +78,15 @@ class YOLOAnnotator {
                 this.loadImages(e.target.files);
             }
         });
-        
+
+        // Button to trigger file input
+        document.getElementById('btnLoadImages')?.addEventListener('click', () => {
+            document.getElementById('imageInput')?.click();
+        });
+
+        // Show shortcuts modal
+        document.getElementById('btnShowShortcuts')?.addEventListener('click', () => this.showShortcutsModal());
+
         // Save current image
         document.getElementById('btnSave')?.addEventListener('click', () => this.saveCurrentImage());
         
@@ -88,7 +101,28 @@ class YOLOAnnotator {
         document.getElementById('btnZoomOut')?.addEventListener('click', () => this.zoomOut());
         document.getElementById('btnZoomReset')?.addEventListener('click', () => this.resetZoom());
         document.getElementById('btnToggleLabels')?.addEventListener('click', () => this.toggleLabels());
-        
+        document.getElementById('btnToggleGrid')?.addEventListener('click', () => this.toggleGrid());
+
+        // Mask controls
+        const brushSlider = document.getElementById('brushSizeSlider');
+        const brushValue = document.getElementById('brushSizeValue');
+        if (brushSlider && brushValue) {
+            brushSlider.addEventListener('input', (e) => {
+                const size = parseInt(e.target.value);
+                this.canvasManager.toolManager.setBrushSize(size);
+                brushValue.textContent = `${size}px`;
+            });
+        }
+
+        document.getElementById('btnEraseMode')?.addEventListener('click', () => {
+            const isEraseMode = !this.canvasManager.toolManager.isEraseMode();
+            this.canvasManager.toolManager.setEraseMode(isEraseMode);
+            const btn = document.getElementById('btnEraseMode');
+            if (btn) {
+                btn.classList.toggle('active', isEraseMode);
+            }
+        });
+
         // Navigation
         document.getElementById('btnPrevImage')?.addEventListener('click', () => this.navigatePrevious());
         document.getElementById('btnNextImage')?.addEventListener('click', () => this.navigateNext());
@@ -177,6 +211,12 @@ class YOLOAnnotator {
                     this.loadProject(parseInt(e.target.value));
                 }
             });
+
+            // Auto-select first project if exists and none selected
+            if (projects.length > 0 && !selector.value) {
+                selector.value = projects[0].id;
+                await this.loadProject(projects[0].id);
+            }
         }
     }
 
@@ -185,6 +225,10 @@ class YOLOAnnotator {
             console.log('Loading project:', projectId);
             const project = await this.projectManager.loadProject(projectId);
             this.canvasManager.classes = project.classes || [];
+
+            // Set project type to enforce bbox or mask only
+            this.canvasManager.setProjectType(project.type || 'bbox');
+
             this.updateClassUI();
             await this.galleryManager.loadImages(projectId);
             this.updateStats();
@@ -192,6 +236,81 @@ class YOLOAnnotator {
         } catch (error) {
             console.error('Error loading project:', error);
         }
+    }
+
+    showShortcutsModal() {
+        const content = `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-height: 400px; overflow-y: auto;">
+                <div class="shortcut-item">
+                    <span><strong>Guardar</strong></span>
+                    <span class="shortcut-key">Ctrl+S</span>
+                </div>
+                <div class="shortcut-item">
+                    <span><strong>Deshacer</strong></span>
+                    <span class="shortcut-key">Ctrl+Z</span>
+                </div>
+                <div class="shortcut-item">
+                    <span><strong>Eliminar</strong></span>
+                    <span class="shortcut-key">Del/Backspace</span>
+                </div>
+                <div class="shortcut-item">
+                    <span><strong>Deseleccionar</strong></span>
+                    <span class="shortcut-key">Esc</span>
+                </div>
+                <div class="shortcut-item">
+                    <span><strong>Navegación</strong></span>
+                    <span class="shortcut-key">← →</span>
+                </div>
+                <div class="shortcut-item">
+                    <span><strong>Herramienta Box</strong></span>
+                    <span class="shortcut-key">B</span>
+                </div>
+                <div class="shortcut-item">
+                    <span><strong>Herramienta Mask</strong></span>
+                    <span class="shortcut-key">M</span>
+                </div>
+                <div class="shortcut-item">
+                    <span><strong>Herramienta Select</strong></span>
+                    <span class="shortcut-key">V</span>
+                </div>
+                <div class="shortcut-item">
+                    <span><strong>Herramienta Pan</strong></span>
+                    <span class="shortcut-key">H</span>
+                </div>
+                <div class="shortcut-item">
+                    <span><strong>Seleccionar Clase</strong></span>
+                    <span class="shortcut-key">1-9</span>
+                </div>
+            </div>
+            <style>
+                .shortcut-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 8px 12px;
+                    background: var(--gray-light);
+                    border-radius: 6px;
+                }
+                .shortcut-key {
+                    background: var(--primary);
+                    color: white;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    font-family: monospace;
+                    font-size: 0.9em;
+                    font-weight: 600;
+                }
+            </style>
+        `;
+
+        this.ui.showModal('⌨️ Atajos de Teclado', content, [
+            {
+                text: 'Cerrar',
+                type: 'primary',
+                action: 'close',
+                handler: (modal, close) => close()
+            }
+        ]);
     }
 
     showNewProjectModal() {
@@ -236,16 +355,25 @@ class YOLOAnnotator {
                         return;
                     }
                     
-                    const classes = classesText ? 
+                    const classes = classesText ?
                         classesText.split(',').map((c, i) => ({
                             id: i,
                             name: c.trim(),
                             color: this.randomColor()
                         })) : [];
-                    
-                    await this.projectManager.createProject(name, type, classes);
+
+                    const project = await this.projectManager.createProject(name, type, classes);
                     await this.loadProjects();
                     close();
+
+                    // Auto-select the newly created project
+                    if (project && project.id) {
+                        const selector = document.getElementById('projectSelector');
+                        if (selector) {
+                            selector.value = project.id;
+                            await this.loadProject(project.id);
+                        }
+                    }
                 }
             }
         ]);
@@ -256,10 +384,26 @@ class YOLOAnnotator {
     }
 
     setTool(tool) {
+        // Validate tool for project type
+        if (!this.canvasManager.isToolValid(tool)) {
+            const type = this.canvasManager.projectType;
+            this.ui.showToast(
+                `Herramienta "${tool}" no disponible para proyectos de tipo "${type}". Usa ${type === 'bbox' ? 'Box' : 'Mask'}.`,
+                'warning'
+            );
+            return;
+        }
+
         this.canvasManager.toolManager.setTool(tool);
         document.querySelectorAll('.tool-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tool === tool);
         });
+
+        // Show/hide mask controls based on tool
+        const maskControls = document.getElementById('maskControls');
+        if (maskControls) {
+            maskControls.style.display = (tool === 'mask') ? 'block' : 'none';
+        }
     }
 
     async loadImages(files) {
@@ -336,57 +480,226 @@ class YOLOAnnotator {
         });
     }
 
-    async saveCurrentImage() {
+    scheduleAutoSave() {
+        if (!this.autoSaveEnabled) return;
+
+        // Clear existing timer
+        if (this.autoSaveTimer) {
+            clearTimeout(this.autoSaveTimer);
+        }
+
+        // Schedule auto-save after delay
+        this.autoSaveTimer = setTimeout(() => {
+            this.autoSave();
+        }, this.autoSaveDelay);
+    }
+
+    async autoSave() {
+        if (!this.canvasManager.hasUnsavedChanges) return;
+        if (!this.canvasManager.image || !this.projectManager.currentProject) return;
+
+        console.log('Auto-saving...');
+        await this.saveCurrentImage(true); // true = silent save
+    }
+
+    async saveCurrentImage(silent = false) {
         if (!this.canvasManager.image || !this.projectManager.currentProject) {
             return;
         }
-        
+
         try {
-            this.canvasManager.canvas.toBlob(async (blob) => {
-                const imageData = {
-                    id: this.canvasManager.imageId,
-                    projectId: this.projectManager.currentProject.id,
-                    name: this.canvasManager.imageName,
-                    image: blob,
-                    annotations: this.canvasManager.annotations,
-                    width: this.canvasManager.image.width,
-                    height: this.canvasManager.image.height,
-                    timestamp: Date.now()
-                };
-                
-                const id = await this.db.saveImage(imageData);
-                this.canvasManager.imageId = id;
-                
-                await this.galleryManager.loadImages(this.projectManager.currentProject.id);
-                this.updateStats();
-                
-                this.ui.showToast(window.i18n.t('notifications.imageSaved'), 'success');
+            // Use original image blob instead of canvas
+            const imageBlob = this.canvasManager.originalImageBlob;
+
+            if (!imageBlob) {
+                if (!silent) {
+                    this.ui.showToast('Error: No se encontró la imagen original', 'error');
+                }
+                return;
+            }
+
+            // Clean annotations to remove cached image objects
+            const cleanAnnotations = this.canvasManager.annotations.map(ann => {
+                const cleanAnn = { ...ann };
+                delete cleanAnn._cachedImage; // Remove HTMLImageElement that can't be cloned
+                return cleanAnn;
             });
+
+            const imageData = {
+                id: this.canvasManager.imageId,
+                projectId: this.projectManager.currentProject.id,
+                name: this.canvasManager.imageName,
+                image: imageBlob,  // Original image without annotations
+                annotations: cleanAnnotations,  // Clean annotations without cached images
+                width: this.canvasManager.image.width,
+                height: this.canvasManager.image.height,
+                timestamp: Date.now()
+            };
+
+            const id = await this.db.saveImage(imageData);
+            this.canvasManager.imageId = id;
+
+            // Clear unsaved changes flag
+            this.canvasManager.clearUnsavedChanges();
+
+            await this.galleryManager.loadImages(this.projectManager.currentProject.id);
+            this.updateStats();
+
+            if (!silent) {
+                this.ui.showToast(window.i18n.t('notifications.imageSaved'), 'success');
+            } else {
+                console.log('Auto-saved successfully');
+            }
         } catch (error) {
             console.error('Error saving image:', error);
-            this.ui.showToast(window.i18n.t('notifications.error.saveImage'), 'error');
+            if (!silent) {
+                this.ui.showToast(window.i18n.t('notifications.error.saveImage'), 'error');
+            }
         }
     }
 
     async downloadDataset() {
         if (!this.projectManager.currentProject) return;
-        
+
         try {
             const images = await this.db.getProjectImages(this.projectManager.currentProject.id);
-            
+
             if (images.length === 0) {
                 this.ui.showToast(window.i18n.t('notifications.noImages'), 'warning');
                 return;
             }
-            
+
+            // Show format selection modal
+            this.showExportFormatModal(images);
+
+        } catch (error) {
+            console.error('Error downloading dataset:', error);
+            this.ui.showToast(window.i18n.t('notifications.error.downloadDataset'), 'error');
+        }
+    }
+
+    showExportFormatModal(images) {
+        const formats = [
+            { id: 'yolo', key: 'yolo' },
+            { id: 'yoloSeg', key: 'yoloSeg' },
+            { id: 'coco', key: 'coco' },
+            { id: 'masksPng', key: 'masksPng' },
+            { id: 'voc', key: 'voc' },
+            { id: 'csv', key: 'csv' }
+        ];
+
+        const formatsHTML = formats.map(fmt => `
+            <label class="export-format-option">
+                <input type="radio" name="exportFormat" value="${fmt.id}" ${fmt.id === 'yolo' ? 'checked' : ''}>
+                <div class="format-content">
+                    <strong>${window.i18n.t(`export.formats.${fmt.key}.name`)}</strong>
+                    <p>${window.i18n.t(`export.formats.${fmt.key}.description`)}</p>
+                </div>
+            </label>
+        `).join('');
+
+        const content = `
+            <div class="export-format-selector">
+                <p class="format-description">${window.i18n.t('export.formatDescription')}</p>
+                <div class="format-options">
+                    ${formatsHTML}
+                </div>
+            </div>
+            <style>
+                .export-format-selector {
+                    padding: 10px 0;
+                }
+                .format-description {
+                    margin-bottom: 20px;
+                    color: var(--gray-dark);
+                }
+                .format-options {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    max-height: 400px;
+                    overflow-y: auto;
+                }
+                .export-format-option {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 12px;
+                    padding: 12px;
+                    border: 2px solid var(--gray-light);
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .export-format-option:hover {
+                    border-color: var(--primary);
+                    background: var(--gray-light);
+                }
+                .export-format-option input[type="radio"] {
+                    margin-top: 4px;
+                    cursor: pointer;
+                }
+                .export-format-option input[type="radio"]:checked ~ .format-content {
+                    color: var(--primary);
+                }
+                .format-content {
+                    flex: 1;
+                }
+                .format-content strong {
+                    display: block;
+                    margin-bottom: 4px;
+                    font-size: 1.05em;
+                }
+                .format-content p {
+                    margin: 0;
+                    font-size: 0.9em;
+                    color: var(--gray-dark);
+                }
+            </style>
+        `;
+
+        this.ui.showModal(window.i18n.t('export.selectFormat'), content, [
+            {
+                text: window.i18n.t('actions.cancel'),
+                type: 'secondary',
+                action: 'cancel',
+                handler: (modal, close) => close()
+            },
+            {
+                text: window.i18n.t('export.downloadDataset'),
+                type: 'primary',
+                icon: 'fas fa-download',
+                action: 'export',
+                handler: async (modal, close) => {
+                    const selectedFormat = modal.querySelector('input[name="exportFormat"]:checked').value;
+                    close();
+                    await this.executeExport(selectedFormat, images);
+                }
+            }
+        ]);
+    }
+
+    async executeExport(format, images) {
+        console.log(`Formato seleccionado: ${format}`);
+        console.log('Falta implementar');
+
+        // Por ahora, solo ejecutar el formato YOLO que ya existía
+        if (format === 'yolo') {
+            await this.exportYOLODetection(images);
+        } else {
+            this.ui.showToast(`Formato ${format} - Falta implementar`, 'info');
+        }
+    }
+
+    async exportYOLODetection(images) {
+        try {
             const zip = new JSZip();
             const imagesFolder = zip.folder('images');
             const labelsFolder = zip.folder('labels');
-            
+
             for (const imageData of images) {
                 const ext = imageData.image.type.split('/')[1];
                 imagesFolder.file(`${imageData.name}.${ext}`, imageData.image);
-                
+
                 let yoloContent = '';
                 if (imageData.annotations && imageData.annotations.length > 0) {
                     imageData.annotations.forEach(ann => {
@@ -396,19 +709,19 @@ class YOLOAnnotator {
                             const y_center = (y + height / 2) / imageData.height;
                             const w = width / imageData.width;
                             const h = height / imageData.height;
-                            
+
                             yoloContent += `${ann.class} ${x_center.toFixed(6)} ${y_center.toFixed(6)} ${w.toFixed(6)} ${h.toFixed(6)}\n`;
                         }
                     });
                 }
-                
+
                 labelsFolder.file(`${imageData.name}.txt`, yoloContent);
             }
-            
+
             const sortedClasses = [...this.projectManager.currentProject.classes].sort((a, b) => a.id - b.id);
             const classesContent = sortedClasses.map(cls => cls.name).join('\n');
             zip.file('classes.txt', classesContent);
-            
+
             const blob = await zip.generateAsync({ type: 'blob' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -416,10 +729,10 @@ class YOLOAnnotator {
             a.download = `${this.projectManager.currentProject.name}_${Date.now()}.zip`;
             a.click();
             URL.revokeObjectURL(url);
-            
+
             this.ui.showToast(window.i18n.t('notifications.datasetDownloaded'), 'success');
         } catch (error) {
-            console.error('Error downloading dataset:', error);
+            console.error('Error exporting YOLO dataset:', error);
             this.ui.showToast(window.i18n.t('notifications.error.downloadDataset'), 'error');
         }
     }
@@ -544,7 +857,34 @@ class YOLOAnnotator {
 
     toggleLabels() {
         this.canvasManager.showLabels = !this.canvasManager.showLabels;
+        const btn = document.getElementById('btnToggleLabels');
+        if (btn) {
+            btn.classList.toggle('active', this.canvasManager.showLabels);
+        }
         this.canvasManager.redraw();
+    }
+
+    toggleGrid() {
+        this.canvasManager.showGrid = !this.canvasManager.showGrid;
+        const btn = document.getElementById('btnToggleGrid');
+        if (btn) {
+            btn.classList.toggle('active', this.canvasManager.showGrid);
+        }
+        this.canvasManager.redraw();
+    }
+
+    updateButtonStates() {
+        // Update labels button (default is true)
+        const btnLabels = document.getElementById('btnToggleLabels');
+        if (btnLabels) {
+            btnLabels.classList.toggle('active', this.canvasManager.showLabels);
+        }
+
+        // Update grid button (default is false)
+        const btnGrid = document.getElementById('btnToggleGrid');
+        if (btnGrid) {
+            btnGrid.classList.toggle('active', this.canvasManager.showGrid);
+        }
     }
 
     undo() {

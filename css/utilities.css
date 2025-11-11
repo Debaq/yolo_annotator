@@ -69,3 +69,20 @@
 .introjs-nextbutton {
     margin: 0 !important;
 }
+
+/* Pulse animation for unsaved changes */
+@keyframes btn-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(243, 156, 18, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(243, 156, 18, 0);
+    }
+}
+
+.btn-pulse {
+    animation: btn-pulse 2s infinite;
+}

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YOLO Annotator - FabLab TecMedHub</title>
+    <title>Annotix - FabLab TecMedHub</title>
 
     <!-- External Libraries -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -31,16 +31,15 @@
             <div class="header-content">
                 <div class="header-left">
                     <div>
-                        <h1 class="app-title"><i class="fas fa-tag"></i> <span data-i18n="app.title">YOLO Annotator</span></h1>
-                        <p class="app-subtitle" data-i18n="app.subtitle">Herramienta profesional de anotación</p>
+                        <h1 class="app-title"><i class="fas fa-tag"></i> <span data-i18n="app.title">Annotix</span></h1>
+                        <p class="app-subtitle" data-i18n="app.subtitle">Herramienta de anotación de Nico</p>
                     </div>
                 </div>
 
                 <div class="header-branding">
-                    <i class="fas fa-flask"></i>
+                    <img src="https://www.uach.cl/uach/_imag/uach/logo-v2.png" alt="UACh" style="height: 40px; margin-right: 10px;">
                     <div>
-                        <strong data-i18n="app.branding.fablab">FabLab TecMedHub</strong><br>
-                        <small data-i18n="app.branding.university">Universidad Austral de Chile - Sede Puerto Montt</small>
+                        <strong data-i18n="app.branding.fablab">TecMedHub</strong><br>
                     </div>
                 </div>
 
@@ -50,7 +49,11 @@
                     </select>
 
                     <button class="btn-header" id="btnNewProject" data-i18n-title="header.newProject">
-                        <i class="fas fa-plus"></i> <span data-i18n="header.newProject">Nuevo</span>
+                        <i class="fas fa-plus"></i>
+                    </button>
+
+                    <button class="btn-header" id="btnSave" data-i18n-title="actions.save" disabled>
+                        <i class="fas fa-save"></i>
                     </button>
 
                     <button class="btn-header" id="btnExportProject" data-i18n-title="header.exportProject">
@@ -65,147 +68,50 @@
                         <i class="fas fa-file-import"></i>
                     </button>
 
+                    <button class="btn-header" id="btnShowShortcuts" data-i18n-title="shortcuts.title">
+                        <i class="fas fa-keyboard"></i>
+                    </button>
+
                     <!-- Language Selector (will be injected here) -->
                     <div id="languageSelectorContainer"></div>
 
                     <button class="btn-header" id="btnHelp" data-i18n-title="header.help">
                         <i class="fas fa-question-circle"></i>
                     </button>
+
+                    <a href="https://github.com/debaq/Annotix" target="_blank" class="btn-header" title="GitHub Repository" style="text-decoration: none; color: inherit;">
+                        <i class="fab fa-github"></i>
+                    </a>
                 </div>
             </div>
         </header>
 
         <!-- Main Layout -->
         <div class="main-layout">
-            <!-- Left Sidebar -->
+            <!-- Left Sidebar - Image Gallery Only -->
             <aside class="sidebar">
-                <!-- Tools Section -->
-                <div class="panel-section">
-                    <h3><i class="fas fa-tools"></i> <span data-i18n="tools.title">Herramientas</span></h3>
-                    <div class="tool-selector">
-                        <div class="tool-btn active" data-tool="bbox" data-i18n-title="tools.tooltips.bbox">
-                            <i class="fas fa-vector-square"></i>
-                            <span data-i18n="tools.bbox">Box</span>
-                        </div>
-                        <div class="tool-btn" data-tool="mask" data-i18n-title="tools.tooltips.mask">
-                            <i class="fas fa-paint-brush"></i>
-                            <span data-i18n="tools.mask">Mask</span>
-                        </div>
-                        <div class="tool-btn" data-tool="select" data-i18n-title="tools.tooltips.select">
-                            <i class="fas fa-mouse-pointer"></i>
-                            <span data-i18n="tools.select">Select</span>
-                        </div>
-                        <div class="tool-btn" data-tool="pan" data-i18n-title="tools.tooltips.pan">
-                            <i class="fas fa-hand-paper"></i>
-                            <span data-i18n="tools.pan">Pan</span>
-                        </div>
-                    </div>
-                    <div id="maskControls" style="display: none; margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e0e0e0;">
-                    <div class="mask-control-group">
-                        <label class="mask-control-label" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 0.85em; font-weight: 600;">
-                            <span><i class="fas fa-circle"></i> Brush Size</span>
-                            <span id="brushSizeValue" style="background: #667eea; color: white; padding: 2px 8px; border-radius: 4px;">20px</span>
-                        </label>
-                        <input type="range" id="brushSizeSlider" min="5" max="100" value="20" class="brush-slider" style="width: 100%; cursor: pointer;">
-                    </div>
-
-                    <div class="mask-control-group" style="margin-top: 12px;">
-                        <button class="btn btn-sm" id="btnEraseMode" style="width: 100%; background: #6c757d; color: white;">
-                            <i class="fas fa-eraser"></i> <span id="eraseModeText">Erase Mode: OFF</span>
-                        </button>
-                    </div>
-
-                    <div class="mask-control-group" style="margin-top: 8px;">
-                        <button class="btn btn-sm btn-warning" id="btnClearMask" style="width: 100%;">
-                            <i class="fas fa-trash"></i> Clear Current Mask
-                        </button>
-                    </div>
-
-                    <div class="mask-control-info" style="margin-top: 12px; padding: 8px; background: white; border-radius: 4px; font-size: 0.75em; color: #6c757d;">
-                        <i class="fas fa-info-circle"></i> Click and drag to paint. Use erase mode to remove areas.
-                    </div>
-                </div>
+                <!-- Image Upload Button -->
+                <div class="panel-section" style="padding-bottom: 8px;">
+                    <input type="file" id="imageInput" accept="image/*" multiple style="display: none;">
+                    <button class="btn btn-primary btn-block" id="btnLoadImages">
+                        <i class="fas fa-folder-open"></i> <span data-i18n="images.load">Cargar Imágenes</span>
+                    </button>
                 </div>
 
-                <!-- Classes Section -->
-                <div class="panel-section">
-                    <h3><i class="fas fa-tags"></i> <span data-i18n="classes.title">Clases Activas</span></h3>
-                    <div class="class-list" id="classList">
-                        <div class="empty-message" data-i18n="classes.empty">Crea un proyecto primero</div>
+                <!-- Gallery Filters -->
+                <div class="panel-section" style="padding-top: 0; padding-bottom: 8px;">
+                    <div class="gallery-filters">
+                        <button class="filter-btn active" data-filter="all" data-i18n="gallery.all">Todas</button>
+                        <button class="filter-btn" data-filter="annotated" data-i18n="gallery.annotated">Anotadas</button>
+                        <button class="filter-btn" data-filter="unannotated" data-i18n="gallery.unannotated">Sin anotar</button>
                     </div>
                 </div>
 
-                <!-- Image Upload -->
-                <div class="panel-section">
-                    <h3><i class="fas fa-image"></i> <span data-i18n="images.title">Cargar Imagen</span></h3>
-                    <div class="file-upload">
-                        <input type="file" id="imageInput" accept="image/*" multiple>
-                        <label for="imageInput" class="file-upload-label">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                            <span data-i18n="images.select">Seleccionar imágenes</span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Actions -->
-                <div class="panel-section">
-                    <h3><i class="fas fa-bolt"></i> <span data-i18n="actions.title">Acciones</span></h3>
-                    <div class="btn-group">
-                        <button class="btn btn-info btn-block" id="btnSave" disabled data-i18n-title="shortcuts.save">
-                            <i class="fas fa-save"></i> <span data-i18n="actions.save">Guardar</span>
-                        </button>
-                    </div>
-                    <div class="btn-group">
-                        <button class="btn btn-warning btn-block" id="btnUndo" data-i18n-title="shortcuts.undo">
-                            <i class="fas fa-undo"></i> <span data-i18n="actions.undo">Deshacer</span>
-                        </button>
-                    </div>
-                    <div class="btn-group">
-                        <button class="btn btn-danger btn-block" id="btnClear">
-                            <i class="fas fa-trash"></i> <span data-i18n="actions.clear">Limpiar</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Keyboard Shortcuts -->
-                <div class="panel-section">
-                    <h3><i class="fas fa-keyboard"></i> <span data-i18n="shortcuts.title">Atajos</span></h3>
-                    <div class="shortcuts-list">
-                        <div class="shortcut-item">
-                            <span data-i18n="shortcuts.save">Guardar</span>
-                            <span class="shortcut-key">Ctrl+S</span>
-                        </div>
-                        <div class="shortcut-item">
-                            <span data-i18n="shortcuts.undo">Deshacer</span>
-                            <span class="shortcut-key">Ctrl+Z</span>
-                        </div>
-                        <div class="shortcut-item">
-                            <span data-i18n="shortcuts.delete">Eliminar</span>
-                            <span class="shortcut-key">Del</span>
-                        </div>
-                        <div class="shortcut-item">
-                            <span data-i18n="shortcuts.navigation">Navegación</span>
-                            <span class="shortcut-key">← →</span>
-                        </div>
-                        <div class="shortcut-item">
-                            <span data-i18n="shortcuts.bbox">Bbox</span>
-                            <span class="shortcut-key">B</span>
-                        </div>
-                        <div class="shortcut-item">
-                            <span data-i18n="shortcuts.mask">Mask</span>
-                            <span class="shortcut-key">M</span>
-                        </div>
-                        <div class="shortcut-item">
-                            <span data-i18n="shortcuts.select">Select</span>
-                            <span class="shortcut-key">V</span>
-                        </div>
-                        <div class="shortcut-item">
-                            <span data-i18n="shortcuts.pan">Pan</span>
-                            <span class="shortcut-key">H</span>
-                        </div>
-                        <div class="shortcut-item">
-                            <span data-i18n="shortcuts.classes">Clase 1-9</span>
-                            <span class="shortcut-key">1-9</span>
+                <!-- Image Gallery (Expanded) -->
+                <div class="panel-section" style="flex: 1; display: flex; flex-direction: column; padding-top: 0;">
+                    <div class="gallery-container-full">
+                        <div class="gallery-grid" id="galleryGrid">
+                            <div class="empty-gallery" data-i18n="gallery.empty">No hay imágenes</div>
                         </div>
                     </div>
                 </div>
@@ -231,10 +137,30 @@
                     </div>
                 </div>
 
-                <!-- Canvas Controls -->
-                <div class="canvas-controls">
-                    <div class="zoom-level" id="zoomLevel">100%</div>
-                    <div class="control-group">
+                <!-- Floating Tools Menu -->
+                <div class="floating-tools">
+                    <!-- Tools Section -->
+                    <div class="floating-section">
+                        <div class="tool-btn active" data-tool="bbox" data-i18n-title="tools.tooltips.bbox">
+                            <i class="fas fa-vector-square"></i>
+                        </div>
+                        <div class="tool-btn" data-tool="mask" data-i18n-title="tools.tooltips.mask" style="display: none;">
+                            <i class="fas fa-paint-brush"></i>
+                        </div>
+                        <div class="tool-btn" id="btnEraseMode" data-i18n-title="Borrador" style="display: none;">
+                            <i class="fas fa-eraser"></i>
+                        </div>
+                        <div class="tool-btn" data-tool="select" data-i18n-title="tools.tooltips.select">
+                            <i class="fas fa-mouse-pointer"></i>
+                        </div>
+                        <div class="tool-btn" data-tool="pan" data-i18n-title="tools.tooltips.pan">
+                            <i class="fas fa-hand-paper"></i>
+                        </div>
+                    </div>
+
+                    <!-- Zoom Section -->
+                    <div class="floating-section">
+                        <div class="zoom-level" id="zoomLevel">100%</div>
                         <button class="control-btn" id="btnZoomIn" data-i18n-title="canvas.zoomIn">
                             <i class="fas fa-search-plus"></i>
                         </button>
@@ -245,13 +171,23 @@
                             <i class="fas fa-expand"></i>
                         </button>
                     </div>
-                    <div class="control-group">
+
+                    <!-- View Section -->
+                    <div class="floating-section">
                         <button class="control-btn" id="btnToggleLabels" data-i18n-title="canvas.toggleLabels">
                             <i class="fas fa-eye"></i>
                         </button>
                         <button class="control-btn" id="btnToggleGrid" data-i18n-title="canvas.toggleGrid">
                             <i class="fas fa-th"></i>
                         </button>
+                    </div>
+
+                    <!-- Mask Controls (shown only when mask tool active) -->
+                    <div id="maskControls" class="floating-section" style="display: none;">
+                        <div style="font-size: 0.7em; text-align: center; margin-bottom: 4px;">
+                            <span id="brushSizeValue">20px</span>
+                        </div>
+                        <input type="range" id="brushSizeSlider" min="5" max="100" value="20" class="vertical-slider">
                     </div>
                 </div>
 
@@ -263,6 +199,18 @@
                     <button class="nav-btn" id="btnNextImage" disabled data-i18n-title="canvas.nextImage">
                         <i class="fas fa-chevron-right"></i>
                     </button>
+                </div>
+
+                <!-- Bottom Bar - Annotations List -->
+                <div class="annotations-bar collapsed" id="annotationsBar">
+                    <div class="annotations-bar-content">
+                        <button class="btn-collapse-vertical" id="btnCollapseAnnotations" title="Colapsar">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="annotations-list" id="annotationsList">
+                            <div class="empty-annotations" data-i18n="annotations.empty">No hay anotaciones en esta imagen</div>
+                        </div>
+                    </div>
                 </div>
             </main>
 
@@ -316,18 +264,11 @@
                     </div>
                 </div>
 
-                <!-- Gallery -->
+                <!-- Active Classes -->
                 <div class="panel-section">
-                    <h3><i class="fas fa-images"></i> <span data-i18n="gallery.title">Galería</span></h3>
-                    <div class="gallery-filters">
-                        <button class="filter-btn active" data-filter="all" data-i18n="gallery.all">Todas</button>
-                        <button class="filter-btn" data-filter="annotated" data-i18n="gallery.annotated">Anotadas</button>
-                        <button class="filter-btn" data-filter="unannotated" data-i18n="gallery.unannotated">Sin anotar</button>
-                    </div>
-                    <div class="gallery-container">
-                        <div class="gallery-grid" id="galleryGrid">
-                            <div class="empty-gallery" data-i18n="gallery.empty">No hay imágenes</div>
-                        </div>
+                    <h3><i class="fas fa-tags"></i> <span data-i18n="classes.active">Clases Activas</span></h3>
+                    <div class="class-list" id="classList">
+                        <div class="empty-message" data-i18n="classes.empty">No hay clases definidas</div>
                     </div>
                 </div>
 
@@ -448,7 +389,18 @@ function updateUIState() {
         const btnClear = document.getElementById('btnClear');
         const btnDownloadZip = document.getElementById('btnDownloadZip');
 
-        if (btnSave) btnSave.disabled = !hasImage || !hasAnnotations || !hasProject;
+        if (btnSave) {
+            btnSave.disabled = !hasImage || !hasAnnotations || !hasProject;
+
+            // Highlight save button if there are unsaved changes
+            if (window.app.canvasManager.hasUnsavedChanges) {
+                btnSave.classList.add('btn-pulse');
+                btnSave.style.background = '#f39c12';
+            } else {
+                btnSave.classList.remove('btn-pulse');
+                btnSave.style.background = '';
+            }
+        }
         if (btnUndo) btnUndo.disabled = !hasAnnotations;
         if (btnClear) btnClear.disabled = !hasAnnotations;
         if (btnDownloadZip) btnDownloadZip.disabled = !hasProject;
@@ -586,6 +538,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.app.canvasManager.redraw();
                 }
             }
+        });
+    }
+
+    // Annotations bar collapse/expand
+    const btnCollapseAnnotations = document.getElementById('btnCollapseAnnotations');
+    const annotationsBar = document.getElementById('annotationsBar');
+    if (btnCollapseAnnotations && annotationsBar) {
+        btnCollapseAnnotations.addEventListener('click', () => {
+            annotationsBar.classList.toggle('collapsed');
         });
     }
 });

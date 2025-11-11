@@ -9,20 +9,27 @@
     flex-direction: column;
 }
 
+.gallery-container-full {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
 .gallery-filters {
     display: flex;
-    gap: 4px;
-    margin-bottom: 10px;
+    gap: 3px;
+    margin-bottom: 8px;
 }
 
 .filter-btn {
     flex: 1;
-    padding: 6px;
+    padding: 5px 4px;
     border: 1px solid var(--border);
     background: var(--white);
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
-    font-size: 0.75em;
+    font-size: 0.7em;
     transition: var(--transition);
 }
 

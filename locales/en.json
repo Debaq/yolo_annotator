@@ -2,7 +2,7 @@
   "language": "English",
   "code": "en",
   "app": {
-    "title": "YOLO Annotator",
+    "title": "Annotix",
     "subtitle": "Professional annotation tool",
     "branding": {
       "fablab": "FabLab TecMedHub",
@@ -97,12 +97,40 @@
   "export": {
     "title": "Export",
     "downloadDataset": "Download Dataset ZIP",
-    "downloadClasses": "Download classes.txt"
+    "downloadClasses": "Download classes.txt",
+    "selectFormat": "Select Export Format",
+    "formatDescription": "Choose the format you want to export annotations:",
+    "formats": {
+      "yolo": {
+        "name": "YOLO Detection",
+        "description": "Bounding boxes in YOLO format (.txt) with data.yaml"
+      },
+      "yoloSeg": {
+        "name": "YOLO Segmentation",
+        "description": "Polygons in YOLO format (.txt) with data.yaml"
+      },
+      "coco": {
+        "name": "COCO JSON",
+        "description": "COCO format for Mask R-CNN, RetinaNet, etc."
+      },
+      "masksPng": {
+        "name": "PNG Masks (U-Net)",
+        "description": "PNG mask images for semantic segmentation"
+      },
+      "voc": {
+        "name": "Pascal VOC XML",
+        "description": "XML format with pixel coordinates"
+      },
+      "csv": {
+        "name": "Simple CSV",
+        "description": "CSV format for pandas processing"
+      }
+    }
   },
   "project": {
     "new": "New Project",
     "name": "Project Name",
-    "namePlaceholder": "My YOLO Project",
+    "namePlaceholder": "My Annotix Project",
     "type": "Annotation Type",
     "typeBbox": "Bounding Box",
     "typeMask": "Segmentation (Mask)",
@@ -142,7 +170,7 @@
     }
   },
   "tour": {
-    "welcome": "Welcome to <strong>YOLO Annotator</strong>. This tool allows you to annotate images to train YOLO models.",
+    "welcome": "Welcome to <strong>Annotix</strong>. This tool allows you to annotate images for training machine learning models.",
     "project": "First, create a new project or select an existing one. Each project can be <strong>Bounding Box</strong> or <strong>Segmentation</strong> type.",
     "tools": "Here you'll find the annotation <strong>tools</strong>: Box for rectangles, Mask for paintable masks, Select for editing, and Pan to move the view.",
     "classes": "Define your annotation <strong>classes</strong>. Each class has a name and color. You can add, edit or delete classes.",

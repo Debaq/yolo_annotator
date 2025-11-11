@@ -46,6 +46,13 @@ class CanvasManager {
         this.resizeHandle = null;
         this.originalBox = null;
 
+        // Move state for dragging boxes
+        this.isDraggingBox = false;
+        this.dragStartX = 0;
+        this.dragStartY = 0;
+        this.dragOffsetX = 0;
+        this.dragOffsetY = 0;
+
         // Tool manager
         this.toolManager = new ToolManager();
 
@@ -55,7 +62,15 @@ class CanvasManager {
 
         // Settings
         this.showLabels = true;
+        this.showGrid = false;
         this.maskOpacity = 0.5;
+
+        // Unsaved changes tracking
+        this.hasUnsavedChanges = false;
+        this.lastSavedAnnotationsCount = 0;
+
+        // Store original image blob
+        this.originalImageBlob = null;
 
         // Device pixel ratio for sharp rendering
         this.dpr = window.devicePixelRatio || 1;
@@ -93,20 +108,20 @@ class CanvasManager {
     updateToolAvailability() {
         const bboxBtn = document.querySelector('[data-tool="bbox"]');
         const maskBtn = document.querySelector('[data-tool="mask"]');
+        const eraseBtn = document.getElementById('btnEraseMode');
+        const maskControls = document.getElementById('maskControls');
 
         if (bboxBtn && maskBtn) {
             if (this.projectType === 'bbox') {
                 bboxBtn.style.display = 'flex';
                 maskBtn.style.display = 'none';
-                // Show/hide mask controls
-                const maskControls = document.getElementById('maskControls');
+                if (eraseBtn) eraseBtn.style.display = 'none';
                 if (maskControls) maskControls.style.display = 'none';
             } else if (this.projectType === 'mask') {
                 bboxBtn.style.display = 'none';
                 maskBtn.style.display = 'flex';
-                // Show mask controls
-                const maskControls = document.getElementById('maskControls');
-                if (maskControls) maskControls.style.display = 'block';
+                if (eraseBtn) eraseBtn.style.display = 'flex';
+                if (maskControls) maskControls.style.display = 'flex';
             }
         }
     }
@@ -205,11 +220,45 @@ class CanvasManager {
 
         // Select tool
         if (tool === 'select') {
+            if (this.selectedAnnotation) {
+                // Check resize handles first (only for bbox)
+                if (this.selectedAnnotation.type === 'bbox') {
+                    const handle = this.getResizeHandle(pos.x, pos.y);
+                    if (handle) {
+                        this.resizeHandle = handle;
+                        this.originalBox = { ...this.selectedAnnotation.data };
+                        return;
+                    }
+                }
+
+                // Check if clicking inside selected annotation to move it
+                const imgPos = this.canvasToImage(pos.x, pos.y);
+                let bx, by, width, height;
+
+                if (this.selectedAnnotation.type === 'bbox') {
+                    ({ x: bx, y: by, width, height } = this.selectedAnnotation.data);
+                } else if (this.selectedAnnotation.type === 'mask' && typeof this.selectedAnnotation.data === 'object') {
+                    ({ x: bx, y: by, width, height } = this.selectedAnnotation.data);
+                }
+
+                if (bx !== undefined && imgPos.x >= bx && imgPos.x <= bx + width &&
+                    imgPos.y >= by && imgPos.y <= by + height) {
+                    this.isDraggingBox = true;
+                    this.dragStartX = imgPos.x;
+                    this.dragStartY = imgPos.y;
+                    this.dragOffsetX = imgPos.x - bx;
+                    this.dragOffsetY = imgPos.y - by;
+                    this.canvas.style.cursor = 'move';
+                    return;
+                }
+            }
+
+            // Otherwise, try to select a different annotation
             this.handleSelect(pos.x, pos.y);
             return;
         }
 
-        // Check resize handles (only for bbox)
+        // Check resize handles (only for bbox) - for other tools
         if (this.selectedAnnotation && this.selectedAnnotation.type === 'bbox') {
             const handle = this.getResizeHandle(pos.x, pos.y);
             if (handle) {
@@ -224,6 +273,13 @@ class CanvasManager {
         if (tool === 'mask') {
             // Initialize mask canvas with image dimensions
             this.toolManager.initMaskCanvas(this.image.width, this.image.height);
+
+            // If there's a selected mask, load it for editing
+            if (this.selectedAnnotation && this.selectedAnnotation.type === 'mask' &&
+                typeof this.selectedAnnotation.data === 'object' && this.selectedAnnotation.data.imageData) {
+                const { imageData, x, y, width, height } = this.selectedAnnotation.data;
+                this.toolManager.loadMaskForEditing(imageData, x, y, width, height, this.image.width, this.image.height);
+            }
 
             // Start drawing mask
             const imgPos = this.canvasToImage(pos.x, pos.y);
@@ -248,6 +304,16 @@ class CanvasManager {
             this.panY += dy;
             this.startX = pos.x;
             this.startY = pos.y;
+            this.redraw();
+            return;
+        }
+
+        // Dragging box
+        if (this.isDraggingBox && this.selectedAnnotation) {
+            const imgPos = this.canvasToImage(pos.x, pos.y);
+            this.selectedAnnotation.data.x = imgPos.x - this.dragOffsetX;
+            this.selectedAnnotation.data.y = imgPos.y - this.dragOffsetY;
+            this.markUnsavedChanges();
             this.redraw();
             return;
         }
@@ -300,6 +366,12 @@ class CanvasManager {
             return;
         }
 
+        if (this.isDraggingBox) {
+            this.isDraggingBox = false;
+            this.canvas.style.cursor = 'default';
+            return;
+        }
+
         if (this.resizeHandle) {
             this.resizeHandle = null;
             this.originalBox = null;
@@ -329,22 +401,46 @@ class CanvasManager {
                                       height
                     }
                 });
+                this.markUnsavedChanges();
             }
         } else if (tool === 'mask') {
             const maskData = this.toolManager.getMaskData();
             if (maskData) {
-                this.annotations.push({
-                    type: 'mask',
-                    class: this.classes[this.currentClass]?.id || 0,
-                    data: maskData // Store as data URL
-                });
+                // Check if we're editing an existing mask
+                if (this.selectedAnnotation && this.selectedAnnotation.type === 'mask') {
+                    // Update existing mask
+                    this.selectedAnnotation.data = {
+                        imageData: maskData.imageData,
+                        x: maskData.x,
+                        y: maskData.y,
+                        width: maskData.width,
+                        height: maskData.height
+                    };
+                    // Clear cache so it reloads
+                    delete this.selectedAnnotation._cachedImage;
+                } else {
+                    // Create new mask
+                    this.annotations.push({
+                        type: 'mask',
+                        class: this.classes[this.currentClass]?.id || 0,
+                        data: {
+                            imageData: maskData.imageData,
+                            x: maskData.x,
+                            y: maskData.y,
+                            width: maskData.width,
+                            height: maskData.height
+                        }
+                    });
+                }
                 this.toolManager.clearMask();
+                this.markUnsavedChanges();
             }
         }
 
         this.isDrawing = false;
         this.toolManager.resetLastPosition();
         this.redraw();
+        this.updateAnnotationsBar();
     }
 
     handleMouseLeave(e) {
@@ -382,9 +478,17 @@ class CanvasManager {
                 if (imgPos.x >= bx && imgPos.x <= bx + width &&
                     imgPos.y >= by && imgPos.y <= by + height) {
                     this.selectedAnnotation = ann;
-                this.redraw();
-                return;
-                    }
+                    this.redraw();
+                    return;
+                }
+            } else if (ann.type === 'mask' && typeof ann.data === 'object' && ann.data.x !== undefined) {
+                const { x: mx, y: my, width, height } = ann.data;
+                if (imgPos.x >= mx && imgPos.x <= mx + width &&
+                    imgPos.y >= my && imgPos.y <= my + height) {
+                    this.selectedAnnotation = ann;
+                    this.redraw();
+                    return;
+                }
             }
         }
 
@@ -452,8 +556,25 @@ class CanvasManager {
                 box.x = newX2;
                 box.height = Math.max(5, imgPos.y - box.y);
                 break;
+            case 'n':
+                const newYN = Math.min(imgPos.y, orig.y + orig.height - 5);
+                box.height = orig.y + orig.height - newYN;
+                box.y = newYN;
+                break;
+            case 's':
+                box.height = Math.max(5, imgPos.y - box.y);
+                break;
+            case 'e':
+                box.width = Math.max(5, imgPos.x - box.x);
+                break;
+            case 'w':
+                const newXW = Math.min(imgPos.x, orig.x + orig.width - 5);
+                box.width = orig.x + orig.width - newXW;
+                box.x = newXW;
+                break;
         }
 
+        this.markUnsavedChanges();
         this.redraw();
     }
 
@@ -467,6 +588,43 @@ class CanvasManager {
 
         if (tool === 'mask') {
             this.canvas.style.cursor = 'crosshair';
+            return;
+        }
+
+        if (tool === 'select') {
+            if (this.selectedAnnotation) {
+                // Check if over resize handle (bbox only)
+                if (this.selectedAnnotation.type === 'bbox') {
+                    const handle = this.getResizeHandle(x, y);
+                    if (handle) {
+                        const cursors = {
+                            nw: 'nw-resize', ne: 'ne-resize',
+                            sw: 'sw-resize', se: 'se-resize',
+                            n: 'n-resize', s: 's-resize',
+                            e: 'e-resize', w: 'w-resize'
+                        };
+                        this.canvas.style.cursor = cursors[handle];
+                        return;
+                    }
+                }
+
+                // Check if over selected annotation (for moving)
+                const imgPos = this.canvasToImage(x, y);
+                let bx, by, width, height;
+
+                if (this.selectedAnnotation.type === 'bbox') {
+                    ({ x: bx, y: by, width, height } = this.selectedAnnotation.data);
+                } else if (this.selectedAnnotation.type === 'mask' && typeof this.selectedAnnotation.data === 'object') {
+                    ({ x: bx, y: by, width, height } = this.selectedAnnotation.data);
+                }
+
+                if (bx !== undefined && imgPos.x >= bx && imgPos.x <= bx + width &&
+                    imgPos.y >= by && imgPos.y <= by + height) {
+                    this.canvas.style.cursor = 'move';
+                    return;
+                }
+            }
+            this.canvas.style.cursor = 'default';
             return;
         }
 
@@ -490,6 +648,14 @@ class CanvasManager {
     loadImage(file) {
         return new Promise((resolve, reject) => {
             this.imageName = file.name.replace(/\.[^/.]+$/, '');
+
+            // Store original blob
+            if (file instanceof File) {
+                this.originalImageBlob = file;
+            } else if (file instanceof Blob) {
+                this.originalImageBlob = file;
+            }
+
             const reader = new FileReader();
 
             reader.onload = (e) => {
@@ -555,6 +721,11 @@ class CanvasManager {
         this.ctx.imageSmoothingQuality = 'high';
         this.ctx.drawImage(this.image, 0, 0);
 
+        // Draw grid if enabled
+        if (this.showGrid) {
+            this.drawGrid();
+        }
+
         // Draw annotations
         this.annotations.forEach(ann => {
             if (ann.type === 'bbox') {
@@ -581,6 +752,33 @@ class CanvasManager {
         this.ctx.restore();
     }
 
+    drawGrid() {
+        if (!this.image) return;
+
+        const gridSize = 50; // pixels
+        const width = this.image.width;
+        const height = this.image.height;
+
+        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+        this.ctx.lineWidth = 1 / this.zoom;
+
+        // Vertical lines
+        for (let x = gridSize; x < width; x += gridSize) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(x, 0);
+            this.ctx.lineTo(x, height);
+            this.ctx.stroke();
+        }
+
+        // Horizontal lines
+        for (let y = gridSize; y < height; y += gridSize) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, y);
+            this.ctx.lineTo(width, y);
+            this.ctx.stroke();
+        }
+    }
+
     drawBbox(annotation) {
         const cls = this.classes.find(c => c.id === annotation.class);
         const color = cls?.color || '#ff0000';
@@ -605,8 +803,9 @@ class CanvasManager {
     drawMaskAnnotation(annotation) {
         const cls = this.classes.find(c => c.id === annotation.class);
         const color = cls?.color || '#ff0000';
+        const isSelected = annotation === this.selectedAnnotation;
 
-        // Load mask image from data URL
+        // Handle old format (string) for backward compatibility
         if (typeof annotation.data === 'string') {
             const img = new Image();
             img.onload = () => {
@@ -614,10 +813,47 @@ class CanvasManager {
                 this.ctx.drawImage(img, 0, 0);
                 this.ctx.globalAlpha = 1;
             };
-            // Only set src if not already loaded
             if (!img.src) {
                 img.src = annotation.data;
             }
+            return;
+        }
+
+        // New format with position data
+        const { imageData, x, y, width, height } = annotation.data;
+
+        // Create image cache if not exists
+        if (!annotation._cachedImage) {
+            annotation._cachedImage = new Image();
+            annotation._cachedImage.src = imageData;
+        }
+
+        const img = annotation._cachedImage;
+        if (img.complete) {
+            this.ctx.globalAlpha = this.maskOpacity;
+            this.ctx.drawImage(img, x, y, width, height);
+            this.ctx.globalAlpha = 1;
+
+            // Draw bounding box if selected
+            if (isSelected) {
+                this.ctx.strokeStyle = color;
+                this.ctx.lineWidth = 3 / this.zoom;
+                this.ctx.setLineDash([5 / this.zoom, 5 / this.zoom]);
+                this.ctx.strokeRect(x, y, width, height);
+                this.ctx.setLineDash([]);
+            }
+
+            // Draw label if enabled
+            if (this.showLabels && cls) {
+                this.ctx.fillStyle = color;
+                this.ctx.font = `${14 / this.zoom}px Arial`;
+                const textWidth = this.ctx.measureText(cls.name).width;
+                this.ctx.fillRect(x, y - 20 / this.zoom, textWidth + 10 / this.zoom, 20 / this.zoom);
+                this.ctx.fillStyle = '#fff';
+                this.ctx.fillText(cls.name, x + 5 / this.zoom, y - 5 / this.zoom);
+            }
+        } else {
+            img.onload = () => this.redraw();
         }
     }
 
@@ -653,8 +889,24 @@ class CanvasManager {
         if (index > -1) {
             this.annotations.splice(index, 1);
             this.selectedAnnotation = null;
+            this.markUnsavedChanges();
             this.redraw();
+            this.updateAnnotationsBar();
         }
+    }
+
+    markUnsavedChanges() {
+        this.hasUnsavedChanges = true;
+
+        // Trigger auto-save if app instance is available
+        if (window.app && window.app.scheduleAutoSave) {
+            window.app.scheduleAutoSave();
+        }
+    }
+
+    clearUnsavedChanges() {
+        this.hasUnsavedChanges = false;
+        this.lastSavedAnnotationsCount = this.annotations.length;
     }
 
     clear() {
@@ -692,5 +944,145 @@ class CanvasManager {
         });
 
         return yoloContent;
+    }
+
+    updateAnnotationsBar() {
+        const annotationsBar = document.getElementById('annotationsBar');
+        const annotationsList = document.getElementById('annotationsList');
+
+        if (!annotationsBar || !annotationsList) return;
+
+        // Always show bar, collapse when empty
+        annotationsBar.style.display = 'block';
+
+        if (this.annotations.length === 0) {
+            annotationsBar.classList.add('collapsed');
+            annotationsList.innerHTML = '<div class="empty-annotations">Sin anotaciones</div>';
+            return;
+        }
+
+        // Remove collapsed class when we have annotations
+        annotationsBar.classList.remove('collapsed');
+
+        // Clear list
+        annotationsList.innerHTML = '';
+
+        // Add each annotation as a card
+        this.annotations.forEach((ann, index) => {
+            const cls = this.classes.find(c => c.id === ann.class);
+            const className = cls?.name || `Class ${ann.class}`;
+            const color = cls?.color || '#ff0000';
+
+            const card = document.createElement('div');
+            card.className = 'annotation-card';
+            if (ann === this.selectedAnnotation) {
+                card.classList.add('selected');
+            }
+
+            // Get bounds for both bbox and mask
+            let x, y, width, height;
+            if (ann.type === 'bbox') {
+                ({ x, y, width, height } = ann.data);
+            } else if (ann.type === 'mask' && typeof ann.data === 'object' && ann.data.x !== undefined) {
+                ({ x, y, width, height } = ann.data);
+            } else {
+                return; // Skip old format masks
+            }
+
+            card.innerHTML = `
+                <div class="annotation-thumbnail">
+                    <canvas width="100" height="75"></canvas>
+                    <div class="annotation-overlay">
+                        <div class="annotation-class-label" style="background: ${color}">
+                            ${className}
+                        </div>
+                        <button class="annotation-delete-btn" data-action="delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Render thumbnail
+            const thumbnailCanvas = card.querySelector('canvas');
+            const thumbCtx = thumbnailCanvas.getContext('2d');
+            if (this.image) {
+                // Calculate scale to fit bbox in thumbnail
+                const thumbWidth = 100;
+                const thumbHeight = 75;
+                const scale = Math.min(thumbWidth / width, thumbHeight / height, 1);
+
+                const drawWidth = width * scale;
+                const drawHeight = height * scale;
+                const offsetX = (thumbWidth - drawWidth) / 2;
+                const offsetY = (thumbHeight - drawHeight) / 2;
+
+                // Clear canvas first
+                thumbCtx.clearRect(0, 0, thumbWidth, thumbHeight);
+
+                // Draw cropped image (only the region inside the bbox/mask)
+                thumbCtx.drawImage(
+                    this.image,
+                    x, y, width, height,  // Source coordinates from image
+                    offsetX, offsetY, drawWidth, drawHeight  // Destination in canvas
+                );
+
+                // Draw mask overlay if it's a mask annotation
+                if (ann.type === 'mask' && ann.data.imageData) {
+                    if (!ann._cachedImage) {
+                        ann._cachedImage = new Image();
+                        ann._cachedImage.src = ann.data.imageData;
+                    }
+                    if (ann._cachedImage.complete) {
+                        thumbCtx.globalAlpha = 0.6;
+                        thumbCtx.drawImage(
+                            ann._cachedImage,
+                            0, 0, width, height,
+                            offsetX, offsetY, drawWidth, drawHeight
+                        );
+                        thumbCtx.globalAlpha = 1;
+                    }
+                }
+
+                // Draw border around the entire thumbnail
+                thumbCtx.strokeStyle = color;
+                thumbCtx.lineWidth = 3;
+                thumbCtx.strokeRect(offsetX, offsetY, drawWidth, drawHeight);
+            }
+
+            // Click to select
+            card.addEventListener('click', (e) => {
+                if (!e.target.closest('.annotation-delete-btn')) {
+                    this.selectedAnnotation = ann;
+                    this.redraw();
+                    this.updateAnnotationsBar();
+                }
+            });
+
+            // Delete button
+            const deleteBtn = card.querySelector('.annotation-delete-btn');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const index = this.annotations.indexOf(ann);
+                    if (index > -1) {
+                        this.annotations.splice(index, 1);
+                        if (this.selectedAnnotation === ann) {
+                            this.selectedAnnotation = null;
+                        }
+                        this.markUnsavedChanges();
+                        this.redraw();
+                        this.updateAnnotationsBar();
+                    }
+                });
+            }
+
+            annotationsList.appendChild(card);
+        });
+
+        // If no bboxes, show empty message
+        if (annotationsList.children.length === 0) {
+            annotationsList.innerHTML = '<div class="empty-annotations">No hay bounding boxes en esta imagen</div>';
+        }
     }
 }

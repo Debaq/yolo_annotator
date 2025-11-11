@@ -52,7 +52,7 @@ class ToolManager {
     initMaskCanvas(width, height) {
         if (!this.maskCanvas) {
             this.maskCanvas = document.createElement('canvas');
-            this.maskCtx = this.maskCanvas.getContext('2d');
+            this.maskCtx = this.maskCanvas.getContext('2d', { willReadFrequently: true });
         }
 
         // Set canvas size to match image
@@ -91,6 +91,8 @@ class ToolManager {
     drawCircle(x, y, color) {
         if (!this.maskCtx) return;
 
+        // Set composite operation for erase mode
+        this.maskCtx.globalCompositeOperation = this.eraseMode ? 'destination-out' : 'source-over';
         this.maskCtx.fillStyle = this.eraseMode ? 'rgba(0,0,0,1)' : color;
         this.maskCtx.beginPath();
         this.maskCtx.arc(x, y, this.brushSize / 2, 0, Math.PI * 2);
@@ -123,8 +125,67 @@ class ToolManager {
     getMaskData() {
         if (!this.maskCanvas) return null;
 
-        // Return the canvas as an image data URL
-        return this.maskCanvas.toDataURL('image/png');
+        // Get the bounding box of the painted area
+        const bounds = this.getMaskBounds();
+        if (!bounds) return null;
+
+        // Create a temporary canvas for the cropped mask
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = bounds.width;
+        tempCanvas.height = bounds.height;
+        const tempCtx = tempCanvas.getContext('2d');
+
+        // Draw only the painted region
+        tempCtx.drawImage(
+            this.maskCanvas,
+            bounds.x, bounds.y, bounds.width, bounds.height,
+            0, 0, bounds.width, bounds.height
+        );
+
+        // Return both the cropped image and the position
+        return {
+            imageData: tempCanvas.toDataURL('image/png'),
+            x: bounds.x,
+            y: bounds.y,
+            width: bounds.width,
+            height: bounds.height
+        };
+    }
+
+    getMaskBounds() {
+        if (!this.maskCanvas) return null;
+
+        const imageData = this.maskCtx.getImageData(0, 0, this.maskCanvas.width, this.maskCanvas.height);
+        const pixels = imageData.data;
+
+        let minX = this.maskCanvas.width;
+        let minY = this.maskCanvas.height;
+        let maxX = 0;
+        let maxY = 0;
+        let hasPixels = false;
+
+        // Find the bounding box of non-transparent pixels
+        for (let y = 0; y < this.maskCanvas.height; y++) {
+            for (let x = 0; x < this.maskCanvas.width; x++) {
+                const alpha = pixels[(y * this.maskCanvas.width + x) * 4 + 3];
+                if (alpha > 0) {
+                    hasPixels = true;
+                    minX = Math.min(minX, x);
+                    minY = Math.min(minY, y);
+                    maxX = Math.max(maxX, x);
+                    maxY = Math.max(maxY, y);
+                }
+            }
+        }
+
+        if (!hasPixels) return null;
+
+        return {
+            x: minX,
+            y: minY,
+            width: maxX - minX + 1,
+            height: maxY - minY + 1
+        };
     }
 
     getMaskImageData() {
@@ -148,6 +209,24 @@ class ToolManager {
         img.onload = () => {
             this.maskCtx.clearRect(0, 0, this.maskCanvas.width, this.maskCanvas.height);
             this.maskCtx.drawImage(img, 0, 0);
+        };
+        img.src = imageDataUrl;
+    }
+
+    // Load cropped mask for editing with position
+    loadMaskForEditing(imageDataUrl, x, y, width, height, fullWidth, fullHeight) {
+        if (!this.maskCanvas || !imageDataUrl) return;
+
+        // Ensure canvas is correct size
+        if (this.maskCanvas.width !== fullWidth || this.maskCanvas.height !== fullHeight) {
+            this.initMaskCanvas(fullWidth, fullHeight);
+        }
+
+        const img = new Image();
+        img.onload = () => {
+            this.maskCtx.clearRect(0, 0, this.maskCanvas.width, this.maskCanvas.height);
+            // Draw the cropped mask at its original position
+            this.maskCtx.drawImage(img, x, y, width, height);
         };
         img.src = imageDataUrl;
     }

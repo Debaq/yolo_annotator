@@ -2,7 +2,7 @@
   "language": "Español",
   "code": "es",
   "app": {
-    "title": "Anotador YOLO",
+    "title": "Annotix",
     "subtitle": "Herramienta profesional de anotación",
     "branding": {
       "fablab": "FabLab TecMedHub",
@@ -32,6 +32,7 @@
   },
   "classes": {
     "title": "Clases Activas",
+    "active": "Clases Activas",
     "manage": "Gestionar Clases",
     "add": "Agregar Clase",
     "placeholder": "Nombre de clase",
@@ -40,8 +41,13 @@
     "exists": "Ya existe una clase con ese nombre",
     "enterName": "Ingresa un nombre para la clase"
   },
+  "annotations": {
+    "title": "Anotaciones",
+    "empty": "Sin anotaciones"
+  },
   "images": {
-    "title": "Cargar Imagen",
+    "load": "Cargar imágenes",
+    "title": "Titulo",
     "select": "Seleccionar imágenes",
     "upload": "Seleccionar imágenes",
     "noImages": "No hay imágenes"
@@ -97,12 +103,40 @@
   "export": {
     "title": "Exportar",
     "downloadDataset": "Descargar Dataset ZIP",
-    "downloadClasses": "Descargar classes.txt"
+    "downloadClasses": "Descargar classes.txt",
+    "selectFormat": "Seleccionar Formato de Exportación",
+    "formatDescription": "Elige el formato en el que deseas exportar las anotaciones:",
+    "formats": {
+      "yolo": {
+        "name": "YOLO Detection",
+        "description": "Bounding boxes en formato YOLO (.txt) con data.yaml"
+      },
+      "yoloSeg": {
+        "name": "YOLO Segmentation",
+        "description": "Polígonos en formato YOLO (.txt) con data.yaml"
+      },
+      "coco": {
+        "name": "COCO JSON",
+        "description": "Formato COCO para Mask R-CNN, RetinaNet, etc."
+      },
+      "masksPng": {
+        "name": "Máscaras PNG (U-Net)",
+        "description": "Imágenes PNG de máscaras para segmentación semántica"
+      },
+      "voc": {
+        "name": "Pascal VOC XML",
+        "description": "Formato XML con coordenadas en píxeles"
+      },
+      "csv": {
+        "name": "CSV Simple",
+        "description": "Formato CSV para procesamiento con pandas"
+      }
+    }
   },
   "project": {
     "new": "Nuevo Proyecto",
     "name": "Nombre del Proyecto",
-    "namePlaceholder": "Mi Proyecto YOLO",
+    "namePlaceholder": "Mi Proyecto Annotix",
     "type": "Tipo de Anotación",
     "typeBbox": "Bounding Box",
     "typeMask": "Segmentación (Mask)",
@@ -119,6 +153,7 @@
   },
   "notifications": {
     "imageSaved": "Imagen guardada",
+    "imagesLoaded": "{count} imágenes cargadas",
     "datasetDownloaded": "Dataset descargado",
     "classesDownloaded": "classes.txt descargado",
     "noClasses": "No hay clases para descargar",
@@ -142,7 +177,7 @@
     }
   },
   "tour": {
-    "welcome": "Bienvenido al <strong>YOLO Annotator</strong>. Esta herramienta te permite anotar imágenes para entrenar modelos YOLO.",
+    "welcome": "Bienvenido a <strong>Annotix</strong>. Esta herramienta te permite anotar imágenes para entrenar modelos de machine learning.",
     "project": "Primero, crea un nuevo proyecto o selecciona uno existente. Cada proyecto puede ser de tipo <strong>Bounding Box</strong> o <strong>Segmentación</strong>.",
     "tools": "Aquí encontrarás las <strong>herramientas</strong> de anotación: Box para rectángulos, Mask para máscaras pintables, Select para editar, y Pan para mover la vista.",
     "classes": "Define tus <strong>clases</strong> de anotación. Cada clase tiene un nombre y un color. Puedes agregar, editar o eliminar clases.",

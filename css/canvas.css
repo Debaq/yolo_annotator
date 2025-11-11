@@ -50,7 +50,7 @@
 /* Controles de Canvas */
 .canvas-controls {
     position: absolute;
-    bottom: 20px;
+    top: 20px;
     right: 20px;
     display: flex;
     flex-direction: column;
@@ -91,15 +91,18 @@
     cursor: not-allowed;
 }
 
+.control-btn.active {
+    background: var(--success);
+    color: var(--white);
+}
+
 .zoom-level {
-    background: var(--white);
-    border-radius: 8px;
-    box-shadow: 0 2px 10px var(--shadow);
-    padding: 6px 12px;
-    font-size: 0.85em;
-    font-weight: 600;
-    min-width: 60px;
+    background: transparent;
+    padding: 4px 0;
+    font-size: 0.75em;
+    font-weight: 700;
     text-align: center;
+    color: var(--primary);
 }
 
 /* Navegación de Imágenes */
@@ -173,4 +176,441 @@
 
 .image-info-value {
     font-weight: 600;
+}
+
+/* ============================================
+   ANNOTATIONS BAR (Bottom)
+   Lista de anotaciones con miniaturas
+   ============================================ */
+
+.annotations-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -2px 6px var(--shadow);
+    z-index: 200;
+    transition: var(--transition);
+}
+
+.annotations-bar.collapsed {
+    height: 26px;
+}
+
+.annotations-bar.collapsed .annotations-list {
+    display: none;
+}
+
+.annotations-bar.collapsed .btn-collapse-vertical i {
+    transform: rotate(180deg);
+}
+
+.annotations-bar-content {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    gap: 2px;
+}
+
+.btn-collapse-vertical {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: var(--gray-light);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    color: var(--dark);
+    flex-shrink: 0;
+    padding: 0;
+    margin: 1px 3px;
+    border-radius: 3px;
+}
+
+.btn-collapse-vertical:hover {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.btn-collapse-vertical i {
+    transition: transform 0.3s ease;
+    font-size: 0.9em;
+}
+
+.annotations-list {
+    display: flex;
+    gap: 6px;
+    padding: 4px 6px;
+    overflow-x: auto;
+    max-height: 110px;
+    scrollbar-width: thin;
+    flex: 1;
+}
+
+.annotations-list::-webkit-scrollbar {
+    height: 6px;
+}
+
+.annotations-list::-webkit-scrollbar-track {
+    background: var(--gray-light);
+}
+
+.annotations-list::-webkit-scrollbar-thumb {
+    background: var(--gray);
+    border-radius: 3px;
+}
+
+.annotations-list::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+.empty-annotations {
+    color: var(--gray-dark);
+    font-size: 0.75em;
+    font-style: italic;
+    padding: 4px;
+    text-align: center;
+    width: 100%;
+}
+
+.annotation-card {
+    min-width: 100px;
+    max-width: 100px;
+    background: var(--white);
+    border: 2px solid var(--gray);
+    border-radius: 6px;
+    padding: 0;
+    cursor: pointer;
+    transition: var(--transition);
+    overflow: hidden;
+}
+
+.annotation-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px var(--shadow);
+    transform: translateY(-2px);
+}
+
+.annotation-card.selected {
+    border-color: var(--primary);
+    border-width: 3px;
+    box-shadow: 0 2px 12px var(--shadow-strong);
+}
+
+.annotation-thumbnail {
+    width: 100%;
+    height: 75px;
+    overflow: hidden;
+    background: var(--gray-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.annotation-thumbnail canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.annotation-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 3px;
+    pointer-events: none;
+}
+
+.annotation-class-label {
+    display: inline-block;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 0.65em;
+    font-weight: 600;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    align-self: flex-start;
+    backdrop-filter: blur(4px);
+}
+
+.annotation-delete-btn {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 22px;
+    height: 22px;
+    border: none;
+    background: rgba(231, 76, 60, 0.9);
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.75em;
+    transition: var(--transition);
+    pointer-events: auto;
+    backdrop-filter: blur(4px);
+}
+
+.annotation-delete-btn:hover {
+    background: var(--danger);
+    transform: scale(1.1);
+}
+
+/* ============================================
+   FLOATING TOOLS MENU
+   Menú flotante de herramientas en el lado izquierdo
+   ============================================ */
+
+.floating-tools {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 100;
+}
+
+.floating-section {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px var(--shadow);
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.floating-section h4 {
+    font-size: 0.7em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray);
+    margin: 0 0 4px 0;
+    font-weight: 600;
+}
+
+.floating-tools .tool-btn {
+    width: 42px;
+    height: 42px;
+    border: 2px solid var(--border);
+    background: var(--white);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dark);
+}
+
+.floating-tools .tool-btn i {
+    font-size: 1.3em;
+}
+
+.floating-tools .tool-btn:hover:not(.active) {
+    border-color: var(--primary);
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.floating-tools .tool-btn.active {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: var(--white);
+}
+
+.floating-tools #btnEraseMode.active {
+    border-color: var(--danger);
+    background: var(--danger);
+    color: var(--white);
+}
+
+.floating-zoom {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.floating-zoom-display {
+    font-size: 0.75em;
+    font-weight: 700;
+    text-align: center;
+    color: var(--primary);
+    padding: 4px 0;
+}
+
+.floating-zoom-btn {
+    width: 42px;
+    height: 36px;
+    border: none;
+    background: var(--white);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dark);
+    font-size: 1em;
+}
+
+.floating-zoom-btn:hover:not(:disabled) {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.floating-zoom-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.floating-view-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.floating-view-btn {
+    width: 42px;
+    height: 36px;
+    border: 2px solid var(--border);
+    background: var(--white);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dark);
+    font-size: 0.95em;
+}
+
+.floating-view-btn:hover:not(.active) {
+    border-color: var(--primary);
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.floating-view-btn.active {
+    border-color: var(--success);
+    background: var(--success);
+    color: var(--white);
+}
+
+.floating-mask-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+}
+
+.floating-brush-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--gray-light);
+    border-radius: 2px;
+    outline: none;
+}
+
+.floating-brush-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.floating-brush-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.floating-brush-value {
+    font-size: 0.75em;
+    font-weight: 600;
+    color: var(--gray);
+}
+
+.floating-erase-btn {
+    width: 42px;
+    height: 36px;
+    border: 2px solid var(--border);
+    background: var(--white);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dark);
+    font-size: 0.95em;
+}
+
+.floating-erase-btn:hover:not(.active) {
+    border-color: var(--danger);
+    background: rgba(231, 76, 60, 0.1);
+}
+
+.floating-erase-btn.active {
+    border-color: var(--danger);
+    background: var(--danger);
+    color: var(--white);
+}
+
+/* Vertical Slider for Brush Size */
+.vertical-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 50px;
+    height: 6px;
+    background: var(--gray-light);
+    border-radius: 3px;
+    outline: none;
+    transform: rotate(-90deg);
+    margin: 35px 0;
+}
+
+.vertical-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.vertical-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
