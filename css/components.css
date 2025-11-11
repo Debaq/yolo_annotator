@@ -748,6 +748,7 @@ color: white;
     overflow: hidden;
     position: relative;
     min-height: 400px;
+    transition: border 0.3s ease, box-shadow 0.3s ease;
 }
 
 .classification-image {
@@ -783,12 +784,57 @@ color: white;
     top: 15px;
     left: 15px;
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 8px;
-    max-width: calc(100% - 30px);
     z-index: 10;
 }
 
+/* Single label corner badge */
+.classification-label-corner {
+    padding: 10px 20px;
+    border-radius: 0 0 8px 0;
+    color: white;
+    font-weight: 600;
+    font-size: 1.1em;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    animation: fadeInSlide 0.3s ease;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* Multiple labels corner container */
+.classification-labels-corner {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    animation: fadeInSlide 0.3s ease;
+}
+
+.classification-label-tag {
+    padding: 6px 14px;
+    border-radius: 4px;
+    color: white;
+    font-weight: 600;
+    font-size: 0.9em;
+    box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    display: inline-block;
+}
+
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Deprecated badge style - keeping for backwards compatibility */
 .classification-label-badge {
     padding: 8px 16px;
     border-radius: 20px;

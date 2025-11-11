@@ -165,10 +165,15 @@ class ClassificationManager {
 
     // Update the labels overlay on the image
     updateLabelsOverlay() {
+        const imageContainer = document.querySelector('.classification-image-container');
         const overlay = document.getElementById('classificationLabelsOverlay');
-        if (!overlay) return;
+
+        if (!imageContainer || !overlay) return;
 
         if (this.labels.length === 0) {
+            // Remove border when no labels
+            imageContainer.style.border = 'none';
+            imageContainer.style.boxShadow = 'none';
             overlay.innerHTML = '';
             return;
         }
@@ -179,11 +184,47 @@ class ClassificationManager {
             return cls ? { name: cls.name, color: cls.color } : null;
         }).filter(c => c !== null);
 
-        overlay.innerHTML = selectedClasses.map(cls => `
-            <div class="classification-label-badge" style="background: ${cls.color}">
-                ${cls.name}
-            </div>
-        `).join('');
+        if (selectedClasses.length === 0) {
+            imageContainer.style.border = 'none';
+            imageContainer.style.boxShadow = 'none';
+            overlay.innerHTML = '';
+            return;
+        }
+
+        if (selectedClasses.length === 1) {
+            // Single label: solid border with class color
+            const cls = selectedClasses[0];
+            imageContainer.style.border = `8px solid ${cls.color}`;
+            imageContainer.style.boxShadow = `0 0 0 2px rgba(0,0,0,0.1), inset 0 0 0 2px rgba(255,255,255,0.5)`;
+
+            // Show class name in corner
+            overlay.innerHTML = `
+                <div class="classification-label-corner" style="background: ${cls.color}">
+                    ${cls.name}
+                </div>
+            `;
+        } else {
+            // Multiple labels: use multiple box-shadows for layered effect
+            const borderWidth = 8;
+            const boxShadows = selectedClasses.map((cls, index) => {
+                const offset = index * borderWidth;
+                return `0 0 0 ${offset + borderWidth}px ${cls.color}`;
+            }).join(', ');
+
+            imageContainer.style.border = 'none';
+            imageContainer.style.boxShadow = boxShadows + ', inset 0 0 0 2px rgba(255,255,255,0.5)';
+
+            // Show all class names in corner
+            overlay.innerHTML = `
+                <div class="classification-labels-corner">
+                    ${selectedClasses.map(cls => `
+                        <span class="classification-label-tag" style="background: ${cls.color}">
+                            ${cls.name}
+                        </span>
+                    `).join('')}
+                </div>
+            `;
+        }
     }
 
     // Load an image for classification
