@@ -182,20 +182,26 @@ class YOLOAnnotator {
 
             // Classification mode shortcuts
             if (this.annotationMode === 'classification') {
-                // Arrow keys disabled in classification mode to prevent accidental navigation
-                if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                // Arrow keys: Navigate between images
+                if (e.key === 'ArrowLeft') {
                     e.preventDefault();
+                    this.navigatePrevious();
+                    return;
+                }
+                if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    this.navigateNext();
                     return;
                 }
 
-                // A: Cycle to previous class
+                // A: Cycle to previous class (in the list, not the image)
                 if (e.key === 'a' || e.key === 'A') {
                     e.preventDefault();
                     this.classificationManager.cycleClassPrevious();
                     return;
                 }
 
-                // D: Cycle to next class
+                // D: Cycle to next class (in the list, not the image)
                 if (e.key === 'd' || e.key === 'D') {
                     e.preventDefault();
                     this.classificationManager.cycleClassNext();
@@ -238,7 +244,8 @@ class YOLOAnnotator {
                 return; // No other shortcuts in classification mode
             }
 
-            // Arrow keys: Navigate images (only in canvas mode)
+            // Canvas mode shortcuts (detection, segmentation, etc.)
+            // Arrow keys: Navigate images
             if (e.key === 'ArrowLeft') {
                 e.preventDefault();
                 this.navigatePrevious();
@@ -250,8 +257,7 @@ class YOLOAnnotator {
                 return;
             }
 
-            // Canvas mode shortcuts (detection, segmentation, etc.)
-            // ALL canvas-specific shortcuts should be in this block
+            // ALL other canvas-specific shortcuts below
 
             // Numbers 1-9: select class
             if (e.key >= '1' && e.key <= '9') {
