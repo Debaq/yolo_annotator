@@ -251,6 +251,7 @@ class YOLOAnnotator {
             }
 
             // Canvas mode shortcuts (detection, segmentation, etc.)
+            // ALL canvas-specific shortcuts should be in this block
 
             // Numbers 1-9: select class
             if (e.key >= '1' && e.key <= '9') {
@@ -259,42 +260,68 @@ class YOLOAnnotator {
                     this.canvasManager.currentClass = index;
                     this.updateClassUI();
                 }
+                return; // Prevent fallthrough
             }
 
             // Z: Undo
             if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
                 e.preventDefault();
                 this.undo();
+                return;
             }
 
             // Delete: Delete selected
             if (e.key === 'Delete' || e.key === 'Backspace') {
                 e.preventDefault();
                 this.canvasManager.deleteSelected();
+                return;
             }
 
             // Escape: Deselect
             if (e.key === 'Escape') {
                 this.canvasManager.selectedAnnotation = null;
                 this.canvasManager.redraw();
+                return;
             }
 
-            // A/D: Rotate image
+            // A/D: Rotate image (only in canvas mode)
             if (e.key === 'a' || e.key === 'A') {
                 e.preventDefault();
                 this.rotateImageLeft();
+                return;
             }
             if (e.key === 'd' || e.key === 'D') {
                 e.preventDefault();
                 this.rotateImageRight();
+                return;
             }
 
-            // Tools
-            if (e.key === 'b') this.setTool('bbox');
-            if (e.key === 'o') this.setTool('obb');
-            if (e.key === 'm') this.setTool('mask');
-            if (e.key === 'v') this.setTool('select');
-            if (e.key === 'h') this.setTool('pan');
+            // Drawing/editing tools (B, O, M, V, H) - only in canvas mode
+            if (e.key === 'b' || e.key === 'B') {
+                e.preventDefault();
+                this.setTool('bbox');
+                return;
+            }
+            if (e.key === 'o' || e.key === 'O') {
+                e.preventDefault();
+                this.setTool('obb');
+                return;
+            }
+            if (e.key === 'm' || e.key === 'M') {
+                e.preventDefault();
+                this.setTool('mask');
+                return;
+            }
+            if (e.key === 'v' || e.key === 'V') {
+                e.preventDefault();
+                this.setTool('select');
+                return;
+            }
+            if (e.key === 'h' || e.key === 'H') {
+                e.preventDefault();
+                this.setTool('pan');
+                return;
+            }
         });
     }
 
