@@ -376,6 +376,7 @@ class CanvasManager {
                 typeof this.selectedAnnotation.data === 'object' && this.selectedAnnotation.data.imageData) {
                 const { imageData, x, y, width, height } = this.selectedAnnotation.data;
                 this.toolManager.loadMaskForEditing(imageData, x, y, width, height, this.image.width, this.image.height);
+                console.log('Loaded existing mask for editing');
             }
 
             // Start drawing mask
@@ -384,6 +385,14 @@ class CanvasManager {
             this.toolManager.drawMask(imgPos.x, imgPos.y, color);
             this.redraw();
         }
+    }
+
+    // Start a new mask instance (clear selected annotation and temp canvas)
+    startNewMaskInstance() {
+        this.selectedAnnotation = null;
+        this.toolManager.clearMask();
+        this.redraw();
+        console.log('Started new mask instance');
     }
 
     handleMouseMove(e) {
@@ -888,7 +897,12 @@ class CanvasManager {
         }
 
         if (tool === 'mask') {
-            this.canvas.style.cursor = 'crosshair';
+            // Show different cursor for erase mode
+            if (this.toolManager.isEraseMode()) {
+                this.canvas.style.cursor = 'cell'; // Different cursor for erase
+            } else {
+                this.canvas.style.cursor = 'crosshair';
+            }
             return;
         }
 

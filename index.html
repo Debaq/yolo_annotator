@@ -200,7 +200,10 @@
 
                     <!-- Mask Controls (shown only when mask tool active) -->
                     <div id="maskControls" class="floating-section" style="display: none;">
-                        <div style="font-size: 0.7em; text-align: center; margin-bottom: 4px;">
+                        <button class="control-btn" id="btnNewInstance" data-i18n-title="tools.newInstance" title="Nueva Instancia">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <div style="font-size: 0.7em; text-align: center; margin: 4px 0;">
                             <span id="brushSizeValue">20px</span>
                         </div>
                         <input type="range" id="brushSizeSlider" min="5" max="100" value="20" class="vertical-slider">
@@ -528,26 +531,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Erase mode toggle
-    if (btnEraseMode && eraseModeText) {
-        btnEraseMode.addEventListener('click', () => {
-            if (window.app && window.app.canvasManager) {
-                const toolManager = window.app.canvasManager.toolManager;
-                const newEraseMode = !toolManager.isEraseMode();
-                toolManager.setEraseMode(newEraseMode);
-
-                // Update UI
-                btnEraseMode.classList.toggle('active', newEraseMode);
-                eraseModeText.textContent = newEraseMode ? 'Erase Mode: ON' : 'Erase Mode: OFF';
-
-                // Update icon
-                const icon = btnEraseMode.querySelector('i');
-                if (icon) {
-                    icon.className = newEraseMode ? 'fas fa-paint-brush' : 'fas fa-eraser';
-                }
-            }
-        });
-    }
+    // Note: Erase mode toggle is now handled in app.js setupUI()
 
     // Clear current mask
     if (btnClearMask) {

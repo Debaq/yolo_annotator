@@ -128,13 +128,25 @@ class YOLOAnnotator {
             });
         }
 
+        // Erase mode button (mask tool)
         document.getElementById('btnEraseMode')?.addEventListener('click', () => {
             const isEraseMode = !this.canvasManager.toolManager.isEraseMode();
             this.canvasManager.toolManager.setEraseMode(isEraseMode);
             const btn = document.getElementById('btnEraseMode');
             if (btn) {
                 btn.classList.toggle('active', isEraseMode);
+                // Visual feedback
+                const icon = btn.querySelector('i');
+                if (icon && isEraseMode) {
+                    this.ui.showToast('Modo borrador activado', 'info');
+                }
             }
+        });
+
+        // New instance button (start fresh mask)
+        document.getElementById('btnNewInstance')?.addEventListener('click', () => {
+            this.canvasManager.startNewMaskInstance();
+            this.ui.showToast('Nueva instancia iniciada', 'success');
         });
 
         // Image rotation controls
