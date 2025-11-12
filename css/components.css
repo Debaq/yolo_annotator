@@ -1051,6 +1051,17 @@ color: white;
     grid-column: 1 / -1;
 }
 
+/* In code mode, adjust card padding and overflow */
+.modal.code-mode .export-card-training {
+    padding: 16px;
+    overflow: visible;
+}
+
+.modal.code-mode .export-card-training .export-card-header,
+.modal.code-mode .export-card-training .export-card-description {
+    padding: 0 4px;
+}
+
 .export-card-header {
     display: flex;
     align-items: center;
@@ -1157,18 +1168,22 @@ color: white;
 .modal.code-mode .code-generator {
     display: grid;
     grid-template-columns: 1fr 1fr 1.2fr;
-    gap: 16px;
-    max-height: calc(90vh - 180px);
+    gap: 12px;
+    max-height: calc(90vh - 200px);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .modal.code-mode .code-config {
     grid-column: 1 / 3;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 10px;
     overflow-y: auto;
-    padding-right: 8px;
+    overflow-x: hidden;
+    padding-right: 6px;
     align-content: start;
+    min-width: 0;
 }
 
 /* Each section takes full width within config area */
@@ -1198,16 +1213,19 @@ color: white;
 .modal.code-mode .code-preview-container {
     grid-column: 3;
     grid-row: 1 / -1;
-    height: calc(90vh - 180px);
+    height: calc(90vh - 200px);
     display: flex;
     flex-direction: column;
     position: sticky;
     top: 0;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .modal.code-mode .code-preview {
     flex: 1;
     overflow-y: auto;
+    overflow-x: auto;
     max-height: none;
 }
 
@@ -1221,12 +1239,19 @@ color: white;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
+    min-width: 0;
 }
 
 .config-item {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    min-width: 0;
+}
+
+.config-item .form-control,
+.config-item .form-select {
+    min-width: 0;
 }
 
 .config-item .form-label {
@@ -1399,6 +1424,8 @@ color: white;
 .config-section {
     padding: 16px;
     border-bottom: 1px solid var(--light);
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .config-section:last-child {
@@ -1407,12 +1434,15 @@ color: white;
 
 /* In code mode, add visual separation */
 .modal.code-mode .config-section {
-    padding: 12px;
-    margin-bottom: 8px;
+    padding: 10px;
+    margin-bottom: 6px;
     background: white;
     border-radius: 6px;
     border: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
+    min-width: 0;
+    box-sizing: border-box;
+    width: 100%;
 }
 
 .modal.code-mode .config-section:last-child {
@@ -1436,8 +1466,13 @@ color: white;
 
 .config-checkboxes {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 6px;
+    min-width: 0;
+}
+
+.modal.code-mode .config-checkboxes {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 }
 
 .checkbox-label {
@@ -1449,6 +1484,8 @@ color: white;
     user-select: none;
     transition: background 0.2s ease;
     border-radius: 4px;
+    min-width: 0;
+    word-break: break-word;
 }
 
 .checkbox-label:hover {
