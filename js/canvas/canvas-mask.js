@@ -1,0 +1,427 @@
+/**
+ * CANVAS MASK - Segmentation (Semantic & Instance)
+ * Handles mask/brush-based annotations
+ *
+ * Features:
+ * - Draw masks with brush tool
+ * - Erase mode to remove painted areas
+ * - Adjustable brush size
+ * - Multiple instances (for instance segmentation)
+ * - Opacity control
+ * - Shortcuts: M (mask tool), E (erase mode), [ (decrease brush), ] (increase brush), N (new instance)
+ *
+ * Tools: mask (brush), select, pan
+ */
+
+class CanvasMask extends CanvasBase {
+    constructor(canvas, ui, projectType) {
+        super(canvas, ui, projectType);
+
+        // Mask-specific state
+        this.isDrawing = false;
+        this.maskOpacity = 0.5;
+
+        // Brush settings
+        this.brushSize = 20;
+        this.minBrushSize = 5;
+        this.maxBrushSize = 100;
+        this.eraseMode = false;
+
+        // Current mask being drawn
+        this.currentMaskCanvas = null;
+        this.currentMaskCtx = null;
+        this.currentMaskBounds = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+
+        // Drag state (for moving/selecting masks)
+        this.isDragging = false;
+        this.dragOffsetX = 0;
+        this.dragOffsetY = 0;
+
+        // Current tool
+        this.currentTool = 'mask'; // 'mask', 'select', 'pan'
+    }
+
+    // ============================================
+    // TOOL MANAGEMENT
+    // ============================================
+
+    getAvailableTools() {
+        return ['mask', 'select', 'pan'];
+    }
+
+    setTool(tool) {
+        if (!this.getAvailableTools().includes(tool)) {
+            console.warn(`Tool "${tool}" not available for mask canvas`);
+            return;
+        }
+        this.currentTool = tool;
+        this.updateCursor();
+    }
+
+    updateCursor() {
+        if (this.currentTool === 'mask') {
+            this.canvas.style.cursor = 'crosshair';
+        } else if (this.currentTool === 'select') {
+            this.canvas.style.cursor = 'default';
+        } else if (this.currentTool === 'pan') {
+            this.canvas.style.cursor = 'grab';
+        }
+    }
+
+    // ============================================
+    // SHORTCUTS - Specific to Mask
+    // ============================================
+
+    getSpecificShortcuts() {
+        return {
+            // Tools
+            'm': { handler: () => this.setTool('mask'), description: 'Mask Tool' },
+            'v': { handler: () => this.setTool('select'), description: 'Select Tool' },
+
+            // Brush controls
+            'e': { handler: () => this.toggleEraseMode(), description: 'Toggle Erase Mode' },
+            '[': { handler: () => this.decreaseBrushSize(), description: 'Decrease Brush Size' },
+            ']': { handler: () => this.increaseBrushSize(), description: 'Increase Brush Size' },
+
+            // Mask management
+            'n': { handler: () => this.newMaskInstance(), description: 'New Mask Instance' },
+            'Delete': { handler: () => this.deleteSelected(), description: 'Delete Selected' },
+            'Backspace': { handler: () => this.deleteSelected(), description: 'Delete Selected' },
+            'd': { handler: () => this.deleteSelected(), description: 'Delete Selected' },
+
+            // Class selection (1-9)
+            '1': { handler: () => this.selectClass(0), description: 'Select Class 1' },
+            '2': { handler: () => this.selectClass(1), description: 'Select Class 2' },
+            '3': { handler: () => this.selectClass(2), description: 'Select Class 3' },
+            '4': { handler: () => this.selectClass(3), description: 'Select Class 4' },
+            '5': { handler: () => this.selectClass(4), description: 'Select Class 5' },
+            '6': { handler: () => this.selectClass(5), description: 'Select Class 6' },
+            '7': { handler: () => this.selectClass(6), description: 'Select Class 7' },
+            '8': { handler: () => this.selectClass(7), description: 'Select Class 8' },
+            '9': { handler: () => this.selectClass(8), description: 'Select Class 9' }
+        };
+    }
+
+    selectClass(index) {
+        if (index < this.classes.length) {
+            this.currentClass = this.classes[index].id;
+            this.emit('classChanged', { classId: this.currentClass });
+        }
+    }
+
+    toggleEraseMode() {
+        this.eraseMode = !this.eraseMode;
+        this.updateEraseButton();
+        this.ui.showToast(this.eraseMode ? 'Erase mode ON' : 'Erase mode OFF', 'info');
+    }
+
+    updateEraseButton() {
+        const eraseBtn = document.getElementById('btnEraseMode');
+        if (eraseBtn) {
+            eraseBtn.classList.toggle('active', this.eraseMode);
+        }
+    }
+
+    decreaseBrushSize() {
+        this.brushSize = Math.max(this.minBrushSize, this.brushSize - 5);
+        this.updateBrushDisplay();
+        this.ui.showToast(`Brush size: ${this.brushSize}px`, 'info');
+    }
+
+    increaseBrushSize() {
+        this.brushSize = Math.min(this.maxBrushSize, this.brushSize + 5);
+        this.updateBrushDisplay();
+        this.ui.showToast(`Brush size: ${this.brushSize}px`, 'info');
+    }
+
+    updateBrushDisplay() {
+        const slider = document.getElementById('brushSizeSlider');
+        const display = document.getElementById('brushSizeValue');
+        if (slider) slider.value = this.brushSize;
+        if (display) display.textContent = `${this.brushSize}px`;
+    }
+
+    newMaskInstance() {
+        if (this.currentMaskCanvas) {
+            // Save current mask before starting new one
+            this.saveMask();
+        }
+        this.ui.showToast('New mask instance started', 'success');
+    }
+
+    // ============================================
+    // DRAWING LOGIC
+    // ============================================
+
+    handleDrawStart(x, y) {
+        if (this.currentTool === 'mask') {
+            this.isDrawing = true;
+
+            // Create temporary mask canvas if not exists
+            if (!this.currentMaskCanvas) {
+                this.initMaskCanvas();
+            }
+
+            // Start drawing on mask canvas
+            this.drawBrush(x, y);
+            this.lastX = x;
+            this.lastY = y;
+        } else if (this.currentTool === 'select') {
+            // Check if clicking on existing mask
+            const clickedMask = this.getMaskAtPosition(x, y);
+            if (clickedMask) {
+                this.selectedAnnotation = clickedMask;
+                this.isDragging = true;
+                this.dragOffsetX = x - clickedMask.data.x;
+                this.dragOffsetY = y - clickedMask.data.y;
+                this.redraw();
+            } else {
+                this.selectedAnnotation = null;
+                this.redraw();
+            }
+        }
+    }
+
+    handleDrawMove(x, y) {
+        if (this.currentTool === 'mask' && this.isDrawing) {
+            // Interpolate between last position and current for smooth drawing
+            this.interpolateBrush(this.lastX, this.lastY, x, y);
+            this.lastX = x;
+            this.lastY = y;
+            this.redraw();
+        } else if (this.currentTool === 'select' && this.isDragging && this.selectedAnnotation) {
+            // Drag mask (move position)
+            this.selectedAnnotation.data.x = x - this.dragOffsetX;
+            this.selectedAnnotation.data.y = y - this.dragOffsetY;
+            this.hasUnsavedChanges = true;
+            this.redraw();
+        }
+    }
+
+    handleDrawEnd(x, y) {
+        if (this.currentTool === 'mask' && this.isDrawing) {
+            this.isDrawing = false;
+            // Note: mask is saved when user clicks "Save" or starts new instance
+        } else if (this.currentTool === 'select' && this.isDragging) {
+            this.isDragging = false;
+        }
+    }
+
+    initMaskCanvas() {
+        if (!this.image) return;
+
+        this.currentMaskCanvas = document.createElement('canvas');
+        this.currentMaskCanvas.width = this.image.width;
+        this.currentMaskCanvas.height = this.image.height;
+        this.currentMaskCtx = this.currentMaskCanvas.getContext('2d');
+
+        // Reset bounds
+        this.currentMaskBounds = {
+            minX: Infinity,
+            minY: Infinity,
+            maxX: -Infinity,
+            maxY: -Infinity
+        };
+
+        // Set brush color based on current class
+        const cls = this.classes.find(c => c.id === this.currentClass);
+        this.currentMaskCtx.fillStyle = cls?.color || '#ff0000';
+    }
+
+    drawBrush(x, y) {
+        if (!this.currentMaskCtx) return;
+
+        this.currentMaskCtx.globalCompositeOperation = this.eraseMode ? 'destination-out' : 'source-over';
+
+        this.currentMaskCtx.beginPath();
+        this.currentMaskCtx.arc(x, y, this.brushSize / 2, 0, Math.PI * 2);
+        this.currentMaskCtx.fill();
+
+        // Update bounds
+        if (!this.eraseMode) {
+            this.currentMaskBounds.minX = Math.min(this.currentMaskBounds.minX, x - this.brushSize / 2);
+            this.currentMaskBounds.minY = Math.min(this.currentMaskBounds.minY, y - this.brushSize / 2);
+            this.currentMaskBounds.maxX = Math.max(this.currentMaskBounds.maxX, x + this.brushSize / 2);
+            this.currentMaskBounds.maxY = Math.max(this.currentMaskBounds.maxY, y + this.brushSize / 2);
+        }
+    }
+
+    interpolateBrush(x1, y1, x2, y2) {
+        const dist = Math.hypot(x2 - x1, y2 - y1);
+        const steps = Math.max(1, Math.floor(dist / 2));
+
+        for (let i = 0; i <= steps; i++) {
+            const t = i / steps;
+            const x = x1 + (x2 - x1) * t;
+            const y = y1 + (y2 - y1) * t;
+            this.drawBrush(x, y);
+        }
+    }
+
+    saveMask() {
+        if (!this.currentMaskCanvas) return;
+
+        // Check if mask has any content
+        const imageData = this.currentMaskCtx.getImageData(
+            0, 0,
+            this.currentMaskCanvas.width,
+            this.currentMaskCanvas.height
+        );
+
+        let hasContent = false;
+        for (let i = 3; i < imageData.data.length; i += 4) {
+            if (imageData.data[i] > 0) {
+                hasContent = true;
+                break;
+            }
+        }
+
+        if (!hasContent) {
+            this.ui.showToast('No mask drawn', 'warning');
+            return;
+        }
+
+        // Save mask as annotation
+        const annotation = {
+            type: 'mask',
+            class: this.currentClass,
+            data: {
+                imageData: this.currentMaskCanvas.toDataURL('image/png'),
+                x: Math.max(0, Math.floor(this.currentMaskBounds.minX)),
+                y: Math.max(0, Math.floor(this.currentMaskBounds.minY)),
+                width: Math.ceil(this.currentMaskBounds.maxX - this.currentMaskBounds.minX),
+                height: Math.ceil(this.currentMaskBounds.maxY - this.currentMaskBounds.minY)
+            }
+        };
+
+        this.addAnnotation(annotation);
+        this.ui.showToast('Mask saved', 'success');
+
+        // Clear current mask canvas
+        this.currentMaskCanvas = null;
+        this.currentMaskCtx = null;
+    }
+
+    // ============================================
+    // DRAWING
+    // ============================================
+
+    redraw() {
+        super.redraw();
+
+        // Draw current mask being painted (if any)
+        if (this.currentMaskCanvas && this.currentTool === 'mask') {
+            this.ctx.save();
+            this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+            this.ctx.translate(this.panX, this.panY);
+            this.ctx.scale(this.zoom, this.zoom);
+
+            this.ctx.globalAlpha = this.maskOpacity;
+            this.ctx.drawImage(this.currentMaskCanvas, 0, 0);
+            this.ctx.globalAlpha = 1;
+
+            this.ctx.restore();
+        }
+    }
+
+    drawAnnotation(annotation) {
+        if (annotation.type === 'mask') {
+            this.drawMask(annotation);
+        }
+    }
+
+    drawMask(annotation) {
+        const cls = this.classes.find(c => c.id === annotation.class);
+        const color = cls?.color || '#ff0000';
+        const isSelected = annotation === this.selectedAnnotation;
+
+        // Handle old format (string) for backward compatibility
+        if (typeof annotation.data === 'string') {
+            const img = new Image();
+            img.onload = () => {
+                this.ctx.globalAlpha = this.maskOpacity;
+                this.ctx.drawImage(img, 0, 0);
+                this.ctx.globalAlpha = 1;
+            };
+            if (!img.src) {
+                img.src = annotation.data;
+            }
+            return;
+        }
+
+        // New format with position data
+        const { imageData, x, y, width, height } = annotation.data;
+
+        // Create image cache if not exists
+        if (!annotation._cachedImage) {
+            annotation._cachedImage = new Image();
+            annotation._cachedImage.src = imageData;
+        }
+
+        const img = annotation._cachedImage;
+        if (img.complete) {
+            this.ctx.globalAlpha = this.maskOpacity;
+            this.ctx.drawImage(img, x, y, width, height);
+            this.ctx.globalAlpha = 1;
+
+            // Draw bounding box if selected
+            if (isSelected) {
+                this.ctx.strokeStyle = color;
+                this.ctx.lineWidth = 3 / this.zoom;
+                this.ctx.setLineDash([5 / this.zoom, 5 / this.zoom]);
+                this.ctx.strokeRect(x, y, width, height);
+                this.ctx.setLineDash([]);
+            }
+
+            // Draw label if enabled
+            if (this.showLabels && cls) {
+                this.ctx.fillStyle = color;
+                this.ctx.font = `${14 / this.zoom}px Arial`;
+                const textWidth = this.ctx.measureText(cls.name).width;
+                this.ctx.fillRect(x, y - 20 / this.zoom, textWidth + 10 / this.zoom, 20 / this.zoom);
+                this.ctx.fillStyle = '#fff';
+                this.ctx.fillText(cls.name, x + 5 / this.zoom, y - 5 / this.zoom);
+            }
+        } else {
+            img.onload = () => this.redraw();
+        }
+    }
+
+    // ============================================
+    // SELECTION & INTERACTION
+    // ============================================
+
+    getMaskAtPosition(x, y) {
+        // Simple bounding box check (more efficient than pixel-perfect)
+        for (let i = this.annotations.length - 1; i >= 0; i--) {
+            const ann = this.annotations[i];
+            if (ann.type === 'mask' && typeof ann.data !== 'string') {
+                const { x: mx, y: my, width, height } = ann.data;
+                if (x >= mx && x <= mx + width && y >= my && y <= my + height) {
+                    return ann;
+                }
+            }
+        }
+        return null;
+    }
+
+    // ============================================
+    // PUBLIC METHODS (called from UI)
+    // ============================================
+
+    setBrushSize(size) {
+        this.brushSize = Math.max(this.minBrushSize, Math.min(this.maxBrushSize, size));
+        this.updateBrushDisplay();
+    }
+
+    setMaskOpacity(opacity) {
+        this.maskOpacity = opacity;
+        this.redraw();
+    }
+
+    finishCurrentMask() {
+        if (this.currentMaskCanvas) {
+            this.saveMask();
+        }
+    }
+}

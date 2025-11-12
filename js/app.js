@@ -38,8 +38,10 @@ class YOLOAnnotator {
             this.exportManager = new ExportManager(this.db, this.ui);
             this.shortcutsManager = new ShortcutsManager(this.ui);
 
+            // Canvas will be created dynamically when project is loaded (using CanvasFactory)
             const canvas = document.getElementById('canvas');
-            this.canvasManager = new CanvasManager(canvas, this.ui);
+            this.canvas = canvas;
+            this.canvasManager = null; // Will be set in loadProject()
 
             const canvasContainer = document.querySelector('.canvas-container');
             this.classificationManager = new ClassificationManager(canvasContainer, this.ui);
@@ -133,6 +135,7 @@ class YOLOAnnotator {
         const brushValue = document.getElementById('brushSizeValue');
         if (brushSlider && brushValue) {
             brushSlider.addEventListener('input', (e) => {
+                if (!this.canvasManager) return;
                 const size = parseInt(e.target.value);
                 this.canvasManager.toolManager.setBrushSize(size);
                 brushValue.textContent = `${size}px`;
@@ -141,6 +144,7 @@ class YOLOAnnotator {
 
         // Erase mode button (mask tool)
         document.getElementById('btnEraseMode')?.addEventListener('click', () => {
+            if (!this.canvasManager) return;
             const isEraseMode = !this.canvasManager.toolManager.isEraseMode();
             this.canvasManager.toolManager.setEraseMode(isEraseMode);
             const btn = document.getElementById('btnEraseMode');
@@ -156,6 +160,7 @@ class YOLOAnnotator {
 
         // New instance button (start fresh mask)
         document.getElementById('btnNewInstance')?.addEventListener('click', () => {
+            if (!this.canvasManager) return;
             this.canvasManager.startNewMaskInstance();
             this.ui.showToast('Nueva instancia iniciada', 'success');
         });
@@ -165,6 +170,7 @@ class YOLOAnnotator {
         const rotationValue = document.getElementById('rotationValue');
         if (rotationSlider && rotationValue) {
             rotationSlider.addEventListener('input', (e) => {
+                if (!this.canvasManager) return;
                 const angle = parseInt(e.target.value);
                 this.canvasManager.setImageRotation(angle);
                 rotationValue.textContent = `${angle}°`;
@@ -172,6 +178,7 @@ class YOLOAnnotator {
         }
 
         document.getElementById('btnResetRotation')?.addEventListener('click', () => {
+            if (!this.canvasManager) return;
             this.canvasManager.resetImageRotation();
             if (rotationSlider) rotationSlider.value = 0;
             if (rotationValue) rotationValue.textContent = '0°';
@@ -281,6 +288,8 @@ class YOLOAnnotator {
             }
 
             // ALL other canvas-specific shortcuts below
+            // Skip if no canvas manager loaded
+            if (!this.canvasManager) return;
 
             // Numbers 1-9: select class
             if (e.key >= '1' && e.key <= '9') {
@@ -417,15 +426,40 @@ class YOLOAnnotator {
                 this.annotationMode = 'classification';
                 this.classificationManager.classes = project.classes || [];
                 this.classificationManager.init(project.type === 'multiLabel');
-                this.canvasManager.clear();
+
+                // Destroy canvas if exists
+                if (this.canvasManager) {
+                    this.canvasManager.destroy();
+                    this.canvasManager = null;
+                }
             } else {
                 // Switch to canvas mode
                 this.annotationMode = 'canvas';
                 if (this.classificationManager.classificationUI) {
                     this.classificationManager.destroy();
                 }
-                this.canvasManager.classes = project.classes || [];
-                this.canvasManager.setProjectType(project.type);
+
+                // Destroy previous canvas if exists and type changed
+                if (this.canvasManager) {
+                    // Check if project type changed
+                    if (this.canvasManager.projectType !== project.type) {
+                        console.log(`Project type changed from ${this.canvasManager.projectType} to ${project.type}, recreating canvas`);
+                        this.canvasManager.destroy();
+                        this.canvasManager = null;
+                    }
+                }
+
+                // Create canvas using factory if not exists
+                if (!this.canvasManager) {
+                    console.log(`Creating canvas for project type: ${project.type}`);
+                    this.canvasManager = CanvasFactory.create(project.type, this.canvas, this.ui);
+                }
+
+                // Set classes
+                if (this.canvasManager) {
+                    this.canvasManager.classes = project.classes || [];
+                    this.canvasManager.currentClass = (project.classes && project.classes.length > 0) ? project.classes[0].id : 0;
+                }
             }
 
             // Update UI visibility based on mode
@@ -802,6 +836,8 @@ class YOLOAnnotator {
 
 
     setTool(tool) {
+        if (!this.canvasManager) return;
+
         // Validate tool for project type
         if (!this.canvasManager.isToolValid(tool)) {
             const type = this.canvasManager.projectType;
