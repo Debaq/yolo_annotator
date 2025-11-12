@@ -10,6 +10,7 @@ class YOLOAnnotator {
         this.projectManager = null;
         this.exportManager = null;
         this.trainingCodeGenerator = null;
+        this.shortcutsManager = null;
         this.canvasManager = null;
         this.classificationManager = null;
         this.galleryManager = null;
@@ -35,6 +36,7 @@ class YOLOAnnotator {
             // Initialize managers
             this.projectManager = new ProjectManager(this.db, this.ui);
             this.exportManager = new ExportManager(this.db, this.ui);
+            this.shortcutsManager = new ShortcutsManager(this.ui);
 
             const canvas = document.getElementById('canvas');
             this.canvasManager = new CanvasManager(canvas, this.ui);
@@ -79,7 +81,7 @@ class YOLOAnnotator {
         document.getElementById('btnOpenProject')?.addEventListener('click', () => this.openProjectFile());
         document.getElementById('btnManageProjects')?.addEventListener('click', () => this.showManageProjectsModal());
         document.getElementById('btnExport')?.addEventListener('click', () => this.showExportModal());
-        document.getElementById('btnHelp')?.addEventListener('click', () => this.startTour());
+        document.getElementById('btnHelp')?.addEventListener('click', () => this.shortcutsManager.startTour());
 
         // Project import file input
         document.getElementById('projectImportInput')?.addEventListener('change', (e) => this.handleProjectImport(e));
@@ -108,7 +110,7 @@ class YOLOAnnotator {
         document.getElementById('btnBatchAugmentation')?.addEventListener('click', () => this.showAugmentationModal());
 
         // Show shortcuts modal
-        document.getElementById('btnShowShortcuts')?.addEventListener('click', () => this.showShortcutsModal());
+        document.getElementById('btnShowShortcuts')?.addEventListener('click', () => this.shortcutsManager.showShortcutsModal());
 
         // Save current image
         document.getElementById('btnSave')?.addEventListener('click', () => this.saveCurrentImage());
@@ -535,88 +537,6 @@ class YOLOAnnotator {
         }
     }
 
-    showShortcutsModal() {
-        const content = `
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-height: 400px; overflow-y: auto;">
-                <div class="shortcut-item">
-                    <span><strong>Guardar</strong></span>
-                    <span class="shortcut-key">Ctrl+S</span>
-                </div>
-                <div class="shortcut-item">
-                    <span><strong>Deshacer</strong></span>
-                    <span class="shortcut-key">Ctrl+Z</span>
-                </div>
-                <div class="shortcut-item">
-                    <span><strong>Eliminar</strong></span>
-                    <span class="shortcut-key">Del/Backspace</span>
-                </div>
-                <div class="shortcut-item">
-                    <span><strong>Deseleccionar</strong></span>
-                    <span class="shortcut-key">Esc</span>
-                </div>
-                <div class="shortcut-item">
-                    <span><strong>Navegación imágenes</strong></span>
-                    <span class="shortcut-key">← →</span>
-                </div>
-                <div class="shortcut-item">
-                    <span><strong>Rotar imagen</strong></span>
-                    <span class="shortcut-key">A / D</span>
-                </div>
-                <div class="shortcut-item">
-                    <span><strong>Herramienta Box</strong></span>
-                    <span class="shortcut-key">B</span>
-                </div>
-                <div class="shortcut-item">
-                    <span><strong>Herramienta OBB</strong></span>
-                    <span class="shortcut-key">O</span>
-                </div>
-                <div class="shortcut-item">
-                    <span><strong>Herramienta Mask</strong></span>
-                    <span class="shortcut-key">M</span>
-                </div>
-                <div class="shortcut-item">
-                    <span><strong>Herramienta Select</strong></span>
-                    <span class="shortcut-key">V</span>
-                </div>
-                <div class="shortcut-item">
-                    <span><strong>Herramienta Pan</strong></span>
-                    <span class="shortcut-key">H</span>
-                </div>
-                <div class="shortcut-item">
-                    <span><strong>Seleccionar Clase</strong></span>
-                    <span class="shortcut-key">1-9</span>
-                </div>
-            </div>
-            <style>
-                .shortcut-item {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 8px 12px;
-                    background: var(--gray-light);
-                    border-radius: 6px;
-                }
-                .shortcut-key {
-                    background: var(--primary);
-                    color: white;
-                    padding: 4px 8px;
-                    border-radius: 4px;
-                    font-family: monospace;
-                    font-size: 0.9em;
-                    font-weight: 600;
-                }
-            </style>
-        `;
-
-        this.ui.showModal('⌨️ Atajos de Teclado', content, [
-            {
-                text: 'Cerrar',
-                type: 'primary',
-                action: 'close',
-                handler: (modal, close) => close()
-            }
-        ]);
-    }
 
     showNewProjectModal() {
         const preprocessor = new ImagePreprocessor();
@@ -755,7 +675,7 @@ class YOLOAnnotator {
                         classesText.split(',').map((c, i) => ({
                             id: i,
                             name: c.trim(),
-                            color: this.randomColor()
+                            color: Utils.randomColor()
                         })) : [];
 
                     // Get image dimension configuration
@@ -880,9 +800,6 @@ class YOLOAnnotator {
         }, 100);
     }
 
-    randomColor() {
-        return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
-    }
 
     setTool(tool) {
         // Validate tool for project type
@@ -917,7 +834,7 @@ class YOLOAnnotator {
         const loadedImages = [];
         for (const file of files) {
             try {
-                const img = await this.loadImageFile(file);
+                const img = await Utils.loadImageFile(file);
                 loadedImages.push({ img, file });
             } catch (error) {
                 console.error(`Error loading ${file.name}:`, error);
@@ -969,7 +886,7 @@ class YOLOAnnotator {
 
         for (const { img, file, blob, width, height } of processedImages) {
             try {
-                const finalBlob = blob || await this.fileToBlob(file);
+                const finalBlob = blob || await Utils.fileToBlob(file);
                 const finalWidth = width || img.width;
                 const finalHeight = height || img.height;
 
@@ -1019,30 +936,7 @@ class YOLOAnnotator {
         }
     }
 
-    loadImageFile(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => resolve(img);
-                img.onerror = reject;
-                img.src = e.target.result;
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
-    }
 
-    fileToBlob(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                resolve(new Blob([e.target.result], { type: file.type }));
-            };
-            reader.onerror = reject;
-            reader.readAsArrayBuffer(file);
-        });
-    }
 
     async showManageProjectsModal() {
         try {
@@ -1068,7 +962,7 @@ class YOLOAnnotator {
                                         <h4 class="project-name">${project.name}</h4>
                                         <div class="project-meta">
                                             <span class="project-type" data-type="${project.type}">
-                                                <i class="fas ${this.getProjectTypeIcon(project.type)}"></i>
+                                                <i class="fas ${Utils.getProjectTypeIcon(project.type)}"></i>
                                                 ${window.i18n.t(`project.types.${project.type}.name`)}
                                             </span>
                                             <span class="project-stats">
@@ -1293,18 +1187,6 @@ class YOLOAnnotator {
         }
     }
 
-    getProjectTypeIcon(type) {
-        const icons = {
-            'classification': 'fa-tag',
-            'multiLabel': 'fa-tags',
-            'detection': 'fa-vector-square',
-            'segmentation': 'fa-fill-drip',
-            'instanceSeg': 'fa-object-group',
-            'keypoints': 'fa-braille',
-            'obb': 'fa-rotate'
-        };
-        return icons[type] || 'fa-folder';
-    }
 
     async showPreprocessingModal(nonSquareImages, preprocessor) {
         return new Promise((resolve) => {
@@ -2369,7 +2251,7 @@ class YOLOAnnotator {
         }
 
         nameInput.value = '';
-        colorInput.value = this.randomColor();
+        colorInput.value = Utils.randomColor();
 
         this.updateClassUI();
 
@@ -3077,15 +2959,6 @@ class YOLOAnnotator {
         const images = await this.db.getProjectImages(project.id);
 
         await this.exportManager.exportDataset(format, project, images);
-    }
-
-
-    startTour() {
-        if (window.startAppTour) {
-            window.startAppTour();
-        } else {
-            this.ui.showToast('Tour no disponible', 'info');
-        }
     }
 }
 
