@@ -1153,22 +1153,32 @@ color: white;
     gap: 16px;
 }
 
-/* Two column layout in code mode */
+/* Three column layout in code mode: config spans 2 cols, code takes 1 col */
 .modal.code-mode .code-generator {
     display: grid;
-    grid-template-columns: 400px 1fr;
-    gap: 20px;
+    grid-template-columns: 1fr 1fr 1.2fr;
+    gap: 16px;
     max-height: calc(90vh - 180px);
 }
 
 .modal.code-mode .code-config {
+    grid-column: 1 / 3;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
     overflow-y: auto;
-    padding-right: 12px;
+    padding-right: 8px;
+    align-content: start;
+}
+
+/* Each section takes full width within config area */
+.modal.code-mode .code-config > * {
+    grid-column: span 2;
 }
 
 /* Custom scrollbar for code config in code mode */
 .modal.code-mode .code-config::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
 }
 
 .modal.code-mode .code-config::-webkit-scrollbar-track {
@@ -1186,13 +1196,18 @@ color: white;
 }
 
 .modal.code-mode .code-preview-container {
-    height: 100%;
+    grid-column: 3;
+    grid-row: 1 / -1;
+    height: calc(90vh - 180px);
     display: flex;
     flex-direction: column;
+    position: sticky;
+    top: 0;
 }
 
 .modal.code-mode .code-preview {
     flex: 1;
+    overflow-y: auto;
     max-height: none;
 }
 
@@ -1451,13 +1466,12 @@ color: white;
     color: var(--dark);
 }
 
-/* Help Icon Tooltips */
+/* Help Icon Tooltips - Tippy.js handles the tooltip rendering */
 .help-icon {
     display: inline-flex;
     align-items: center;
     margin-left: 6px;
     cursor: help;
-    position: relative;
     color: var(--primary);
     opacity: 0.7;
     transition: opacity 0.2s ease;
@@ -1471,89 +1485,10 @@ color: white;
     font-size: 0.9em;
 }
 
-/* Tooltip on hover */
-.help-icon::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%) translateY(-8px);
-    background: rgba(0, 0, 0, 0.9);
-    color: white;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 0.85em;
-    line-height: 1.4;
-    white-space: normal;
-    width: 280px;
-    max-width: 90vw;
-    text-align: left;
-    font-weight: normal;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    z-index: 10000;
+.checkbox-label {
+    cursor: pointer;
 }
 
-.help-icon::before {
-    content: '';
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%) translateY(4px);
-    border: 6px solid transparent;
-    border-top-color: rgba(0, 0, 0, 0.9);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    z-index: 10000;
-}
-
-.help-icon:hover::after,
-.help-icon:hover::before {
-    opacity: 1;
-    transform: translateX(-50%) translateY(-4px);
-}
-
-/* Tooltip for checkbox labels */
-.checkbox-label[data-tooltip] {
-    position: relative;
-}
-
-.checkbox-label[data-tooltip]:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 0;
-    transform: translateY(-8px);
-    background: rgba(0, 0, 0, 0.9);
-    color: white;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 0.85em;
-    line-height: 1.4;
-    white-space: normal;
-    width: 280px;
-    max-width: 90vw;
-    text-align: left;
-    font-weight: normal;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    z-index: 10000;
-}
-
-.checkbox-label[data-tooltip]:hover::before {
-    content: '';
-    position: absolute;
-    bottom: 100%;
-    left: 20px;
-    transform: translateY(4px);
-    border: 6px solid transparent;
-    border-top-color: rgba(0, 0, 0, 0.9);
-    z-index: 10000;
-}
-
-/* Section title tooltips */
 .config-section-title .help-icon {
     margin-left: 8px;
     font-size: 0.9em;

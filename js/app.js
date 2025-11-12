@@ -2341,7 +2341,7 @@ class YOLOAnnotator {
                                     <div class="config-item">
                                         <label class="form-label">
                                             Framework
-                                            <span class="help-icon" data-tooltip="Librería de deep learning a usar. Se adapta según tu tipo de proyecto.">
+                                            <span class="help-icon" data-tippy-content="Librería de deep learning a usar. Se adapta según tu tipo de proyecto.">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
                                         </label>
@@ -2352,7 +2352,7 @@ class YOLOAnnotator {
                                     <div class="config-item">
                                         <label class="form-label">
                                             Modelo
-                                            <span class="help-icon" data-tooltip="Tamaño del modelo: Nano es rápido pero menos preciso, XLarge es lento pero más preciso.">
+                                            <span class="help-icon" data-tippy-content="Tamaño del modelo: Nano es rápido pero menos preciso, XLarge es lento pero más preciso.">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
                                         </label>
@@ -2369,7 +2369,7 @@ class YOLOAnnotator {
                                     <div class="config-item">
                                         <label class="form-label">
                                             Dispositivo
-                                            <span class="help-icon" data-tooltip="Dónde entrenar: CPU es lento pero funciona siempre, GPU (CUDA) es muy rápido si tienes NVIDIA.">
+                                            <span class="help-icon" data-tippy-content="Dónde entrenar: CPU es lento pero funciona siempre, GPU (CUDA) es muy rápido si tienes NVIDIA.">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
                                         </label>
@@ -2382,7 +2382,7 @@ class YOLOAnnotator {
                                     <div class="config-item">
                                         <label class="form-label">
                                             Epochs
-                                            <span class="help-icon" data-tooltip="Cuántas veces el modelo ve todo el dataset. Más epochs = más aprendizaje pero más tiempo.">
+                                            <span class="help-icon" data-tippy-content="Cuántas veces el modelo ve todo el dataset. Más epochs = más aprendizaje pero más tiempo.">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
                                         </label>
@@ -2393,7 +2393,7 @@ class YOLOAnnotator {
                                     <div class="config-item">
                                         <label class="form-label">
                                             Batch Size
-                                            <span class="help-icon" data-tooltip="Cuántas imágenes procesar al mismo tiempo. Valores altos usan más memoria pero entrenan más rápido.">
+                                            <span class="help-icon" data-tippy-content="Cuántas imágenes procesar al mismo tiempo. Valores altos usan más memoria pero entrenan más rápido.">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
                                         </label>
@@ -2402,7 +2402,7 @@ class YOLOAnnotator {
                                     <div class="config-item">
                                         <label class="form-label">
                                             Tamaño Imagen
-                                            <span class="help-icon" data-tooltip="Resolución de las imágenes durante entrenamiento. Más grande = más detalle pero más lento.">
+                                            <span class="help-icon" data-tippy-content="Resolución de las imágenes durante entrenamiento. Más grande = más detalle pero más lento.">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
                                         </label>
@@ -2430,7 +2430,7 @@ class YOLOAnnotator {
                                                 <div class="config-item">
                                                     <label class="form-label">
                                                         Optimizer
-                                                        <span class="help-icon" data-tooltip="Algoritmo que ajusta los pesos del modelo durante entrenamiento. Adam: equilibrado y popular. AdamW: Adam con weight decay mejorado. SGD: clásico, más lento pero a veces mejor resultado final. RMSprop: bueno para RNNs.">
+                                                        <span class="help-icon" data-tippy-content="Algoritmo que ajusta los pesos del modelo durante entrenamiento. Adam: equilibrado y popular. AdamW: Adam con weight decay mejorado. SGD: clásico, más lento pero a veces mejor resultado final. RMSprop: bueno para RNNs.">
                                                             <i class="fas fa-question-circle"></i>
                                                         </span>
                                                     </label>
@@ -2444,7 +2444,7 @@ class YOLOAnnotator {
                                                 <div class="config-item">
                                                     <label class="form-label">
                                                         Learning Rate
-                                                        <span class="help-icon" data-tooltip="Qué tan rápido aprende el modelo. Valores altos = aprende rápido pero puede ser inestable. 0.001 es un buen punto de partida.">
+                                                        <span class="help-icon" data-tippy-content="Qué tan rápido aprende el modelo. Valores altos = aprende rápido pero puede ser inestable. 0.001 es un buen punto de partida.">
                                                             <i class="fas fa-question-circle"></i>
                                                         </span>
                                                     </label>
@@ -2455,7 +2455,7 @@ class YOLOAnnotator {
                                                 <div class="config-item">
                                                     <label class="form-label">
                                                         Patience (Early Stop)
-                                                        <span class="help-icon" data-tooltip="Cuántos epochs esperar sin mejora antes de detener. Si el modelo no mejora en 50 epochs, para automáticamente.">
+                                                        <span class="help-icon" data-tippy-content="Cuántos epochs esperar sin mejora antes de detener. Si el modelo no mejora en 50 epochs, para automáticamente.">
                                                             <i class="fas fa-question-circle"></i>
                                                         </span>
                                                     </label>
@@ -2464,7 +2464,7 @@ class YOLOAnnotator {
                                                 <div class="config-item">
                                                     <label class="form-label">
                                                         Validation Split (%)
-                                                        <span class="help-icon" data-tooltip="Qué porcentaje de tus imágenes usar para validar el modelo. 20% es estándar: 80% entrena, 20% valida.">
+                                                        <span class="help-icon" data-tippy-content="Qué porcentaje de tus imágenes usar para validar el modelo. 20% es estándar: 80% entrena, 20% valida.">
                                                             <i class="fas fa-question-circle"></i>
                                                         </span>
                                                     </label>
@@ -2477,32 +2477,32 @@ class YOLOAnnotator {
                                         <div class="config-section">
                                             <h5 class="config-section-title">
                                                 <i class="fas fa-magic"></i> Data Augmentation
-                                                <span class="help-icon" data-tooltip="Técnicas para crear variaciones de tus imágenes y evitar que el modelo memorice. Ayuda a generalizar mejor.">
+                                                <span class="help-icon" data-tippy-content="Técnicas para crear variaciones de tus imágenes y evitar que el modelo memorice. Ayuda a generalizar mejor.">
                                                     <i class="fas fa-question-circle"></i>
                                                 </span>
                                             </h5>
                                             <div class="config-checkboxes">
-                                                <label class="checkbox-label" data-tooltip="Combina 4 imágenes aleatorias en una sola. Muy efectivo para mejorar detección de objetos pequeños.">
+                                                <label class="checkbox-label" data-tippy-content="Combina 4 imágenes aleatorias en una sola. Muy efectivo para mejorar detección de objetos pequeños.">
                                                     <input type="checkbox" id="augMosaic" checked>
                                                     <span>Mosaic (combina 4 imágenes)</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tooltip="Mezcla dos imágenes con transparencia. Ayuda al modelo a ser más robusto ante oclusiones.">
+                                                <label class="checkbox-label" data-tippy-content="Mezcla dos imágenes con transparencia. Ayuda al modelo a ser más robusto ante oclusiones.">
                                                     <input type="checkbox" id="augMixup">
                                                     <span>Mixup (mezcla transparencias)</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tooltip="Cambia los colores de la imagen (tono, saturación, brillo). Útil para diferentes condiciones de iluminación.">
+                                                <label class="checkbox-label" data-tippy-content="Cambia los colores de la imagen (tono, saturación, brillo). Útil para diferentes condiciones de iluminación.">
                                                     <input type="checkbox" id="augHsv" checked>
                                                     <span>HSV (color jitter)</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tooltip="Voltea las imágenes horizontal o verticalmente. Duplica tus datos sin esfuerzo.">
+                                                <label class="checkbox-label" data-tippy-content="Voltea las imágenes horizontal o verticalmente. Duplica tus datos sin esfuerzo.">
                                                     <input type="checkbox" id="augFlip" checked>
                                                     <span>Flips (horizontal/vertical)</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tooltip="Rota las imágenes levemente. Útil si tus objetos pueden aparecer en diferentes ángulos.">
+                                                <label class="checkbox-label" data-tippy-content="Rota las imágenes levemente. Útil si tus objetos pueden aparecer en diferentes ángulos.">
                                                     <input type="checkbox" id="augRotate">
                                                     <span>Rotación</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tooltip="Hace zoom in/out y recorta aleatoriamente. Simula objetos a diferentes distancias.">
+                                                <label class="checkbox-label" data-tippy-content="Hace zoom in/out y recorta aleatoriamente. Simula objetos a diferentes distancias.">
                                                     <input type="checkbox" id="augScale" checked>
                                                     <span>Scale/Crop</span>
                                                 </label>
@@ -2513,30 +2513,66 @@ class YOLOAnnotator {
                                         <div class="config-section">
                                             <h5 class="config-section-title">
                                                 <i class="fas fa-chart-line"></i> Métricas y Gráficos
-                                                <span class="help-icon" data-tooltip="Qué información guardar durante el entrenamiento para analizar el rendimiento del modelo.">
+                                                <span class="help-icon" data-tippy-content="Qué información guardar durante el entrenamiento para analizar el rendimiento del modelo.">
                                                     <i class="fas fa-question-circle"></i>
                                                 </span>
                                             </h5>
                                             <div class="config-checkboxes">
-                                                <label class="checkbox-label" data-tooltip="Guarda gráficos de pérdida y precisión durante entrenamiento. Muy útil para ver si el modelo está aprendiendo.">
+                                                <label class="checkbox-label" data-tippy-content="Guarda gráficos de pérdida y precisión durante entrenamiento. Muy útil para ver si el modelo está aprendiendo.">
                                                     <input type="checkbox" id="savePlots" checked>
                                                     <span>Guardar gráficos de entrenamiento</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tooltip="Tabla que muestra qué clases se confunden entre sí. Ideal para entender errores del modelo.">
+                                                <label class="checkbox-label" data-tippy-content="Tabla que muestra qué clases se confunden entre sí. Ideal para entender errores del modelo.">
                                                     <input type="checkbox" id="saveConfMatrix" checked>
                                                     <span>Matriz de confusión</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tooltip="Gráficos que muestran el balance entre precisión y recall. Importantes para evaluar calidad de detecciones.">
+                                                <label class="checkbox-label" data-tippy-content="Gráficos que muestran el balance entre precisión y recall. Importantes para evaluar calidad de detecciones.">
                                                     <input type="checkbox" id="savePrCurves" checked>
                                                     <span>Curvas Precision-Recall</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tooltip="Guarda imágenes con las predicciones del modelo dibujadas encima. Perfecto para ver qué tan bien funciona visualmente.">
+                                                <label class="checkbox-label" data-tippy-content="Guarda imágenes con las predicciones del modelo dibujadas encima. Perfecto para ver qué tan bien funciona visualmente.">
                                                     <input type="checkbox" id="savePredictions">
                                                     <span>Visualizar predicciones</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tooltip="Exporta todas las métricas a un archivo CSV para analizarlas en Excel o hacer tus propios gráficos.">
+                                                <label class="checkbox-label" data-tippy-content="Exporta todas las métricas a un archivo CSV para analizarlas en Excel o hacer tus propios gráficos.">
                                                     <input type="checkbox" id="saveMetricsCsv" checked>
                                                     <span>Exportar métricas a CSV</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Model Export -->
+                                        <div class="config-section">
+                                            <h5 class="config-section-title">
+                                                <i class="fas fa-file-export"></i> Exportación del Modelo
+                                                <span class="help-icon" data-tippy-content="Formatos para deployar tu modelo entrenado en producción.">
+                                                    <i class="fas fa-question-circle"></i>
+                                                </span>
+                                            </h5>
+                                            <div class="config-checkboxes">
+                                                <label class="checkbox-label" data-tippy-content="ONNX: formato universal, funciona con TensorFlow, PyTorch, y casi cualquier librería. Ideal para producción.">
+                                                    <input type="checkbox" id="exportOnnx" checked>
+                                                    <span>ONNX (recomendado)</span>
+                                                </label>
+                                                <label class="checkbox-label" data-tippy-content="TorchScript: formato nativo de PyTorch, muy rápido pero solo funciona con PyTorch.">
+                                                    <input type="checkbox" id="exportTorchscript">
+                                                    <span>TorchScript</span>
+                                                </label>
+                                                <label class="checkbox-label" data-tippy-content="TensorFlow Lite: para móviles y dispositivos embebidos (Android, iOS, Raspberry Pi).">
+                                                    <input type="checkbox" id="exportTflite">
+                                                    <span>TensorFlow Lite</span>
+                                                </label>
+                                                <label class="checkbox-label" data-tippy-content="OpenVINO: optimizado para CPUs Intel. Muy rápido en hardware Intel.">
+                                                    <input type="checkbox" id="exportOpenvino">
+                                                    <span>OpenVINO</span>
+                                                </label>
+                                                <label class="checkbox-label" data-tippy-content="CoreML: para apps nativas de iOS/macOS. Aprovecha los chips Apple.">
+                                                    <input type="checkbox" id="exportCoreml">
+                                                    <span>CoreML</span>
+                                                </label>
+                                                <label class="checkbox-label" data-tippy-content="TensorRT: máxima aceleración en GPUs NVIDIA. Para producción de alto rendimiento.">
+                                                    <input type="checkbox" id="exportTensorrt">
+                                                    <span>TensorRT</span>
                                                 </label>
                                             </div>
                                         </div>
@@ -2643,7 +2679,8 @@ class YOLOAnnotator {
             // Code generation controls - advanced
             ['codeOptimizer', 'codeLr', 'codePatience', 'codeValSplit',
              'augMosaic', 'augMixup', 'augHsv', 'augFlip', 'augRotate', 'augScale',
-             'savePlots', 'saveConfMatrix', 'savePrCurves', 'savePredictions', 'saveMetricsCsv'].forEach(id => {
+             'savePlots', 'saveConfMatrix', 'savePrCurves', 'savePredictions', 'saveMetricsCsv',
+             'exportOnnx', 'exportTorchscript', 'exportTflite', 'exportOpenvino', 'exportCoreml', 'exportTensorrt'].forEach(id => {
                 document.getElementById(id)?.addEventListener('change', () => this.generateTrainingCode());
                 document.getElementById(id)?.addEventListener('input', () => this.generateTrainingCode());
             });
@@ -2652,6 +2689,19 @@ class YOLOAnnotator {
             document.getElementById('btnCopyCode')?.addEventListener('click', () => this.copyCode());
             document.getElementById('btnDownloadPy')?.addEventListener('click', () => this.downloadCode('py'));
             document.getElementById('btnDownloadIpynb')?.addEventListener('click', () => this.downloadCode('ipynb'));
+
+            // Initialize Tippy.js tooltips
+            if (typeof tippy !== 'undefined') {
+                tippy('[data-tippy-content]', {
+                    theme: 'light',
+                    arrow: true,
+                    placement: 'top',
+                    maxWidth: 320,
+                    animation: 'scale',
+                    duration: [200, 150],
+                    appendTo: () => document.body,  // Append to body so tooltips appear above modal
+                });
+            }
         }, 100);
     }
 
@@ -2791,6 +2841,14 @@ class YOLOAnnotator {
         const savePrCurves = document.getElementById('savePrCurves')?.checked || false;
         const savePredictions = document.getElementById('savePredictions')?.checked || false;
         const saveMetricsCsv = document.getElementById('saveMetricsCsv')?.checked || false;
+
+        // Read export options
+        const exportOnnx = document.getElementById('exportOnnx')?.checked || false;
+        const exportTorchscript = document.getElementById('exportTorchscript')?.checked || false;
+        const exportTflite = document.getElementById('exportTflite')?.checked || false;
+        const exportOpenvino = document.getElementById('exportOpenvino')?.checked || false;
+        const exportCoreml = document.getElementById('exportCoreml')?.checked || false;
+        const exportTensorrt = document.getElementById('exportTensorrt')?.checked || false;
 
         const projectType = this.projectManager.currentProject?.type || 'detection';
         const projectName = this.projectManager.currentProject?.name || 'mi_proyecto';
@@ -2985,17 +3043,14 @@ val_results = model_best.predict(
 )
 print(f"\\n🎨 Predicciones guardadas en: {results.save_dir / 'predictions'}")
 
-` : ''}# ============================================
-# 8. EXPORTAR MODELO (OPCIONAL)
+` : ''}${exportOnnx || exportTorchscript || exportTflite || exportOpenvino || exportCoreml || exportTensorrt ? `# ============================================
+# 8. EXPORTAR MODELO PARA PRODUCCIÓN
 # ============================================
 
-# Exportar a diferentes formatos para deployment
-# model_best.export(format='onnx')      # ONNX
-# model_best.export(format='torchscript')  # TorchScript
-# model_best.export(format='tflite')    # TensorFlow Lite
-# model_best.export(format='openvino')  # OpenVINO
+print("\\n📦 Exportando modelo a formatos de producción...")
+${exportOnnx ? "\nmodel_best.export(format='onnx')  # ONNX - Universal\nprint('✅ ONNX exportado')" : ''}${exportTorchscript ? "\nmodel_best.export(format='torchscript')  # TorchScript - PyTorch nativo\nprint('✅ TorchScript exportado')" : ''}${exportTflite ? "\nmodel_best.export(format='tflite')  # TensorFlow Lite - Móviles\nprint('✅ TFLite exportado')" : ''}${exportOpenvino ? "\nmodel_best.export(format='openvino')  # OpenVINO - Intel CPUs\nprint('✅ OpenVINO exportado')" : ''}${exportCoreml ? "\nmodel_best.export(format='coreml')  # CoreML - iOS/macOS\nprint('✅ CoreML exportado')" : ''}${exportTensorrt ? "\nmodel_best.export(format='engine')  # TensorRT - NVIDIA GPUs\nprint('✅ TensorRT exportado')" : ''}
 
-print("\\n🎉 Todo listo!")
+` : ''}print("\\n🎉 Todo listo!")
 print(f"📁 Resultados en: {results.save_dir}")
 print(f"🏆 Mejor modelo: {best_model_path}")
 `;
