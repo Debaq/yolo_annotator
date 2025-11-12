@@ -201,7 +201,14 @@ class CanvasMask extends CanvasBase {
     handleDrawEnd(x, y) {
         if (this.currentTool === 'mask' && this.isDrawing) {
             this.isDrawing = false;
-            // Note: mask is saved when user clicks "Save" or starts new instance
+            // Auto-save mask after finishing drawing
+            // Use a timeout to allow multiple strokes before saving
+            if (this.autoSaveTimeout) {
+                clearTimeout(this.autoSaveTimeout);
+            }
+            this.autoSaveTimeout = setTimeout(() => {
+                this.saveMask();
+            }, 2000); // Save 2 seconds after user stops drawing
         } else if (this.currentTool === 'select' && this.isDragging) {
             this.isDragging = false;
         }
@@ -209,6 +216,10 @@ class CanvasMask extends CanvasBase {
 
     initMaskCanvas() {
         if (!this.image) return;
+
+        console.log('Initializing mask canvas...');
+        console.log('Current class:', this.currentClass);
+        console.log('Available classes:', this.classes);
 
         this.currentMaskCanvas = document.createElement('canvas');
         this.currentMaskCanvas.width = this.image.width;
@@ -223,9 +234,18 @@ class CanvasMask extends CanvasBase {
             maxY: -Infinity
         };
 
+        // Ensure currentClass is valid
+        if (this.classes.length > 0 && (this.currentClass === undefined || this.currentClass === null)) {
+            this.currentClass = this.classes[0].id;
+            console.log('Current class was undefined, set to first class:', this.currentClass);
+        }
+
         // Set brush color based on current class
         const cls = this.classes.find(c => c.id === this.currentClass);
-        this.currentMaskCtx.fillStyle = cls?.color || '#ff0000';
+        const color = cls?.color || '#ff0000';
+        this.currentMaskCtx.fillStyle = color;
+
+        console.log('Mask canvas initialized with color:', color, 'for class:', cls?.name);
     }
 
     drawBrush(x, y) {
@@ -406,12 +426,62 @@ class CanvasMask extends CanvasBase {
     }
 
     // ============================================
+    // OVERRIDE BASE CLASS METHODS
+    // ============================================
+
+    clearCanvas() {
+        // Clear temporary mask canvas
+        if (this.autoSaveTimeout) {
+            clearTimeout(this.autoSaveTimeout);
+        }
+        this.currentMaskCanvas = null;
+        this.currentMaskCtx = null;
+
+        // Call parent clearCanvas
+        super.clearCanvas();
+    }
+
+    async loadImage(file) {
+        // Clear any temporary mask before loading new image
+        if (this.currentMaskCanvas) {
+            console.log('Clearing temporary mask canvas before loading new image');
+            if (this.autoSaveTimeout) {
+                clearTimeout(this.autoSaveTimeout);
+            }
+            this.currentMaskCanvas = null;
+            this.currentMaskCtx = null;
+        }
+
+        // Call parent loadImage
+        return super.loadImage(file);
+    }
+
+    startNewMaskInstance() {
+        // Save current mask if exists
+        if (this.currentMaskCanvas) {
+            console.log('Saving current mask before starting new instance');
+            this.saveMask();
+        }
+        this.ui.showToast('New mask instance started', 'success');
+    }
+
+    // ============================================
     // PUBLIC METHODS (called from UI)
     // ============================================
 
     setBrushSize(size) {
         this.brushSize = Math.max(this.minBrushSize, Math.min(this.maxBrushSize, size));
         this.updateBrushDisplay();
+    }
+
+    isEraseMode() {
+        return this.eraseMode;
+    }
+
+    setEraseMode(enabled) {
+        this.eraseMode = enabled;
+        this.updateEraseButton();
+        this.ui.showToast(this.eraseMode ? 'Erase mode ON' : 'Erase mode OFF', 'info');
     }
 
     setMaskOpacity(opacity) {
