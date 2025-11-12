@@ -301,7 +301,7 @@ class CanvasMask extends CanvasBase {
 
         if (!hasContent) {
             console.log('No mask content detected');
-            this.ui.showToast('No mask drawn', 'warning');
+            // Don't show toast, just clear silently
             this.currentMaskCanvas = null;
             this.currentMaskCtx = null;
             return;
@@ -320,8 +320,6 @@ class CanvasMask extends CanvasBase {
         );
 
         console.log('Saving mask with bounds:', { x, y, width, height });
-        console.log('Original bounds:', this.currentMaskBounds);
-        console.log('Canvas size:', this.currentMaskCanvas.width, 'x', this.currentMaskCanvas.height);
 
         // Create a temporary canvas for the cropped region
         const croppedCanvas = document.createElement('canvas');
@@ -349,14 +347,17 @@ class CanvasMask extends CanvasBase {
             }
         };
 
-        console.log('Adding mask annotation:', annotation);
+        console.log('Adding mask annotation');
 
-        this.addAnnotation(annotation);
-        this.ui.showToast('Mask saved', 'success');
-
-        // Clear current mask canvas
+        // Clear current mask canvas BEFORE adding annotation to prevent flash
         this.currentMaskCanvas = null;
         this.currentMaskCtx = null;
+
+        // Add annotation (this will trigger markUnsavedChanges -> scheduleAutoSave)
+        this.addAnnotation(annotation);
+
+        // Show toast without triggering another redraw
+        this.ui.showToast('Mask saved', 'success');
     }
 
     // ============================================

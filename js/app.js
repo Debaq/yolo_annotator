@@ -1551,6 +1551,7 @@ class YOLOAnnotator {
             // Only reload gallery if this is a manual save, not auto-save
             if (!silent) {
                 await this.galleryManager.loadImages(this.projectManager.currentProject.id);
+                this.updateStats();
                 this.ui.showToast(window.i18n.t('notifications.imageSaved'), 'success');
             } else {
                 // For silent auto-save, only update the current thumbnail
@@ -1559,12 +1560,14 @@ class YOLOAnnotator {
                     : this.canvasManager.imageId;
 
                 if (currentImageId) {
+                    // Update thumbnail badge count
                     this.galleryManager.updateThumbnail(currentImageId);
+
+                    // Update stats quietly without any visual disruption
+                    this.updateStatsQuiet();
                 }
                 console.log('Auto-saved successfully');
             }
-
-            this.updateStats();
         } catch (error) {
             console.error('Error saving image:', error);
             if (!silent) {
@@ -2711,17 +2714,45 @@ class YOLOAnnotator {
 
     updateStats() {
         const images = this.galleryManager.images;
-        const totalLabels = images.reduce((sum, img) => 
+        const totalLabels = images.reduce((sum, img) =>
             sum + (img.annotations ? img.annotations.length : 0), 0);
         const annotated = images.filter(img => img.annotations && img.annotations.length > 0).length;
-        
+
         document.getElementById('statTotalImages').textContent = images.length;
         document.getElementById('statAnnotated').textContent = annotated;
         document.getElementById('statLabels').textContent = totalLabels;
-        
+
         const progress = images.length > 0 ? (annotated / images.length) * 100 : 0;
         document.getElementById('progressBar').style.width = `${progress}%`;
         document.getElementById('progressText').textContent = `${annotated}/${images.length} ${window.i18n.t('stats.progress')}`;
+    }
+
+    updateStatsQuiet() {
+        // Update stats without causing any visual disruption (used for auto-save)
+        // Only update if elements exist
+        const statLabelsEl = document.getElementById('statLabels');
+        const statAnnotatedEl = document.getElementById('statAnnotated');
+        const progressBarEl = document.getElementById('progressBar');
+        const progressTextEl = document.getElementById('progressText');
+
+        if (!statLabelsEl || !statAnnotatedEl) return;
+
+        const images = this.galleryManager.images;
+        const totalLabels = images.reduce((sum, img) =>
+            sum + (img.annotations ? img.annotations.length : 0), 0);
+        const annotated = images.filter(img => img.annotations && img.annotations.length > 0).length;
+
+        // Use requestAnimationFrame to batch DOM updates and prevent reflow
+        requestAnimationFrame(() => {
+            statAnnotatedEl.textContent = annotated;
+            statLabelsEl.textContent = totalLabels;
+
+            if (progressBarEl && progressTextEl) {
+                const progress = images.length > 0 ? (annotated / images.length) * 100 : 0;
+                progressBarEl.style.width = `${progress}%`;
+                progressTextEl.textContent = `${annotated}/${images.length} ${window.i18n.t('stats.progress')}`;
+            }
+        });
     }
 
     showExportModal() {
