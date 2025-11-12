@@ -33,8 +33,20 @@
         <!-- Header -->
         <header class="app-header">
             <div class="header-content">
-                <!-- App Logo & Name -->
+                <!-- Left Side: Logos -->
                 <div class="header-left">
+                    <a href="https://www.uach.cl" target="_blank" class="header-logo-link" title="Universidad Austral de Chile">
+                        <img src="https://www.uach.cl/uach/_imag/uach/logo-v2.png" alt="Universidad Austral de Chile" class="header-logo">
+                    </a>
+
+                    <div class="header-divider-vertical"></div>
+
+                    <div class="header-branding">
+                        <strong data-i18n="app.branding.fablab">TecMedHub</strong>
+                    </div>
+
+                    <div class="header-divider-vertical"></div>
+
                     <h1 class="app-title">
                         <i class="fas fa-tag"></i>
                         <span data-i18n="app.title">Annotix</span>
@@ -47,36 +59,36 @@
                         <option value="" data-i18n="header.selectProject">Seleccionar proyecto...</option>
                     </select>
 
-                    <button class="btn-header" id="btnNewProject" data-i18n-title="header.newProject">
+                    <button class="btn-header btn-icon-only" id="btnNewProject" data-tippy-content="" data-i18n-title="header.newProject">
                         <i class="fas fa-plus"></i>
                     </button>
 
-                    <button class="btn-header" id="btnOpenProject" data-i18n-title="header.openProject">
+                    <button class="btn-header btn-icon-only" id="btnOpenProject" data-tippy-content="" data-i18n-title="header.openProject">
                         <i class="fas fa-folder-open"></i>
                     </button>
 
-                    <button class="btn-header" id="btnManageProjects" data-i18n-title="header.manageProjects">
+                    <button class="btn-header btn-icon-only" id="btnManageProjects" data-tippy-content="" data-i18n-title="header.manageProjects">
                         <i class="fas fa-folder-tree"></i>
                     </button>
 
                     <div class="header-divider"></div>
 
-                    <button class="btn-header" id="btnSave" data-i18n-title="actions.save" disabled>
+                    <button class="btn-header btn-icon-only" id="btnSave" data-tippy-content="" data-i18n-title="actions.save" disabled>
                         <i class="fas fa-save"></i>
                     </button>
 
-                    <button class="btn-header" id="btnExport" data-i18n-title="header.export">
+                    <button class="btn-header btn-icon-only" id="btnExport" data-tippy-content="" data-i18n-title="header.export">
                         <i class="fas fa-download"></i>
                     </button>
                 </div>
 
-                <!-- Right Side: Help, Language, GitHub, Branding -->
+                <!-- Right Side: Help, Language, GitHub -->
                 <div class="header-right">
-                    <button class="btn-header" id="btnHelp" data-i18n-title="header.help">
+                    <button class="btn-header btn-icon-ghost" id="btnHelp" data-tippy-content="" data-i18n-title="header.help">
                         <i class="fas fa-question-circle"></i>
                     </button>
 
-                    <button class="btn-header" id="btnShowShortcuts" data-i18n-title="shortcuts.title">
+                    <button class="btn-header btn-icon-ghost" id="btnShowShortcuts" data-tippy-content="" data-i18n-title="shortcuts.title">
                         <i class="fas fa-keyboard"></i>
                     </button>
 
@@ -85,18 +97,9 @@
                     <!-- Language Selector (will be injected here) -->
                     <div id="languageSelectorContainer"></div>
 
-                    <a href="https://github.com/debaq/Annotix" target="_blank" class="btn-header btn-github" title="GitHub Repository">
+                    <a href="https://github.com/debaq/Annotix" target="_blank" class="btn-header btn-icon-ghost" data-tippy-content="GitHub Repository">
                         <i class="fab fa-github"></i>
                     </a>
-
-                    <div class="header-divider"></div>
-
-                    <div class="header-branding">
-                        <img src="https://www.uach.cl/uach/_imag/uach/logo-v2.png" alt="Universidad Austral de Chile" class="branding-logo">
-                        <div class="branding-text">
-                            <strong data-i18n="app.branding.fablab">TecMedHub</strong>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Hidden file input for importing projects -->

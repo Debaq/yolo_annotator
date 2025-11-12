@@ -138,6 +138,7 @@ class CanvasManager {
         const maskBtn = document.querySelector('[data-tool="mask"]');
         const eraseBtn = document.getElementById('btnEraseMode');
         const maskControls = document.getElementById('maskControls');
+        const rotationControls = document.getElementById('rotationControls');
 
         if (!bboxBtn || !maskBtn) return;
 
@@ -158,6 +159,11 @@ class CanvasManager {
             maskControls.style.display = showMask ? 'flex' : 'none';
         }
 
+        // Show rotation controls ONLY for OBB projects
+        if (rotationControls) {
+            rotationControls.style.display = showObb ? 'flex' : 'none';
+        }
+
         // Hide annotation tools for classification projects
         if (['classification', 'multiLabel', 'keypoints'].includes(this.projectType)) {
             bboxBtn.style.display = 'none';
@@ -165,6 +171,7 @@ class CanvasManager {
             maskBtn.style.display = 'none';
             if (eraseBtn) eraseBtn.style.display = 'none';
             if (maskControls) maskControls.style.display = 'none';
+            if (rotationControls) rotationControls.style.display = 'none';
         }
     }
 
