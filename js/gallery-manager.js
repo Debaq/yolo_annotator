@@ -345,4 +345,54 @@ class GalleryManager {
         const currentIndex = this.getCurrentImageIndex();
         return currentIndex > 0;
     }
+
+    async updateThumbnail(imageId) {
+        // Update only the thumbnail for a specific image without reloading entire gallery
+        try {
+            // Find the image in our current images array
+            const imageIndex = this.images.findIndex(img => img.id === imageId);
+            if (imageIndex === -1) {
+                console.log('Image not in current gallery, skipping thumbnail update');
+                return;
+            }
+
+            // Reload just this image's data from DB
+            const updatedImageData = await this.db.getImage(imageId);
+            if (!updatedImageData) {
+                console.log('Image not found in database');
+                return;
+            }
+
+            // Update our local array
+            this.images[imageIndex] = updatedImageData;
+
+            // Find the gallery item DOM element
+            const galleryItem = document.querySelector(`.gallery-item[data-image-id="${imageId}"]`);
+            if (!galleryItem) {
+                console.log('Gallery item DOM element not found');
+                return;
+            }
+
+            // Update the annotation count badge
+            const annotationCount = updatedImageData.annotations?.length || 0;
+            const badge = galleryItem.querySelector('.annotation-badge');
+            if (badge) {
+                badge.textContent = annotationCount;
+                badge.style.display = annotationCount > 0 ? 'flex' : 'none';
+            }
+
+            // Update annotated/unannotated status
+            if (annotationCount > 0) {
+                galleryItem.classList.add('annotated');
+                galleryItem.classList.remove('unannotated');
+            } else {
+                galleryItem.classList.remove('annotated');
+                galleryItem.classList.add('unannotated');
+            }
+
+            console.log(`✓ Updated thumbnail for image ${imageId}, annotations: ${annotationCount}`);
+        } catch (error) {
+            console.error('Error updating thumbnail:', error);
+        }
+    }
 }

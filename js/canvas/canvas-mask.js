@@ -279,40 +279,77 @@ class CanvasMask extends CanvasBase {
     }
 
     saveMask() {
-        if (!this.currentMaskCanvas) return;
+        if (!this.currentMaskCanvas) {
+            console.log('No mask canvas to save');
+            return;
+        }
 
         // Check if mask has any content
-        const imageData = this.currentMaskCtx.getImageData(
+        const fullImageData = this.currentMaskCtx.getImageData(
             0, 0,
             this.currentMaskCanvas.width,
             this.currentMaskCanvas.height
         );
 
         let hasContent = false;
-        for (let i = 3; i < imageData.data.length; i += 4) {
-            if (imageData.data[i] > 0) {
+        for (let i = 3; i < fullImageData.data.length; i += 4) {
+            if (fullImageData.data[i] > 0) {
                 hasContent = true;
                 break;
             }
         }
 
         if (!hasContent) {
+            console.log('No mask content detected');
             this.ui.showToast('No mask drawn', 'warning');
+            this.currentMaskCanvas = null;
+            this.currentMaskCtx = null;
             return;
         }
 
-        // Save mask as annotation
+        // Validate and clamp bounds
+        const x = Math.max(0, Math.floor(this.currentMaskBounds.minX));
+        const y = Math.max(0, Math.floor(this.currentMaskBounds.minY));
+        const width = Math.min(
+            Math.ceil(this.currentMaskBounds.maxX - this.currentMaskBounds.minX),
+            this.currentMaskCanvas.width - x
+        );
+        const height = Math.min(
+            Math.ceil(this.currentMaskBounds.maxY - this.currentMaskBounds.minY),
+            this.currentMaskCanvas.height - y
+        );
+
+        console.log('Saving mask with bounds:', { x, y, width, height });
+        console.log('Original bounds:', this.currentMaskBounds);
+        console.log('Canvas size:', this.currentMaskCanvas.width, 'x', this.currentMaskCanvas.height);
+
+        // Create a temporary canvas for the cropped region
+        const croppedCanvas = document.createElement('canvas');
+        croppedCanvas.width = width;
+        croppedCanvas.height = height;
+        const croppedCtx = croppedCanvas.getContext('2d');
+
+        // Copy only the painted region
+        croppedCtx.drawImage(
+            this.currentMaskCanvas,
+            x, y, width, height,  // Source
+            0, 0, width, height   // Destination
+        );
+
+        // Save mask as annotation with cropped data
         const annotation = {
             type: 'mask',
             class: this.currentClass,
             data: {
-                imageData: this.currentMaskCanvas.toDataURL('image/png'),
-                x: Math.max(0, Math.floor(this.currentMaskBounds.minX)),
-                y: Math.max(0, Math.floor(this.currentMaskBounds.minY)),
-                width: Math.ceil(this.currentMaskBounds.maxX - this.currentMaskBounds.minX),
-                height: Math.ceil(this.currentMaskBounds.maxY - this.currentMaskBounds.minY)
+                imageData: croppedCanvas.toDataURL('image/png'),
+                x: x,
+                y: y,
+                width: width,
+                height: height
             }
         };
+
+        console.log('Adding mask annotation:', annotation);
 
         this.addAnnotation(annotation);
         this.ui.showToast('Mask saved', 'success');

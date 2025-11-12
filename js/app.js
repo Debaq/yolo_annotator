@@ -1548,14 +1548,23 @@ class YOLOAnnotator {
                 this.canvasManager.clearUnsavedChanges();
             }
 
-            await this.galleryManager.loadImages(this.projectManager.currentProject.id);
-            this.updateStats();
-
+            // Only reload gallery if this is a manual save, not auto-save
             if (!silent) {
+                await this.galleryManager.loadImages(this.projectManager.currentProject.id);
                 this.ui.showToast(window.i18n.t('notifications.imageSaved'), 'success');
             } else {
+                // For silent auto-save, only update the current thumbnail
+                const currentImageId = this.annotationMode === 'classification'
+                    ? this.classificationManager.imageId
+                    : this.canvasManager.imageId;
+
+                if (currentImageId) {
+                    this.galleryManager.updateThumbnail(currentImageId);
+                }
                 console.log('Auto-saved successfully');
             }
+
+            this.updateStats();
         } catch (error) {
             console.error('Error saving image:', error);
             if (!silent) {
