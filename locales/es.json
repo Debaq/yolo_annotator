@@ -12,6 +12,7 @@
   "header": {
     "selectProject": "Seleccionar proyecto...",
     "newProject": "Nuevo",
+    "manageProjects": "Gestionar Proyectos",
     "export": "Exportar",
     "help": "Ayuda"
   },
@@ -62,6 +63,11 @@
     "cancel": "Cancelar",
     "create": "Crear",
     "confirm": "Confirmar",
+    "close": "Cerrar",
+    "duplicate": "Duplicar",
+    "rename": "Renombrar",
+    "exportBackup": "Exportar Backup",
+    "deleteConfirm": "Sí, eliminar",
     "clearConfirm": "¿Limpiar todas las anotaciones de esta imagen?"
   },
   "shortcuts": {
@@ -239,9 +245,28 @@
     "created": "Proyecto \"{name}\" creado",
     "loaded": "Proyecto \"{name}\" cargado",
     "deleted": "Proyecto eliminado",
+    "duplicated": "Proyecto \"{name}\" duplicado",
+    "renamed": "Proyecto renombrado",
     "exported": "Proyecto exportado",
     "configExported": "Configuración exportada",
-    "selectFirst": "Selecciona un proyecto primero"
+    "selectFirst": "Selecciona un proyecto primero",
+    "noProjects": "No hay proyectos disponibles",
+    "manageProjects": "Gestionar Proyectos",
+    "renameProject": "Renombrar Proyecto",
+    "newName": "Nuevo nombre",
+    "images": "imágenes",
+    "annotations": "anotaciones",
+    "exportBackup": "Descargar backup .tix antes de eliminar",
+    "deleteWarning": {
+      "title": "⚠️ ADVERTENCIA: ELIMINACIÓN PERMANENTE",
+      "confirmTitle": "¿Confirmar Eliminación?",
+      "projectName": "Proyecto:",
+      "message": "Estás a punto de eliminar este proyecto de forma PERMANENTE.",
+      "permanent": "Esta acción NO se puede deshacer",
+      "allData": "Se eliminarán TODAS las imágenes y anotaciones",
+      "noUndo": "No hay forma de recuperar los datos eliminados",
+      "recommendation": "💡 Recomendación: Exporta el proyecto en formato .tix como backup ANTES de eliminarlo"
+    }
   },
   "notifications": {
     "imageSaved": "Imagen guardada",
@@ -257,6 +282,9 @@
       "loadProject": "Error al cargar proyecto",
       "updateProject": "Error al actualizar proyecto",
       "deleteProject": "Error al eliminar proyecto",
+      "duplicateProject": "Error al duplicar proyecto",
+      "renameProject": "Error al renombrar proyecto",
+      "loadProjects": "Error al cargar proyectos",
       "exportProject": "Error al exportar proyecto",
       "exportConfig": "Error al exportar configuración",
       "importConfig": "Error al importar configuración",
