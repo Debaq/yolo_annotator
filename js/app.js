@@ -606,6 +606,8 @@ class YOLOAnnotator {
                         const name = window.i18n.t(`project.types.${type.key}.name`);
                         const description = window.i18n.t(`project.types.${type.key}.description`);
                         const difficulty = window.i18n.t(`project.types.${type.key}.difficulty`);
+                        const useCases = window.i18n.t(`project.types.${type.key}.useCases`);
+                        const models = window.i18n.t(`project.types.${type.key}.models`);
 
                         const difficultyColor =
                             difficulty === 'Principiante' || difficulty === 'Beginner' ? '#10b981' :
@@ -617,7 +619,17 @@ class YOLOAnnotator {
                                 <div class="type-card-compact-content">
                                     <div class="type-card-compact-header">
                                         <strong class="type-name">${name}</strong>
-                                        <span class="type-difficulty-badge" style="background: ${difficultyColor}"></span>
+                                        <button type="button"
+                                                class="project-type-info-btn"
+                                                data-type-key="${type.key}"
+                                                data-name="${name}"
+                                                data-difficulty="${difficulty}"
+                                                data-difficulty-color="${difficultyColor}"
+                                                data-use-cases="${useCases}"
+                                                data-models="${models}"
+                                                title="Más información">
+                                            <i class="fas fa-question"></i>
+                                        </button>
                                     </div>
                                     <p class="type-description-compact">${description}</p>
                                 </div>
@@ -741,6 +753,84 @@ class YOLOAnnotator {
                         if (fixedOptions) {
                             fixedOptions.style.display = e.target.value === 'fixed' ? 'block' : 'none';
                         }
+                    });
+                });
+
+                // Add event listeners for project type info buttons
+                const infoButtons = modal.querySelectorAll('.project-type-info-btn');
+                let activeTooltip = null;
+
+                infoButtons.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        // Remove existing tooltip if any
+                        if (activeTooltip) {
+                            activeTooltip.remove();
+                            if (activeTooltip.dataset.btnId === btn.dataset.typeKey) {
+                                activeTooltip = null;
+                                return;
+                            }
+                        }
+
+                        // Create tooltip
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'project-type-tooltip';
+                        tooltip.dataset.btnId = btn.dataset.typeKey;
+
+                        const difficultyBgColor = btn.dataset.difficultyColor;
+
+                        tooltip.innerHTML = `
+                            <h4>${btn.dataset.name}</h4>
+                            <div class="project-type-tooltip-section">
+                                <span class="project-type-tooltip-label">${window.i18n.t('project.types.useCasesLabel') || 'Casos de uso'}:</span>
+                                <div class="project-type-tooltip-content">${btn.dataset.useCases}</div>
+                            </div>
+                            <div class="project-type-tooltip-section">
+                                <span class="project-type-tooltip-label">${window.i18n.t('project.types.modelsLabel') || 'Modelos'}:</span>
+                                <div class="project-type-tooltip-content">${btn.dataset.models}</div>
+                            </div>
+                            <div class="project-type-tooltip-section">
+                                <span class="project-type-tooltip-label">${window.i18n.t('project.types.difficultyLabel') || 'Dificultad'}:</span>
+                                <span class="project-type-tooltip-difficulty" style="background: ${difficultyBgColor}; color: white;">${btn.dataset.difficulty}</span>
+                            </div>
+                        `;
+
+                        document.body.appendChild(tooltip);
+
+                        // Position tooltip near the button
+                        const btnRect = btn.getBoundingClientRect();
+                        const tooltipRect = tooltip.getBoundingClientRect();
+
+                        let left = btnRect.right + 10;
+                        let top = btnRect.top;
+
+                        // Adjust if tooltip goes off screen
+                        if (left + tooltipRect.width > window.innerWidth) {
+                            left = btnRect.left - tooltipRect.width - 10;
+                        }
+                        if (top + tooltipRect.height > window.innerHeight) {
+                            top = window.innerHeight - tooltipRect.height - 10;
+                        }
+
+                        tooltip.style.left = left + 'px';
+                        tooltip.style.top = top + 'px';
+
+                        activeTooltip = tooltip;
+
+                        // Close tooltip when clicking outside
+                        const closeTooltip = (event) => {
+                            if (!tooltip.contains(event.target) && event.target !== btn) {
+                                tooltip.remove();
+                                activeTooltip = null;
+                                document.removeEventListener('click', closeTooltip);
+                            }
+                        };
+
+                        setTimeout(() => {
+                            document.addEventListener('click', closeTooltip);
+                        }, 10);
                     });
                 });
             }
