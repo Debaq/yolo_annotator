@@ -61,6 +61,31 @@ class CanvasBase {
         // Shortcuts map - general shortcuts (can be extended by child classes)
         this.shortcuts = this.getGeneralShortcuts();
 
+        // Tool manager compatibility layer - wraps tool methods for backward compatibility
+        this.toolManager = {
+            setTool: (tool) => {
+                if (typeof this.setTool === 'function') {
+                    this.setTool(tool);
+                }
+            },
+            setBrushSize: (size) => {
+                if (typeof this.setBrushSize === 'function') {
+                    this.setBrushSize(size);
+                }
+            },
+            isEraseMode: () => {
+                if (typeof this.isEraseMode === 'function') {
+                    return this.isEraseMode();
+                }
+                return false;
+            },
+            setEraseMode: (enabled) => {
+                if (typeof this.setEraseMode === 'function') {
+                    this.setEraseMode(enabled);
+                }
+            }
+        };
+
         this.init();
     }
 
@@ -533,6 +558,122 @@ class CanvasBase {
         if (this.selectedAnnotation) {
             this.removeAnnotation(this.selectedAnnotation);
             this.ui.showToast('Annotation deleted', 'success');
+        }
+    }
+
+    clearUnsavedChanges() {
+        this.hasUnsavedChanges = false;
+        this.lastSavedAnnotationsCount = this.annotations.length;
+    }
+
+    clearCanvas() {
+        this.image = null;
+        this.imageName = '';
+        this.imageId = null;
+        this.annotations = [];
+        this.selectedAnnotation = null;
+        this.originalImageBlob = null;
+        this.hasUnsavedChanges = false;
+        this.zoom = 1;
+        this.panX = 0;
+        this.panY = 0;
+        this.imageRotation = 0;
+
+        // Clear the canvas visually
+        this.ctx.save();
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.restore();
+    }
+
+    // ============================================
+    // TOOL VALIDATION
+    // ============================================
+
+    isToolValid(tool) {
+        const availableTools = this.getAvailableTools();
+        return availableTools.includes(tool);
+    }
+
+    // ============================================
+    // ROTATION METHODS (for OBB/rotation support)
+    // These can be overridden in child classes that support rotation
+    // ============================================
+
+    setImageRotation(angle) {
+        this.imageRotation = angle;
+        this.redraw();
+    }
+
+    resetImageRotation() {
+        this.imageRotation = 0;
+        this.redraw();
+        const rotationSlider = document.getElementById('rotationSlider');
+        const rotationValue = document.getElementById('rotationValue');
+        if (rotationSlider) rotationSlider.value = 0;
+        if (rotationValue) rotationValue.textContent = '0°';
+    }
+
+    // ============================================
+    // MASK INSTANCE METHODS (for segmentation support)
+    // These can be overridden in mask canvas classes
+    // ============================================
+
+    startNewMaskInstance() {
+        // No-op in base class - mask canvases will override
+        console.log('startNewMaskInstance called on non-mask canvas');
+    }
+
+    // ============================================
+    // TOOL AVAILABILITY (UI Management)
+    // ============================================
+
+    updateToolAvailability() {
+        // Get available tools for this canvas type
+        const availableTools = this.getAvailableTools();
+
+        // Update tool button visibility
+        const toolButtons = {
+            'bbox': document.querySelector('[data-tool="bbox"]'),
+            'obb': document.querySelector('[data-tool="obb"]'),
+            'mask': document.querySelector('[data-tool="mask"]'),
+            'keypoints': document.querySelector('[data-tool="keypoints"]')
+        };
+
+        // Show/hide tool buttons based on availability
+        for (const [tool, button] of Object.entries(toolButtons)) {
+            if (button) {
+                button.style.display = availableTools.includes(tool) ? 'flex' : 'none';
+            }
+        }
+
+        // Handle mask-specific controls
+        const eraseBtn = document.getElementById('btnEraseMode');
+        const maskControls = document.getElementById('maskControls');
+        const showMask = availableTools.includes('mask');
+
+        if (eraseBtn) {
+            eraseBtn.style.display = showMask ? 'flex' : 'none';
+        }
+
+        if (maskControls) {
+            maskControls.style.display = showMask ? 'flex' : 'none';
+        }
+
+        // Handle OBB-specific controls
+        const rotationControls = document.getElementById('rotationControls');
+        const showObb = availableTools.includes('obb');
+
+        if (rotationControls) {
+            rotationControls.style.display = showObb ? 'flex' : 'none';
+        }
+
+        // Handle keypoints-specific controls
+        const keypointControls = document.getElementById('keypointControls');
+        const showKeypoints = availableTools.includes('keypoints');
+
+        if (keypointControls) {
+            keypointControls.style.display = showKeypoints ? 'flex' : 'none';
         }
     }
 
