@@ -26,42 +26,74 @@
     justify-content: space-between;
     align-items: center;
     max-width: 100%;
+    gap: 20px;
 }
 
+/* Header Left: App Logo & Name */
 .header-left {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 .app-title {
-    font-size: 1.4em;
+    font-size: 1.3em;
     font-weight: 600;
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
 }
 
-.app-subtitle {
-    font-size: 0.85em;
-    opacity: 0.9;
-    margin: 0;
+/* Header Center: Project Controls */
+.header-center {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    justify-content: center;
 }
 
+/* Header Right: Help, Language, GitHub, Branding */
+.header-right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Header Divider */
+.header-divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.3);
+    margin: 0 4px;
+}
+
+/* Branding Section */
 .header-branding {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.9em;
-    opacity: 0.95;
+    padding-left: 4px;
 }
 
-.header-branding i {
-    font-size: 1.2em;
+.branding-logo {
+    height: 32px;
+    object-fit: contain;
 }
 
-.header-right {
+.branding-text {
     display: flex;
-    gap: 10px;
-    align-items: center;
+    flex-direction: column;
+    font-size: 0.85em;
+    line-height: 1.2;
+}
+
+.branding-text strong {
+    font-weight: 600;
 }
 
 /* Main Layout - 3 columnas */

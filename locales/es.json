@@ -11,7 +11,9 @@
   },
   "header": {
     "selectProject": "Seleccionar proyecto...",
-    "newProject": "Nuevo",
+    "newProject": "Nuevo Proyecto",
+    "openProject": "Abrir Proyecto",
+    "manageProjects": "Gestionar Proyectos",
     "export": "Exportar",
     "help": "Ayuda"
   },
@@ -23,6 +25,7 @@
     "select": "Select",
     "pan": "Pan",
     "eraseMode": "Borrador",
+    "newInstance": "Nueva Instancia",
     "tooltips": {
       "bbox": "Bounding Box (B)",
       "obb": "Oriented Box (O)",
@@ -62,6 +65,11 @@
     "cancel": "Cancelar",
     "create": "Crear",
     "confirm": "Confirmar",
+    "close": "Cerrar",
+    "duplicate": "Duplicar",
+    "rename": "Renombrar",
+    "exportBackup": "Exportar Backup",
+    "deleteConfirm": "Sí, eliminar",
     "clearConfirm": "¿Limpiar todas las anotaciones de esta imagen?"
   },
   "shortcuts": {
@@ -157,8 +165,15 @@
       "folders": {
         "name": "Carpetas por Clase",
         "description": "Imágenes organizadas en carpetas por clase"
+      },
+      "json": {
+        "name": "JSON Completo",
+        "description": "Exportación JSON con todas las anotaciones"
       }
-    }
+    },
+    "preparing": "Preparando exportación...",
+    "success": "Dataset exportado exitosamente",
+    "downloadDataset": "Descargar Dataset"
   },
   "project": {
     "new": "Nuevo Proyecto",
@@ -232,9 +247,29 @@
     "created": "Proyecto \"{name}\" creado",
     "loaded": "Proyecto \"{name}\" cargado",
     "deleted": "Proyecto eliminado",
+    "duplicated": "Proyecto \"{name}\" duplicado",
+    "renamed": "Proyecto renombrado",
+    "imported": "Proyecto \"{name}\" importado",
     "exported": "Proyecto exportado",
     "configExported": "Configuración exportada",
-    "selectFirst": "Selecciona un proyecto primero"
+    "selectFirst": "Selecciona un proyecto primero",
+    "noProjects": "No hay proyectos disponibles",
+    "manageProjects": "Gestionar Proyectos",
+    "renameProject": "Renombrar Proyecto",
+    "newName": "Nuevo nombre",
+    "images": "imágenes",
+    "annotations": "anotaciones",
+    "exportBackup": "Descargar backup .tix antes de eliminar",
+    "deleteWarning": {
+      "title": "⚠️ ADVERTENCIA: ELIMINACIÓN PERMANENTE",
+      "confirmTitle": "¿Confirmar Eliminación?",
+      "projectName": "Proyecto:",
+      "message": "Estás a punto de eliminar este proyecto de forma PERMANENTE.",
+      "permanent": "Esta acción NO se puede deshacer",
+      "allData": "Se eliminarán TODAS las imágenes y anotaciones",
+      "noUndo": "No hay forma de recuperar los datos eliminados",
+      "recommendation": "💡 Recomendación: Exporta el proyecto en formato .tix como backup ANTES de eliminarlo"
+    }
   },
   "notifications": {
     "imageSaved": "Imagen guardada",
@@ -250,9 +285,13 @@
       "loadProject": "Error al cargar proyecto",
       "updateProject": "Error al actualizar proyecto",
       "deleteProject": "Error al eliminar proyecto",
+      "duplicateProject": "Error al duplicar proyecto",
+      "renameProject": "Error al renombrar proyecto",
+      "loadProjects": "Error al cargar proyectos",
       "exportProject": "Error al exportar proyecto",
       "exportConfig": "Error al exportar configuración",
       "importConfig": "Error al importar configuración",
+      "importProject": "Error al importar proyecto",
       "loadImage": "Error al cargar imagen",
       "saveImage": "Error al guardar imagen",
       "deleteImage": "Error al eliminar imagen",

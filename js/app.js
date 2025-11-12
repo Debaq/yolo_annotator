@@ -8,6 +8,7 @@ class YOLOAnnotator {
         this.db = new DatabaseManager();
         this.ui = new UIManager();
         this.projectManager = null;
+        this.exportManager = null;
         this.canvasManager = null;
         this.classificationManager = null;
         this.galleryManager = null;
@@ -32,6 +33,7 @@ class YOLOAnnotator {
             
             // Initialize managers
             this.projectManager = new ProjectManager(this.db, this.ui);
+            this.exportManager = new ExportManager(this.db, this.ui);
 
             const canvas = document.getElementById('canvas');
             this.canvasManager = new CanvasManager(canvas, this.ui);
@@ -70,9 +72,14 @@ class YOLOAnnotator {
     setupEventListeners() {
         // Project management
         document.getElementById('btnNewProject')?.addEventListener('click', () => this.showNewProjectModal());
+        document.getElementById('btnOpenProject')?.addEventListener('click', () => this.openProjectFile());
+        document.getElementById('btnManageProjects')?.addEventListener('click', () => this.showManageProjectsModal());
         document.getElementById('btnExport')?.addEventListener('click', () => this.showExportModal());
         document.getElementById('btnHelp')?.addEventListener('click', () => this.startTour());
-        
+
+        // Project import file input
+        document.getElementById('projectImportInput')?.addEventListener('change', (e) => this.handleProjectImport(e));
+
         // Tool selection
         document.querySelectorAll('.tool-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -490,6 +497,37 @@ class YOLOAnnotator {
 
             // Show annotations bar
             if (annotationsBar) annotationsBar.style.display = 'block';
+        }
+    }
+
+    openProjectFile() {
+        const input = document.getElementById('projectImportInput');
+        if (input) {
+            input.click();
+        }
+    }
+
+    async handleProjectImport(event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const project = await this.projectManager.importProject(file);
+
+            // Reload projects list
+            await this.loadProjects();
+
+            // Auto-select the imported project
+            const selector = document.getElementById('projectSelector');
+            if (selector && project.id) {
+                selector.value = project.id;
+                await this.loadProject(project.id);
+            }
+        } catch (error) {
+            console.error('Error importing project:', error);
+        } finally {
+            // Reset file input
+            event.target.value = '';
         }
     }
 
@@ -917,6 +955,10 @@ class YOLOAnnotator {
             }
         }
 
+        // Get current image count to generate sequential codes
+        const existingImages = await this.db.getProjectImages(this.projectManager.currentProject.id);
+        let imageCounter = existingImages.length + 1;
+
         // Save all images
         let loadedCount = 0;
         let firstImageId = null;
@@ -927,15 +969,25 @@ class YOLOAnnotator {
                 const finalWidth = width || img.width;
                 const finalHeight = height || img.height;
 
+                // Generate clean sequential filename
+                const extension = file.name.match(/\.[^/.]+$/)?.[0] || '.jpg';
+                const paddedNumber = String(imageCounter).padStart(4, '0');
+                const cleanFilename = `img_${paddedNumber}${extension}`;
+
                 const imageData = {
                     projectId: this.projectManager.currentProject.id,
-                    name: file.name.replace(/\.[^/.]+$/, ''),
+                    name: cleanFilename,              // Clean code for exports: img_0001.jpg
+                    originalFileName: file.name,      // Original name for display in UI
+                    displayName: file.name,           // For showing in gallery/UI
+                    mimeType: finalBlob.type,
                     image: finalBlob,
                     annotations: [],
                     width: finalWidth,
                     height: finalHeight,
                     timestamp: Date.now()
                 };
+
+                console.log(`Saving image: ${cleanFilename} (original: ${file.name})`);
 
                 const imageId = await this.db.saveImage(imageData);
 
@@ -944,6 +996,7 @@ class YOLOAnnotator {
                 }
 
                 loadedCount++;
+                imageCounter++;
             } catch (error) {
                 console.error(`Error saving ${file.name}:`, error);
                 this.ui.showToast(`Error saving ${file.name}`, 'error');
@@ -985,6 +1038,268 @@ class YOLOAnnotator {
             reader.onerror = reject;
             reader.readAsArrayBuffer(file);
         });
+    }
+
+    async showManageProjectsModal() {
+        try {
+            const projects = await this.db.getAllProjects();
+
+            if (projects.length === 0) {
+                this.ui.showToast(window.i18n.t('project.noProjects'), 'info');
+                return;
+            }
+
+            // Get detailed info for each project
+            const projectsInfo = await Promise.all(
+                projects.map(p => this.projectManager.getProjectInfo(p.id))
+            );
+
+            const content = `
+                <div class="project-management-container">
+                    <div class="project-list">
+                        ${projectsInfo.map(project => `
+                            <div class="project-card" data-project-id="${project.id}">
+                                <div class="project-card-header">
+                                    <div class="project-info">
+                                        <h4 class="project-name">${project.name}</h4>
+                                        <div class="project-meta">
+                                            <span class="project-type" data-type="${project.type}">
+                                                <i class="fas ${this.getProjectTypeIcon(project.type)}"></i>
+                                                ${window.i18n.t(`project.types.${project.type}.name`)}
+                                            </span>
+                                            <span class="project-stats">
+                                                <i class="fas fa-images"></i> ${project.imageCount}
+                                                <span class="text-muted">${window.i18n.t('project.images')}</span>
+                                            </span>
+                                            <span class="project-stats">
+                                                <i class="fas fa-tag"></i> ${project.totalAnnotations}
+                                                <span class="text-muted">${window.i18n.t('project.annotations')}</span>
+                                            </span>
+                                        </div>
+                                        <div class="project-dates">
+                                            <small class="text-muted">
+                                                ${window.i18n.t('project.created')}: ${project.createdDate} |
+                                                ${window.i18n.t('project.updated')}: ${project.updatedDate}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="project-card-actions">
+                                    <button class="btn btn-sm btn-secondary" data-action="export-tix" data-id="${project.id}" title="${window.i18n.t('project.exportBackup')}">
+                                        <i class="fas fa-download"></i> ${window.i18n.t('actions.exportBackup')}
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary" data-action="duplicate" data-id="${project.id}" title="${window.i18n.t('actions.duplicate')}">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary" data-action="rename" data-id="${project.id}" title="${window.i18n.t('actions.rename')}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" data-action="delete" data-id="${project.id}" title="${window.i18n.t('actions.delete')}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            this.ui.showModal(window.i18n.t('project.manageProjects'), content, [
+                {
+                    text: window.i18n.t('actions.close'),
+                    type: 'secondary',
+                    action: 'close',
+                    handler: (modal, close) => close()
+                }
+            ]);
+
+            // Add event listeners for actions
+            setTimeout(() => {
+                const modal = document.querySelector('.modal');
+                if (!modal) return;
+
+                // Export .tix backup
+                modal.querySelectorAll('[data-action="export-tix"]').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const projectId = parseInt(e.currentTarget.dataset.id);
+                        const project = await this.db.getProject(projectId);
+                        if (project) {
+                            // Temporarily set as current project for export
+                            const originalProject = this.projectManager.currentProject;
+                            this.projectManager.currentProject = project;
+                            await this.projectManager.exportProject();
+                            this.projectManager.currentProject = originalProject;
+                        }
+                    });
+                });
+
+                // Duplicate project
+                modal.querySelectorAll('[data-action="duplicate"]').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const projectId = parseInt(e.currentTarget.dataset.id);
+                        try {
+                            const newProject = await this.projectManager.duplicateProject(projectId);
+                            // Refresh the modal
+                            modal.querySelector('.modal-close')?.click();
+                            await this.loadProjects();
+                            await this.showManageProjectsModal();
+                        } catch (error) {
+                            console.error('Error duplicating project:', error);
+                        }
+                    });
+                });
+
+                // Rename project
+                modal.querySelectorAll('[data-action="rename"]').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const projectId = parseInt(e.currentTarget.dataset.id);
+                        const project = await this.db.getProject(projectId);
+                        if (!project) return;
+
+                        // Close the manage projects modal first
+                        modal.querySelector('.modal-close')?.click();
+
+                        // Wait a bit for the close animation
+                        setTimeout(() => {
+                            const renameContent = `
+                                <div class="form-group">
+                                    <label class="form-label">${window.i18n.t('project.newName')}</label>
+                                    <input type="text" id="newProjectName" class="form-control" value="${project.name}" placeholder="${window.i18n.t('project.namePlaceholder')}">
+                                </div>
+                            `;
+
+                            this.ui.showModal(window.i18n.t('project.renameProject'), renameContent, [
+                                {
+                                    text: window.i18n.t('actions.cancel'),
+                                    type: 'secondary',
+                                    action: 'cancel',
+                                    handler: (renameModal, closeRename) => {
+                                        closeRename();
+                                        setTimeout(() => this.showManageProjectsModal(), 100);
+                                    }
+                                },
+                                {
+                                    text: window.i18n.t('actions.save'),
+                                    type: 'primary',
+                                    icon: 'fas fa-save',
+                                    action: 'save',
+                                    handler: async (renameModal, closeRename) => {
+                                        const newName = renameModal.querySelector('#newProjectName').value.trim();
+                                        if (!newName) {
+                                            this.ui.showToast(window.i18n.t('project.enterName'), 'warning');
+                                            return;
+                                        }
+                                        try {
+                                            await this.projectManager.renameProject(projectId, newName);
+                                            await this.loadProjects();
+                                            closeRename();
+                                            setTimeout(() => this.showManageProjectsModal(), 100);
+                                        } catch (error) {
+                                            console.error('Error renaming project:', error);
+                                        }
+                                    }
+                                }
+                            ]);
+                        }, 200);
+                    });
+                });
+
+                // Delete project with strong warning
+                modal.querySelectorAll('[data-action="delete"]').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const projectId = parseInt(e.currentTarget.dataset.id);
+                        const project = await this.db.getProject(projectId);
+                        if (!project) return;
+
+                        // Close the manage projects modal first
+                        modal.querySelector('.modal-close')?.click();
+
+                        // Wait a bit for the close animation
+                        setTimeout(() => {
+                            const deleteContent = `
+                                <div class="warning-box">
+                                    <div class="warning-icon">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <h3>${window.i18n.t('project.deleteWarning.title')}</h3>
+                                    <p><strong>${window.i18n.t('project.deleteWarning.projectName')}</strong> ${project.name}</p>
+                                    <div class="warning-details">
+                                        <p>${window.i18n.t('project.deleteWarning.message')}</p>
+                                        <ul class="warning-list">
+                                            <li><i class="fas fa-times-circle"></i> ${window.i18n.t('project.deleteWarning.permanent')}</li>
+                                            <li><i class="fas fa-times-circle"></i> ${window.i18n.t('project.deleteWarning.allData')}</li>
+                                            <li><i class="fas fa-times-circle"></i> ${window.i18n.t('project.deleteWarning.noUndo')}</li>
+                                        </ul>
+                                        <p class="warning-recommendation">
+                                            <i class="fas fa-lightbulb"></i>
+                                            ${window.i18n.t('project.deleteWarning.recommendation')}
+                                        </p>
+                                    </div>
+                                </div>
+                            `;
+
+                            this.ui.showModal(window.i18n.t('project.deleteWarning.confirmTitle'), deleteContent, [
+                            {
+                                text: window.i18n.t('actions.cancel'),
+                                type: 'secondary',
+                                action: 'cancel',
+                                handler: (deleteModal, closeDelete) => {
+                                    closeDelete();
+                                    setTimeout(() => this.showManageProjectsModal(), 100);
+                                }
+                            },
+                            {
+                                text: window.i18n.t('actions.deleteConfirm'),
+                                type: 'danger',
+                                icon: 'fas fa-trash',
+                                action: 'delete',
+                                handler: async (deleteModal, closeDelete) => {
+                                    try {
+                                        await this.projectManager.deleteProject(projectId);
+
+                                        // If deleted project was current, clear it
+                                        if (this.projectManager.currentProject?.id === projectId) {
+                                            this.projectManager.currentProject = null;
+                                            this.canvasManager.clearCanvas();
+                                            this.galleryManager.clearGallery();
+                                        }
+
+                                        await this.loadProjects();
+                                        closeDelete();
+
+                                        // Show manage modal again if there are still projects
+                                        const remainingProjects = await this.db.getAllProjects();
+                                        if (remainingProjects.length > 0) {
+                                            setTimeout(() => this.showManageProjectsModal(), 100);
+                                        }
+                                    } catch (error) {
+                                        console.error('Error deleting project:', error);
+                                    }
+                                }
+                            }
+                        ]);
+                        }, 200);
+                    });
+                });
+            }, 100);
+
+        } catch (error) {
+            console.error('Error showing manage projects modal:', error);
+            this.ui.showToast(window.i18n.t('notifications.error.loadProjects'), 'error');
+        }
+    }
+
+    getProjectTypeIcon(type) {
+        const icons = {
+            'classification': 'fa-tag',
+            'multiLabel': 'fa-tags',
+            'detection': 'fa-vector-square',
+            'segmentation': 'fa-fill-drip',
+            'instanceSeg': 'fa-object-group',
+            'keypoints': 'fa-braille',
+            'obb': 'fa-rotate'
+        };
+        return icons[type] || 'fa-folder';
     }
 
     async showPreprocessingModal(nonSquareImages, preprocessor) {
@@ -1231,11 +1546,20 @@ class YOLOAnnotator {
 
             } else {
                 // Canvas mode (detection, segmentation, etc.)
-                if (!this.canvasManager.image) return;
+                console.log('=== SAVING CANVAS IMAGE ===');
+                console.log('Canvas image exists?', !!this.canvasManager.image);
+                console.log('Image ID:', this.canvasManager.imageId);
+                console.log('Image name:', this.canvasManager.imageName);
+
+                if (!this.canvasManager.image) {
+                    console.log('⚠️ No canvas image to save');
+                    return;
+                }
 
                 imageBlob = this.canvasManager.originalImageBlob;
 
                 if (!imageBlob) {
+                    console.log('⚠️ No original image blob');
                     if (!silent) {
                         this.ui.showToast('Error: No se encontró la imagen original', 'error');
                     }
@@ -1249,6 +1573,9 @@ class YOLOAnnotator {
                     return cleanAnn;
                 });
 
+                console.log('Annotations to save:', cleanAnnotations.length);
+                console.log('Annotations data:', JSON.stringify(cleanAnnotations, null, 2));
+
                 imageData = {
                     id: this.canvasManager.imageId,
                     projectId: this.projectManager.currentProject.id,
@@ -1260,7 +1587,10 @@ class YOLOAnnotator {
                     timestamp: Date.now()
                 };
 
+                console.log('Saving image data to IndexedDB...');
                 const id = await this.db.saveImage(imageData);
+                console.log('✓ Image saved with ID:', id);
+
                 this.canvasManager.imageId = id;
                 this.canvasManager.clearUnsavedChanges();
             }
@@ -1906,20 +2236,9 @@ class YOLOAnnotator {
     async executeExport(format, images) {
         console.log(`Formato seleccionado: ${format}`);
 
-        // Classification projects should only export to CSV
-        if (this.annotationMode === 'classification') {
-            await this.exportClassificationCSV(images);
-            return;
-        }
-
-        // Other formats for detection/segmentation projects
-        if (format === 'yolo') {
-            await this.exportYOLODetection(images);
-        } else if (format === 'csv') {
-            await this.exportClassificationCSV(images);
-        } else {
-            this.ui.showToast(`Formato ${format} - Falta implementar`, 'info');
-        }
+        // Use ExportManager for all exports
+        const project = this.projectManager.currentProject;
+        await this.exportManager.exportDataset(format, project, images);
     }
 
     async exportClassificationCSV(images) {
@@ -2750,9 +3069,10 @@ class YOLOAnnotator {
 
     async exportForTraining() {
         const format = document.getElementById('trainingFormatSelect')?.value;
-        // TODO: Route to appropriate export handler based on format
-        this.ui.showToast(`Exportando en formato ${format}...`, 'info');
-        console.log('Export for training:', format);
+        const project = this.projectManager.currentProject;
+        const images = await this.db.getProjectImages(project.id);
+
+        await this.exportManager.exportDataset(format, project, images);
     }
 
     populateFrameworks() {

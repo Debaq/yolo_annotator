@@ -117,8 +117,11 @@ class GalleryManager {
                 overlayContent = `<span>${annotationCount} labels</span>`;
             }
 
+            // Use displayName or originalFileName for showing to user, fallback to name (code)
+            const displayName = imageData.displayName || imageData.originalFileName || imageData.name;
+
             item.innerHTML = `
-                <img src="${url}" alt="${imageData.name}">
+                <img src="${url}" alt="${displayName}" title="${displayName}">
                 <div class="gallery-item-overlay">
                     ${overlayContent}
                 </div>
@@ -153,21 +156,34 @@ class GalleryManager {
 
     async loadImage(imageId) {
         try {
-            console.log('Loading image:', imageId);
+            console.log('=== LOADING NEW IMAGE ===');
+            console.log('Image ID:', imageId);
 
             // IMPORTANT: Save current image before loading a new one
             // This prevents losing unsaved changes when navigating between images
             if (this.app.annotationMode === 'classification') {
+                console.log('Classification mode - checking for unsaved changes...');
+                console.log('Has unsaved changes?', this.app.classificationManager.hasUnsavedChanges);
+                console.log('Current image ID:', this.app.classificationManager.imageId);
+
                 if (this.app.classificationManager.hasUnsavedChanges &&
                     this.app.classificationManager.imageId) {
-                    console.log('Auto-saving classification changes before loading new image...');
+                    console.log('✓ Auto-saving classification changes before loading new image...');
                     await this.app.saveCurrentImage(true); // true = silent save
                 }
             } else {
+                console.log('Canvas mode - checking for unsaved changes...');
+                console.log('Has unsaved changes?', this.app.canvasManager.hasUnsavedChanges);
+                console.log('Current image ID:', this.app.canvasManager.imageId);
+                console.log('Current annotations count:', this.app.canvasManager.annotations?.length || 0);
+
                 if (this.app.canvasManager.hasUnsavedChanges &&
                     this.app.canvasManager.imageId) {
-                    console.log('Auto-saving canvas changes before loading new image...');
+                    console.log('✓ Auto-saving canvas changes before loading new image...');
+                    console.log('Annotations to save:', JSON.stringify(this.app.canvasManager.annotations));
                     await this.app.saveCurrentImage(true); // true = silent save
+                } else {
+                    console.log('⚠️ NOT saving - either no changes or no imageId');
                 }
             }
 
@@ -195,10 +211,21 @@ class GalleryManager {
                 this.app.classificationManager.clearUnsavedChanges();
             } else {
                 // Canvas mode (detection, segmentation, etc.)
+                console.log('Loading canvas image...');
+                console.log('Image data from DB:', {
+                    id: imageData.id,
+                    name: imageData.name,
+                    annotationsCount: imageData.annotations?.length || 0,
+                    annotations: imageData.annotations
+                });
+
                 await this.app.canvasManager.loadImage(file);
                 this.app.canvasManager.imageId = imageId;
                 this.app.canvasManager.imageName = imageData.name;
                 this.app.canvasManager.annotations = imageData.annotations || [];
+
+                console.log('✓ Annotations loaded into canvas:', this.app.canvasManager.annotations.length);
+
                 this.app.canvasManager.clearUnsavedChanges();
                 this.app.canvasManager.redraw();
                 this.app.canvasManager.updateAnnotationsBar();
@@ -207,7 +234,7 @@ class GalleryManager {
             // Update gallery display
             this.render();
 
-            console.log('Image loaded successfully in', this.app.annotationMode, 'mode');
+            console.log('✓ Image loaded successfully in', this.app.annotationMode, 'mode');
         } catch (error) {
             console.error('Error loading image:', error);
             this.ui.showToast(window.i18n.t('notifications.error.loadImage'), 'error');
