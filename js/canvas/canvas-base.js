@@ -531,8 +531,9 @@ class CanvasBase {
 
     addAnnotation(annotation) {
         this.annotations.push(annotation);
-        this.hasUnsavedChanges = true;
+        this.markUnsavedChanges();
         this.redraw();
+        this.updateAnnotationsBar();
     }
 
     removeAnnotation(annotation) {
@@ -542,16 +543,18 @@ class CanvasBase {
             if (this.selectedAnnotation === annotation) {
                 this.selectedAnnotation = null;
             }
-            this.hasUnsavedChanges = true;
+            this.markUnsavedChanges();
             this.redraw();
+            this.updateAnnotationsBar();
         }
     }
 
     clearAnnotations() {
         this.annotations = [];
         this.selectedAnnotation = null;
-        this.hasUnsavedChanges = true;
+        this.markUnsavedChanges();
         this.redraw();
+        this.updateAnnotationsBar();
     }
 
     deleteSelected() {
@@ -564,6 +567,15 @@ class CanvasBase {
     clearUnsavedChanges() {
         this.hasUnsavedChanges = false;
         this.lastSavedAnnotationsCount = this.annotations.length;
+    }
+
+    markUnsavedChanges() {
+        this.hasUnsavedChanges = true;
+
+        // Trigger auto-save if app instance is available
+        if (window.app && window.app.scheduleAutoSave) {
+            window.app.scheduleAutoSave();
+        }
     }
 
     clearCanvas() {
@@ -584,6 +596,161 @@ class CanvasBase {
         this.ctx.setTransform(1, 0, 0, 1, 0, 0);
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.restore();
+    }
+
+    // ============================================
+    // ANNOTATIONS BAR UI
+    // ============================================
+
+    updateAnnotationsBar() {
+        const annotationsBar = document.getElementById('annotationsBar');
+        const annotationsList = document.getElementById('annotationsList');
+
+        if (!annotationsBar || !annotationsList) return;
+
+        // Always show bar, collapse when empty
+        annotationsBar.style.display = 'block';
+
+        if (this.annotations.length === 0) {
+            annotationsBar.classList.add('collapsed');
+            annotationsList.innerHTML = '<div class="empty-annotations">Sin anotaciones</div>';
+            return;
+        }
+
+        // Remove collapsed class when we have annotations
+        annotationsBar.classList.remove('collapsed');
+
+        // Clear list
+        annotationsList.innerHTML = '';
+
+        // Add each annotation as a card
+        this.annotations.forEach((ann, index) => {
+            const cls = this.classes.find(c => c.id === ann.class);
+            const className = cls?.name || `Class ${ann.class}`;
+            const color = cls?.color || '#ff0000';
+
+            const card = document.createElement('div');
+            card.className = 'annotation-card';
+            if (ann === this.selectedAnnotation) {
+                card.classList.add('selected');
+            }
+
+            // Get bounds for bbox, obb, and mask
+            let x, y, width, height, cx, cy, angle;
+            let typeLabel = '';
+
+            if (ann.type === 'bbox') {
+                ({ x, y, width, height } = ann.data);
+                typeLabel = 'Box';
+            } else if (ann.type === 'obb') {
+                ({ cx, cy, width, height, angle } = ann.data);
+                // Calculate bounding rect for thumbnail (approximate)
+                x = cx - width / 2;
+                y = cy - height / 2;
+                typeLabel = `OBB ${Math.round(angle)}°`;
+            } else if (ann.type === 'mask' && typeof ann.data === 'object' && ann.data.x !== undefined) {
+                ({ x, y, width, height } = ann.data);
+                typeLabel = 'Mask';
+            } else {
+                return; // Skip old format masks
+            }
+
+            card.innerHTML = `
+                <div class="annotation-thumbnail">
+                    <canvas width="100" height="75"></canvas>
+                    <div class="annotation-overlay">
+                        <div class="annotation-class-label" style="background: ${color}">
+                            ${className}
+                        </div>
+                        <div class="annotation-type-badge">${typeLabel}</div>
+                        <button class="annotation-delete-btn" data-action="delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Render thumbnail
+            const thumbnailCanvas = card.querySelector('canvas');
+            const thumbCtx = thumbnailCanvas.getContext('2d');
+            if (this.image) {
+                // Calculate scale to fit bbox in thumbnail
+                const thumbWidth = 100;
+                const thumbHeight = 75;
+                const scale = Math.min(thumbWidth / width, thumbHeight / height, 1);
+
+                const drawWidth = width * scale;
+                const drawHeight = height * scale;
+                const offsetX = (thumbWidth - drawWidth) / 2;
+                const offsetY = (thumbHeight - drawHeight) / 2;
+
+                // Clear canvas first
+                thumbCtx.clearRect(0, 0, thumbWidth, thumbHeight);
+
+                // Draw cropped image (only the region inside the bbox/mask)
+                thumbCtx.drawImage(
+                    this.image,
+                    x, y, width, height,  // Source coordinates from image
+                    offsetX, offsetY, drawWidth, drawHeight  // Destination in canvas
+                );
+
+                // Draw mask overlay if it's a mask annotation
+                if (ann.type === 'mask' && ann.data.imageData) {
+                    if (!ann._cachedImage) {
+                        ann._cachedImage = new Image();
+                        ann._cachedImage.src = ann.data.imageData;
+                    }
+                    if (ann._cachedImage.complete) {
+                        thumbCtx.globalAlpha = 0.6;
+                        thumbCtx.drawImage(
+                            ann._cachedImage,
+                            0, 0, width, height,
+                            offsetX, offsetY, drawWidth, drawHeight
+                        );
+                        thumbCtx.globalAlpha = 1;
+                    }
+                }
+
+                // Draw border around the entire thumbnail
+                thumbCtx.strokeStyle = color;
+                thumbCtx.lineWidth = 3;
+                thumbCtx.strokeRect(offsetX, offsetY, drawWidth, drawHeight);
+            }
+
+            // Click to select
+            card.addEventListener('click', (e) => {
+                if (!e.target.closest('.annotation-delete-btn')) {
+                    this.selectedAnnotation = ann;
+                    this.redraw();
+                    this.updateAnnotationsBar();
+                }
+            });
+
+            // Delete button
+            const deleteBtn = card.querySelector('.annotation-delete-btn');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const index = this.annotations.indexOf(ann);
+                    if (index > -1) {
+                        this.annotations.splice(index, 1);
+                        if (this.selectedAnnotation === ann) {
+                            this.selectedAnnotation = null;
+                        }
+                        this.markUnsavedChanges();
+                        this.redraw();
+                        this.updateAnnotationsBar();
+                    }
+                });
+            }
+
+            annotationsList.appendChild(card);
+        });
+
+        // If no annotations were added (all were old format), show empty message
+        if (annotationsList.children.length === 0) {
+            annotationsList.innerHTML = '<div class="empty-annotations">No hay anotaciones en esta imagen</div>';
+        }
     }
 
     // ============================================
