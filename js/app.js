@@ -2327,17 +2327,27 @@ class YOLOAnnotator {
             // Show number only if index is 0-8 (keys 1-9)
             const classNumber = index < 9 ? `[${index + 1}] ` : '';
 
+            // Count annotations using this class
+            const annotationCount = this.canvasManager.annotations.filter(a => a.class === cls.id).length;
+
             item.innerHTML = `
                 <div class="class-color" style="background: ${cls.color}"></div>
                 <span class="class-name">${classNumber}${cls.name}</span>
-                <button class="class-delete" data-id="${cls.id}">
+                <span class="class-count">${annotationCount}</span>
+                <button class="class-edit" data-id="${cls.id}" title="${window.i18n.t('classes.edit') || 'Edit'}">
+                    <i class="fas fa-pen"></i>
+                </button>
+                <button class="class-delete" data-id="${cls.id}" title="${window.i18n.t('classes.delete') || 'Delete'}">
                     <i class="fas fa-times"></i>
                 </button>
             `;
 
             item.onclick = (e) => {
                 if (e.target.closest('.class-delete')) {
-                    this.deleteClass(cls.id);
+                    this.showDeleteClassModal(cls.id, cls.name, annotationCount);
+                } else if (e.target.closest('.class-edit')) {
+                    e.stopPropagation();
+                    this.showEditClassModal(cls.id, cls.name, cls.color);
                 } else {
                     this.canvasManager.currentClass = index;
                     this.updateClassUI();
@@ -2389,6 +2399,119 @@ class YOLOAnnotator {
                 this.projectManager.updateProject({ classes: this.canvasManager.classes });
             }
         }
+    }
+
+    showDeleteClassModal(classId, className, annotationCount) {
+        const warningMsg = annotationCount > 0
+            ? `<p style="color: #e74c3c; margin: 10px 0;"><i class="fas fa-exclamation-triangle"></i> ${window.i18n.t('classes.deleteWarning') || 'This class has'} <strong>${annotationCount}</strong> ${window.i18n.t('classes.annotations') || 'annotations'}.</p>`
+            : '';
+
+        this.ui.showModal(
+            `${window.i18n.t('classes.deleteTitle') || 'Delete Class'}: ${className}`,
+            `
+                <p>${window.i18n.t('classes.deleteQuestion') || 'What would you like to do with this class?'}</p>
+                ${warningMsg}
+            `,
+            [
+                {
+                    text: window.i18n.t('actions.cancel') || 'Cancel',
+                    type: 'secondary',
+                    action: 'cancel',
+                    handler: (modal, close) => close()
+                },
+                annotationCount > 0 ? {
+                    text: window.i18n.t('classes.rename') || 'Rename Class',
+                    type: 'info',
+                    icon: 'fas fa-pen',
+                    action: 'rename',
+                    handler: (modal, close) => {
+                        close();
+                        this.showEditClassModal(classId, className,
+                            this.canvasManager.classes.find(c => c.id === classId).color
+                        );
+                    }
+                } : null,
+                {
+                    text: annotationCount > 0
+                        ? (window.i18n.t('classes.deleteAll') || `Delete Class & ${annotationCount} Annotations`)
+                        : (window.i18n.t('classes.delete') || 'Delete Class'),
+                    type: 'danger',
+                    icon: 'fas fa-trash',
+                    action: 'delete',
+                    handler: (modal, close) => {
+                        this.deleteClass(classId);
+                        close();
+                    }
+                }
+            ].filter(btn => btn !== null)
+        );
+    }
+
+    showEditClassModal(classId, currentName, currentColor) {
+        const cls = this.canvasManager.classes.find(c => c.id === classId);
+        if (!cls) return;
+
+        this.ui.showModal(
+            window.i18n.t('classes.editTitle') || 'Edit Class',
+            `
+                <div class="form-group">
+                    <label class="form-label">${window.i18n.t('classes.name') || 'Name'}:</label>
+                    <input type="text" id="editClassName" class="form-control" value="${currentName}" placeholder="${window.i18n.t('classes.namePlaceholder') || 'Class name'}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">${window.i18n.t('classes.color') || 'Color'}:</label>
+                    <input type="color" id="editClassColor" class="color-input" value="${currentColor}">
+                </div>
+            `,
+            [
+                {
+                    text: window.i18n.t('actions.cancel') || 'Cancel',
+                    type: 'secondary',
+                    action: 'cancel',
+                    handler: (modal, close) => close()
+                },
+                {
+                    text: window.i18n.t('actions.save') || 'Save Changes',
+                    type: 'primary',
+                    icon: 'fas fa-save',
+                    action: 'save',
+                    handler: (modal, close) => {
+                        const newName = modal.querySelector('#editClassName').value.trim();
+                        const newColor = modal.querySelector('#editClassColor').value;
+
+                        if (!newName) {
+                            this.ui.showToast(window.i18n.t('classes.nameRequired') || 'Class name is required', 'error');
+                            return;
+                        }
+
+                        // Update class
+                        cls.name = newName;
+                        cls.color = newColor;
+
+                        // Update UI
+                        this.updateClassUI();
+                        this.canvasManager.redraw();
+
+                        // Save to project
+                        if (this.projectManager.currentProject) {
+                            this.projectManager.updateProject({ classes: this.canvasManager.classes });
+                        }
+
+                        this.ui.showToast(window.i18n.t('classes.updated') || 'Class updated successfully', 'success');
+                        close();
+                    }
+                }
+            ]
+        );
+
+        // Focus on name input
+        setTimeout(() => {
+            const input = document.getElementById('editClassName');
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        }, 100);
     }
 
     zoomIn() {
