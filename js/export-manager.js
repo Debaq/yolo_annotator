@@ -165,7 +165,8 @@ class ExportManager {
             }
         });
 
-        console.log(`Image "${image.name}": ${bboxCount} bounding boxes exported`);
+        const filename = this.getImageFilename(image);
+        console.log(`Image "${filename}": ${bboxCount} bounding boxes exported`);
         return content;
     }
 
@@ -848,7 +849,12 @@ names: [${classNames.map(n => `'${n}'`).join(', ')}]
      * HELPER: Get image filename with proper extension
      */
     getImageFilename(image) {
-        // If originalFileName is stored (new format), use it
+        // If name already has extension (new format with clean codes), use it
+        if (image.name && image.name.match(/\.[^.]+$/)) {
+            return image.name; // Already has extension: img_0001.jpg
+        }
+
+        // If originalFileName is stored (old format), use it
         if (image.originalFileName) {
             return image.originalFileName;
         }

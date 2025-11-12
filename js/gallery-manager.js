@@ -117,8 +117,11 @@ class GalleryManager {
                 overlayContent = `<span>${annotationCount} labels</span>`;
             }
 
+            // Use displayName or originalFileName for showing to user, fallback to name (code)
+            const displayName = imageData.displayName || imageData.originalFileName || imageData.name;
+
             item.innerHTML = `
-                <img src="${url}" alt="${imageData.name}">
+                <img src="${url}" alt="${displayName}" title="${displayName}">
                 <div class="gallery-item-overlay">
                     ${overlayContent}
                 </div>

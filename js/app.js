@@ -919,6 +919,10 @@ class YOLOAnnotator {
             }
         }
 
+        // Get current image count to generate sequential codes
+        const existingImages = await this.db.getProjectImages(this.projectManager.currentProject.id);
+        let imageCounter = existingImages.length + 1;
+
         // Save all images
         let loadedCount = 0;
         let firstImageId = null;
@@ -929,17 +933,25 @@ class YOLOAnnotator {
                 const finalWidth = width || img.width;
                 const finalHeight = height || img.height;
 
+                // Generate clean sequential filename
+                const extension = file.name.match(/\.[^/.]+$/)?.[0] || '.jpg';
+                const paddedNumber = String(imageCounter).padStart(4, '0');
+                const cleanFilename = `img_${paddedNumber}${extension}`;
+
                 const imageData = {
                     projectId: this.projectManager.currentProject.id,
-                    name: file.name.replace(/\.[^/.]+$/, ''),
-                    originalFileName: file.name,  // Store full filename with extension
-                    mimeType: finalBlob.type,     // Store MIME type (image/jpeg, image/png, etc.)
+                    name: cleanFilename,              // Clean code for exports: img_0001.jpg
+                    originalFileName: file.name,      // Original name for display in UI
+                    displayName: file.name,           // For showing in gallery/UI
+                    mimeType: finalBlob.type,
                     image: finalBlob,
                     annotations: [],
                     width: finalWidth,
                     height: finalHeight,
                     timestamp: Date.now()
                 };
+
+                console.log(`Saving image: ${cleanFilename} (original: ${file.name})`);
 
                 const imageId = await this.db.saveImage(imageData);
 
@@ -948,6 +960,7 @@ class YOLOAnnotator {
                 }
 
                 loadedCount++;
+                imageCounter++;
             } catch (error) {
                 console.error(`Error saving ${file.name}:`, error);
                 this.ui.showToast(`Error saving ${file.name}`, 'error');
