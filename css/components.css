@@ -26,16 +26,45 @@
     color: var(--white);
     padding: 6px 12px;
     border-radius: 6px;
-    font-size: 0.85em;
+    font-size: 0.9em;
     cursor: pointer;
     transition: var(--transition);
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
+    min-width: 36px;
+    height: 36px;
 }
 
 .btn-header:hover {
     background: rgba(255, 255, 255, 0.25);
+}
+
+/* GitHub Button - No background */
+.btn-github {
+    background: transparent !important;
+    border: none !important;
+    padding: 6px;
+}
+
+.btn-github:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    transform: scale(1.1);
+}
+
+/* Language Selector - Match other buttons size */
+.language-selector-btn {
+    min-width: 36px !important;
+    height: 36px !important;
+    padding: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.language-selector-btn .flag {
+    font-size: 1.2em !important;
 }
 
 /* Botones Generales */

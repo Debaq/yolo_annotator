@@ -11,7 +11,8 @@
   },
   "header": {
     "selectProject": "Seleccionar proyecto...",
-    "newProject": "Nuevo",
+    "newProject": "Nuevo Proyecto",
+    "openProject": "Abrir Proyecto",
     "manageProjects": "Gestionar Proyectos",
     "export": "Exportar",
     "help": "Ayuda"
@@ -247,6 +248,7 @@
     "deleted": "Proyecto eliminado",
     "duplicated": "Proyecto \"{name}\" duplicado",
     "renamed": "Proyecto renombrado",
+    "imported": "Proyecto "{name}" importado",
     "exported": "Proyecto exportado",
     "configExported": "Configuración exportada",
     "selectFirst": "Selecciona un proyecto primero",
@@ -288,6 +290,7 @@
       "exportProject": "Error al exportar proyecto",
       "exportConfig": "Error al exportar configuración",
       "importConfig": "Error al importar configuración",
+      "importProject": "Error al importar proyecto",
       "loadImage": "Error al cargar imagen",
       "saveImage": "Error al guardar imagen",
       "deleteImage": "Error al eliminar imagen",

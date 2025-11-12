@@ -250,6 +250,76 @@ class ProjectManager {
         }
     }
 
+    async importProject(file) {
+        try {
+            const text = await file.text();
+            const importData = JSON.parse(text);
+
+            // Validate project data
+            if (!importData.project || !importData.images) {
+                throw new Error('Invalid project file format');
+            }
+
+            // Check if project name already exists
+            const existingProjects = await this.db.getAllProjects();
+            let projectName = importData.project.name;
+            let counter = 1;
+
+            while (existingProjects.some(p => p.name === projectName)) {
+                projectName = `${importData.project.name} (${counter})`;
+                counter++;
+            }
+
+            // Create new project
+            const newProject = {
+                name: projectName,
+                type: importData.project.type,
+                classes: importData.project.classes,
+                preprocessingConfig: importData.project.preprocessingConfig || { enabled: false },
+                createdAt: Date.now(),
+                updatedAt: Date.now()
+            };
+
+            const projectId = await this.db.saveProject(newProject);
+            newProject.id = projectId;
+
+            // Import images if any
+            if (importData.images && importData.images.length > 0) {
+                for (const imageData of importData.images) {
+                    // Note: Imported project files don't include actual image blobs
+                    // Only annotations metadata is preserved
+                    const newImage = {
+                        projectId: projectId,
+                        name: imageData.name,
+                        originalFileName: imageData.originalFileName,
+                        displayName: imageData.displayName,
+                        mimeType: imageData.mimeType,
+                        annotations: imageData.annotations || [],
+                        classification: imageData.classification,
+                        width: imageData.width,
+                        height: imageData.height,
+                        timestamp: Date.now()
+                    };
+
+                    // Skip images without actual image data
+                    if (!imageData.image) {
+                        console.warn(`Skipping image ${imageData.name} - no image data`);
+                        continue;
+                    }
+
+                    await this.db.saveImage(newImage);
+                }
+            }
+
+            this.ui.showToast(window.i18n.t('project.imported', { name: projectName }), 'success');
+            return newProject;
+        } catch (error) {
+            console.error('Error importing project:', error);
+            this.ui.showToast(window.i18n.t('notifications.error.importProject'), 'error');
+            throw error;
+        }
+    }
+
     downloadFile(blob, filename) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');

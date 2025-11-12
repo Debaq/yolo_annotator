@@ -33,21 +33,16 @@
         <!-- Header -->
         <header class="app-header">
             <div class="header-content">
+                <!-- App Logo & Name -->
                 <div class="header-left">
-                    <div>
-                        <h1 class="app-title"><i class="fas fa-tag"></i> <span data-i18n="app.title">Annotix</span></h1>
-                        <p class="app-subtitle" data-i18n="app.subtitle">Herramienta de anotación de Nico</p>
-                    </div>
+                    <h1 class="app-title">
+                        <i class="fas fa-tag"></i>
+                        <span data-i18n="app.title">Annotix</span>
+                    </h1>
                 </div>
 
-                <div class="header-branding">
-                    <img src="https://www.uach.cl/uach/_imag/uach/logo-v2.png" alt="UACh" style="height: 40px; margin-right: 10px;">
-                    <div>
-                        <strong data-i18n="app.branding.fablab">TecMedHub</strong><br>
-                    </div>
-                </div>
-
-                <div class="header-right">
+                <!-- Project Controls -->
+                <div class="header-center">
                     <select id="projectSelector" class="project-selector">
                         <option value="" data-i18n="header.selectProject">Seleccionar proyecto...</option>
                     </select>
@@ -56,9 +51,15 @@
                         <i class="fas fa-plus"></i>
                     </button>
 
+                    <button class="btn-header" id="btnOpenProject" data-i18n-title="header.openProject">
+                        <i class="fas fa-folder-open"></i>
+                    </button>
+
                     <button class="btn-header" id="btnManageProjects" data-i18n-title="header.manageProjects">
                         <i class="fas fa-folder-tree"></i>
                     </button>
+
+                    <div class="header-divider"></div>
 
                     <button class="btn-header" id="btnSave" data-i18n-title="actions.save" disabled>
                         <i class="fas fa-save"></i>
@@ -67,22 +68,39 @@
                     <button class="btn-header" id="btnExport" data-i18n-title="header.export">
                         <i class="fas fa-download"></i>
                     </button>
+                </div>
+
+                <!-- Right Side: Help, Language, GitHub, Branding -->
+                <div class="header-right">
+                    <button class="btn-header" id="btnHelp" data-i18n-title="header.help">
+                        <i class="fas fa-question-circle"></i>
+                    </button>
 
                     <button class="btn-header" id="btnShowShortcuts" data-i18n-title="shortcuts.title">
                         <i class="fas fa-keyboard"></i>
                     </button>
 
+                    <div class="header-divider"></div>
+
                     <!-- Language Selector (will be injected here) -->
                     <div id="languageSelectorContainer"></div>
 
-                    <button class="btn-header" id="btnHelp" data-i18n-title="header.help">
-                        <i class="fas fa-question-circle"></i>
-                    </button>
-
-                    <a href="https://github.com/debaq/Annotix" target="_blank" class="btn-header" title="GitHub Repository" style="text-decoration: none; color: inherit;">
+                    <a href="https://github.com/debaq/Annotix" target="_blank" class="btn-header btn-github" title="GitHub Repository">
                         <i class="fab fa-github"></i>
                     </a>
+
+                    <div class="header-divider"></div>
+
+                    <div class="header-branding">
+                        <img src="https://www.uach.cl/uach/_imag/uach/logo-v2.png" alt="Universidad Austral de Chile" class="branding-logo">
+                        <div class="branding-text">
+                            <strong data-i18n="app.branding.fablab">TecMedHub</strong>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Hidden file input for importing projects -->
+                <input type="file" id="projectImportInput" accept=".yoloproject,.tix" style="display: none;">
             </div>
         </header>
 

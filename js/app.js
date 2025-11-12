@@ -72,10 +72,14 @@ class YOLOAnnotator {
     setupEventListeners() {
         // Project management
         document.getElementById('btnNewProject')?.addEventListener('click', () => this.showNewProjectModal());
+        document.getElementById('btnOpenProject')?.addEventListener('click', () => this.openProjectFile());
         document.getElementById('btnManageProjects')?.addEventListener('click', () => this.showManageProjectsModal());
         document.getElementById('btnExport')?.addEventListener('click', () => this.showExportModal());
         document.getElementById('btnHelp')?.addEventListener('click', () => this.startTour());
-        
+
+        // Project import file input
+        document.getElementById('projectImportInput')?.addEventListener('change', (e) => this.handleProjectImport(e));
+
         // Tool selection
         document.querySelectorAll('.tool-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -493,6 +497,37 @@ class YOLOAnnotator {
 
             // Show annotations bar
             if (annotationsBar) annotationsBar.style.display = 'block';
+        }
+    }
+
+    openProjectFile() {
+        const input = document.getElementById('projectImportInput');
+        if (input) {
+            input.click();
+        }
+    }
+
+    async handleProjectImport(event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const project = await this.projectManager.importProject(file);
+
+            // Reload projects list
+            await this.loadProjects();
+
+            // Auto-select the imported project
+            const selector = document.getElementById('projectSelector');
+            if (selector && project.id) {
+                selector.value = project.id;
+                await this.loadProject(project.id);
+            }
+        } catch (error) {
+            console.error('Error importing project:', error);
+        } finally {
+            // Reset file input
+            event.target.value = '';
         }
     }
 
