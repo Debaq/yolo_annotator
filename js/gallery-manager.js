@@ -22,8 +22,6 @@ class GalleryManager {
 
     async loadImages(projectId) {
         try {
-            console.log('Loading images for project:', projectId);
-
             // IMPORTANT: Clean up old blob URLs BEFORE loading new images
             this.cleanupBlobUrls();
 
@@ -32,7 +30,6 @@ class GalleryManager {
 
             // Load images for the specific project
             this.images = await this.db.getProjectImages(projectId);
-            console.log('Images loaded:', this.images.length, 'for project:', projectId);
 
             // Verify all images belong to this project (safety check)
             const wrongProjectImages = this.images.filter(img => img.projectId !== projectId);
@@ -71,17 +68,15 @@ class GalleryManager {
     }
 
     render() {
-        console.log('Rendering gallery...');
         const filtered = this.getFilteredImages();
-        console.log('Filtered images:', filtered.length);
-        
+
         if (filtered.length === 0) {
             this.container.innerHTML = `<div class="empty-gallery">${window.i18n.t('gallery.empty')}</div>`;
             return;
         }
-        
+
         this.container.innerHTML = '';
-        
+
         filtered.forEach(imageData => {
             const item = document.createElement('div');
             item.className = 'gallery-item';
@@ -163,43 +158,24 @@ class GalleryManager {
                     this.loadImage(imageData.id);
                 }
             };
-            
+
             this.container.appendChild(item);
         });
-        
-        console.log('Gallery rendered successfully');
     }
 
     async loadImage(imageId) {
         try {
-            console.log('=== LOADING NEW IMAGE ===');
-            console.log('Image ID:', imageId);
-
             // IMPORTANT: Save current image before loading a new one
             // This prevents losing unsaved changes when navigating between images
             if (this.app.annotationMode === 'classification') {
-                console.log('Classification mode - checking for unsaved changes...');
-                console.log('Has unsaved changes?', this.app.classificationManager.hasUnsavedChanges);
-                console.log('Current image ID:', this.app.classificationManager.imageId);
-
                 if (this.app.classificationManager.hasUnsavedChanges &&
                     this.app.classificationManager.imageId) {
-                    console.log('✓ Auto-saving classification changes before loading new image...');
                     await this.app.saveCurrentImage(true); // true = silent save
                 }
             } else {
-                console.log('Canvas mode - checking for unsaved changes...');
-                console.log('Has unsaved changes?', this.app.canvasManager.hasUnsavedChanges);
-                console.log('Current image ID:', this.app.canvasManager.imageId);
-                console.log('Current annotations count:', this.app.canvasManager.annotations?.length || 0);
-
                 if (this.app.canvasManager.hasUnsavedChanges &&
                     this.app.canvasManager.imageId) {
-                    console.log('✓ Auto-saving canvas changes before loading new image...');
-                    console.log('Annotations to save:', JSON.stringify(this.app.canvasManager.annotations));
                     await this.app.saveCurrentImage(true); // true = silent save
-                } else {
-                    console.log('⚠️ NOT saving - either no changes or no imageId');
                 }
             }
 
@@ -227,20 +203,10 @@ class GalleryManager {
                 this.app.classificationManager.clearUnsavedChanges();
             } else {
                 // Canvas mode (detection, segmentation, etc.)
-                console.log('Loading canvas image...');
-                console.log('Image data from DB:', {
-                    id: imageData.id,
-                    name: imageData.name,
-                    annotationsCount: imageData.annotations?.length || 0,
-                    annotations: imageData.annotations
-                });
-
                 await this.app.canvasManager.loadImage(file);
                 this.app.canvasManager.imageId = imageId;
                 this.app.canvasManager.imageName = imageData.name;
                 this.app.canvasManager.annotations = imageData.annotations || [];
-
-                console.log('✓ Annotations loaded into canvas:', this.app.canvasManager.annotations.length);
 
                 this.app.canvasManager.clearUnsavedChanges();
                 this.app.canvasManager.redraw();
@@ -249,8 +215,6 @@ class GalleryManager {
 
             // Update gallery display
             this.render();
-
-            console.log('✓ Image loaded successfully in', this.app.annotationMode, 'mode');
         } catch (error) {
             console.error('Error loading image:', error);
             this.ui.showToast(window.i18n.t('notifications.error.loadImage'), 'error');
@@ -352,14 +316,12 @@ class GalleryManager {
             // Find the image in our current images array
             const imageIndex = this.images.findIndex(img => img.id === imageId);
             if (imageIndex === -1) {
-                console.log('Image not in current gallery, skipping thumbnail update');
                 return;
             }
 
             // Reload just this image's data from DB
             const updatedImageData = await this.db.getImage(imageId);
             if (!updatedImageData) {
-                console.log('Image not found in database');
                 return;
             }
 
@@ -369,7 +331,6 @@ class GalleryManager {
             // Find the gallery item DOM element
             const galleryItem = document.querySelector(`.gallery-item[data-image-id="${imageId}"]`);
             if (!galleryItem) {
-                console.log('Gallery item DOM element not found');
                 return;
             }
 
@@ -389,8 +350,6 @@ class GalleryManager {
                 galleryItem.classList.remove('annotated');
                 galleryItem.classList.add('unannotated');
             }
-
-            console.log(`✓ Updated thumbnail for image ${imageId}, annotations: ${annotationCount}`);
         } catch (error) {
             console.error('Error updating thumbnail:', error);
         }

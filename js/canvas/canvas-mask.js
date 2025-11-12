@@ -238,10 +238,6 @@ class CanvasMask extends CanvasBase {
     initMaskCanvas() {
         if (!this.image) return;
 
-        console.log('Initializing mask canvas...');
-        console.log('Current class:', this.currentClass);
-        console.log('Available classes:', this.classes);
-
         this.currentMaskCanvas = document.createElement('canvas');
         this.currentMaskCanvas.width = this.image.width;
         this.currentMaskCanvas.height = this.image.height;
@@ -258,15 +254,12 @@ class CanvasMask extends CanvasBase {
         // Ensure currentClass is valid
         if (this.classes.length > 0 && (this.currentClass === undefined || this.currentClass === null)) {
             this.currentClass = this.classes[0].id;
-            console.log('Current class was undefined, set to first class:', this.currentClass);
         }
 
         // Set brush color based on current class
         const cls = this.classes.find(c => c.id === this.currentClass);
         const color = cls?.color || '#ff0000';
         this.currentMaskCtx.fillStyle = color;
-
-        console.log('Mask canvas initialized with color:', color, 'for class:', cls?.name);
     }
 
     drawBrush(x, y) {
@@ -300,14 +293,7 @@ class CanvasMask extends CanvasBase {
     }
 
     saveMask() {
-        console.log('=== SAVE MASK CALLED ===');
-        console.log('Erase mode:', this.eraseMode);
-        console.log('Current class:', this.currentClass);
-        console.log('Current image:', this.imageName);
-        console.log('Current imageId:', this.imageId);
-
         if (!this.currentMaskCanvas) {
-            console.log('No mask canvas to save');
             return;
         }
 
@@ -327,16 +313,13 @@ class CanvasMask extends CanvasBase {
         }
 
         if (!hasContent) {
-            console.log('Mask is empty after erasing - discarding');
-            // Clear the temporary canvas
+            // Mask is empty after erasing - discard silently
             this.currentMaskCanvas = null;
             this.currentMaskCtx = null;
-            // Clear the auto-save timeout if exists
             if (this.autoSaveTimeout) {
                 clearTimeout(this.autoSaveTimeout);
                 this.autoSaveTimeout = null;
             }
-            // Just redraw to show clean canvas
             this.redraw();
             return;
         }
@@ -371,8 +354,6 @@ class CanvasMask extends CanvasBase {
         const width = maxX - minX + 1;
         const height = maxY - minY + 1;
 
-        console.log('Saving mask with recalculated bounds:', { x, y, width, height });
-
         // Create a temporary canvas for the cropped region
         const croppedCanvas = document.createElement('canvas');
         croppedCanvas.width = width;
@@ -398,8 +379,6 @@ class CanvasMask extends CanvasBase {
                 height: height
             }
         };
-
-        console.log('Adding mask annotation');
 
         // Clear current mask canvas BEFORE adding annotation to prevent flash
         this.currentMaskCanvas = null;
@@ -540,7 +519,6 @@ class CanvasMask extends CanvasBase {
     async loadImage(file) {
         // Clear any temporary mask before loading new image
         if (this.currentMaskCanvas) {
-            console.log('Clearing temporary mask canvas before loading new image');
             if (this.autoSaveTimeout) {
                 clearTimeout(this.autoSaveTimeout);
             }
@@ -555,7 +533,6 @@ class CanvasMask extends CanvasBase {
     startNewMaskInstance() {
         // Save current mask if exists
         if (this.currentMaskCanvas) {
-            console.log('Saving current mask before starting new instance');
             this.saveMask();
         }
         this.ui.showToast('New mask instance started', 'success');

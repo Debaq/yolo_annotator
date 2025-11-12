@@ -27,12 +27,9 @@ class YOLOAnnotator {
 
     async init() {
         try {
-            console.log('Initializing YOLO Annotator...');
-            
             // Initialize database
             await this.db.init();
-            console.log('Database initialized');
-            
+
             // Initialize managers
             this.projectManager = new ProjectManager(this.db, this.ui);
             this.exportManager = new ExportManager(this.db, this.ui);
@@ -52,14 +49,12 @@ class YOLOAnnotator {
             // Initialize training code generator (requires projectManager and canvasManager)
             this.trainingCodeGenerator = new TrainingCodeGenerator(this.projectManager, this.canvasManager, this.ui);
 
-            console.log('Managers initialized');
-            
             // Setup UI event listeners
             this.setupEventListeners();
-            
+
             // Load projects
             await this.loadProjects();
-            
+
             // Setup keyboard shortcuts
             this.setupKeyboardShortcuts();
 
@@ -70,7 +65,6 @@ class YOLOAnnotator {
             this.startPeriodicAutoSave();
 
             this.ui.showToast(window.i18n.t('notifications.appStarted'), 'success');
-            console.log('Application initialized successfully');
         } catch (error) {
             console.error('Error initializing app:', error);
             this.ui.showToast(window.i18n.t('notifications.error.initApp'), 'error');
@@ -443,7 +437,6 @@ class YOLOAnnotator {
                 if (this.canvasManager) {
                     // Check if project type changed
                     if (this.canvasManager.projectType !== project.type) {
-                        console.log(`Project type changed from ${this.canvasManager.projectType} to ${project.type}, recreating canvas`);
                         this.canvasManager.destroy();
                         this.canvasManager = null;
                     }
@@ -451,7 +444,6 @@ class YOLOAnnotator {
 
                 // Create canvas using factory if not exists
                 if (!this.canvasManager) {
-                    console.log(`Creating canvas for project type: ${project.type}`);
                     try {
                         this.canvasManager = CanvasFactory.create(project.type, this.canvas, this.ui);
                     } catch (canvasError) {
@@ -477,7 +469,6 @@ class YOLOAnnotator {
             this.updateClassUI();
             await this.galleryManager.loadImages(projectId);
             this.updateStats();
-            console.log('Project loaded successfully in', this.annotationMode, 'mode');
         } catch (error) {
             console.error('Error loading project:', error);
         }
@@ -875,19 +866,12 @@ class YOLOAnnotator {
             return;
         }
 
-        console.log(`=== LOADING ${files.length} IMAGES ===`);
-        console.log('Project type:', this.projectManager.currentProject.type);
-        console.log('Annotation mode:', this.annotationMode);
-        console.log('Canvas manager exists:', !!this.canvasManager);
-
         // Load all images first to check dimensions
         const loadedImages = [];
         for (const file of files) {
             try {
-                console.log(`Loading image: ${file.name}`);
                 const img = await Utils.loadImageFile(file);
                 loadedImages.push({ img, file });
-                console.log(`✓ Loaded: ${file.name} (${img.width}x${img.height})`);
             } catch (error) {
                 console.error(`Error loading ${file.name}:`, error);
                 this.ui.showToast(`Error loading ${file.name}: ${error.message}`, 'error');
@@ -898,8 +882,6 @@ class YOLOAnnotator {
             this.ui.showToast('No images could be loaded', 'error');
             return;
         }
-
-        console.log(`Successfully loaded ${loadedImages.length} images`);
 
         // Check if preprocessing is needed
         const preprocessor = new ImagePreprocessor();
@@ -981,24 +963,16 @@ class YOLOAnnotator {
             }
         }
 
-        console.log(`=== IMAGES SAVED: ${loadedCount}/${processedImages.length} ===`);
-
         if (loadedCount > 0) {
-            console.log('Reloading gallery...');
             await this.galleryManager.loadImages(this.projectManager.currentProject.id);
-
-            console.log('Updating stats...');
             this.updateStats();
 
             if (firstImageId) {
-                console.log(`Loading first image: ${firstImageId}`);
                 await this.galleryManager.loadImage(firstImageId);
             }
 
             this.ui.showToast(window.i18n.t('notifications.imagesLoaded', { count: loadedCount }), 'success');
-            console.log('=== IMAGE LOADING COMPLETE ===');
         } else {
-            console.error('No images were saved!');
             this.ui.showToast('Failed to save any images', 'error');
         }
     }
@@ -1499,20 +1473,13 @@ class YOLOAnnotator {
 
             } else {
                 // Canvas mode (detection, segmentation, etc.)
-                console.log('=== SAVING CANVAS IMAGE ===');
-                console.log('Canvas image exists?', !!this.canvasManager.image);
-                console.log('Image ID:', this.canvasManager.imageId);
-                console.log('Image name:', this.canvasManager.imageName);
-
                 if (!this.canvasManager.image) {
-                    console.log('⚠️ No canvas image to save');
                     return;
                 }
 
                 imageBlob = this.canvasManager.originalImageBlob;
 
                 if (!imageBlob) {
-                    console.log('⚠️ No original image blob');
                     if (!silent) {
                         this.ui.showToast('Error: No se encontró la imagen original', 'error');
                     }
@@ -1526,9 +1493,6 @@ class YOLOAnnotator {
                     return cleanAnn;
                 });
 
-                console.log('Annotations to save:', cleanAnnotations.length);
-                console.log('Annotations data:', JSON.stringify(cleanAnnotations, null, 2));
-
                 imageData = {
                     id: this.canvasManager.imageId,
                     projectId: this.projectManager.currentProject.id,
@@ -1540,10 +1504,7 @@ class YOLOAnnotator {
                     timestamp: Date.now()
                 };
 
-                console.log('Saving image data to IndexedDB...');
                 const id = await this.db.saveImage(imageData);
-                console.log('✓ Image saved with ID:', id);
-
                 this.canvasManager.imageId = id;
                 this.canvasManager.clearUnsavedChanges();
             }
