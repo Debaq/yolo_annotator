@@ -20,6 +20,10 @@ class YOLOAnnotator {
         this.autoSaveDelay = 3000; // 3 seconds after last change
         this.autoSaveTimer = null;
         this.periodicAutoSaveInterval = 30000; // 30 seconds periodic autosave
+
+        // Counter for serialized image naming to avoid collisions
+        this.imageCounter = 0;
+        this.sessionTimestamp = Date.now(); // Unique session identifier
     }
 
     async init() {
@@ -1497,8 +1501,13 @@ class YOLOAnnotator {
                         if (imageData) {
                             // Single image: create N variations with same config
                             for (let i = 0; i < variations; i++) {
-                                await this.applyAugmentationToImage(imageData, config, keepAnnotations, i + 1);
+                                // Refresh gallery every 3 variations for better UX
+                                const shouldRefresh = (i + 1) % 3 === 0 || (i + 1) === variations;
+                                await this.applyAugmentationToImage(imageData, config, keepAnnotations, i + 1, shouldRefresh);
                             }
+                            // Final gallery refresh and stats update
+                            await this.galleryManager.loadImages(this.projectManager.currentProject.id);
+                            this.updateStats();
                         } else {
                             // Batch: apply to all images
                             await this.applyAugmentationBatch(config, keepAnnotations);
@@ -1597,7 +1606,7 @@ class YOLOAnnotator {
         }, 100);
     }
 
-    async applyAugmentationToImage(imageData, config, keepAnnotations, variationIndex = null) {
+    async applyAugmentationToImage(imageData, config, keepAnnotations, variationIndex = null, refreshGallery = false) {
         try {
             const preprocessor = new ImagePreprocessor();
             const projectType = this.projectManager.currentProject.type;
@@ -1611,17 +1620,23 @@ class YOLOAnnotator {
                 projectType
             );
 
-            // Generate new filename
+            // Generate new filename with serialized naming system
+            // Format: basename_suffix_TIMESTAMP_COUNTER.ext
+            // This ensures unique names even with identical augmentation configs
             const baseName = imageData.name.replace(/\.[^/.]+$/, ''); // Remove extension
             const extension = imageData.name.match(/\.[^/.]+$/)?.[0] || '.png';
             const suffix = ImagePreprocessor.generateAugmentationSuffix(config);
-            const varSuffix = variationIndex ? `_v${variationIndex}` : '';
-            const newName = baseName + suffix + varSuffix + extension;
+
+            // Increment counter for unique naming
+            this.imageCounter++;
+
+            // Create serialized name: basename_suffix_timestamp_counter.ext
+            const serializedName = `${baseName}${suffix}_${this.sessionTimestamp}_${this.imageCounter.toString().padStart(4, '0')}${extension}`;
 
             // Save as new image
             const newImageData = {
                 projectId: this.projectManager.currentProject.id,
-                name: newName,
+                name: serializedName,
                 image: result.blob,
                 annotations: result.annotations,
                 width: result.width,
@@ -1630,6 +1645,13 @@ class YOLOAnnotator {
             };
 
             await this.db.saveImage(newImageData);
+
+            // Refresh gallery incrementally if requested
+            if (refreshGallery) {
+                await this.galleryManager.loadImages(this.projectManager.currentProject.id);
+            }
+
+            return serializedName; // Return the generated name for logging
 
         } catch (error) {
             console.error('Error applying augmentation:', error);
@@ -1641,15 +1663,28 @@ class YOLOAnnotator {
         try {
             this.ui.showToast(window.i18n.t('augmentation.generatingVariations', { count: variations }), 'info');
 
+            // Generate all variations with incremental gallery refresh
+            const generatedNames = [];
             for (let i = 0; i < variations; i++) {
                 const config = this.generateRandomConfig(randomOptions);
-                await this.applyAugmentationToImage(imageData, config, keepAnnotations, i + 1);
+
+                // Refresh gallery every 3 images for better UX (show progress)
+                const shouldRefresh = (i + 1) % 3 === 0 || (i + 1) === variations;
+                const newName = await this.applyAugmentationToImage(imageData, config, keepAnnotations, i + 1, shouldRefresh);
+
+                generatedNames.push(newName);
+
+                // Small delay to prevent UI blocking
+                if (i < variations - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
             }
 
-            // Refresh gallery
+            // Final gallery refresh and stats update
             await this.galleryManager.loadImages(this.projectManager.currentProject.id);
             this.updateStats();
 
+            console.log('Generated augmented images:', generatedNames);
             this.ui.showToast(window.i18n.t('augmentation.variationsSuccess', { count: variations }), 'success');
 
         } catch (error) {
@@ -1668,22 +1703,45 @@ class YOLOAnnotator {
             saturation: 0
         };
 
-        // Random flip
+        // Improved random flip with better distribution
+        // Instead of simple > 0.5, use different probabilities for each
         if (options.flip) {
-            config.flipHorizontal = Math.random() > 0.5;
-            config.flipVertical = Math.random() > 0.5;
+            // Each flip has independent ~40-60% probability (more varied)
+            const flipHProb = 0.4 + Math.random() * 0.2; // 40-60%
+            const flipVProb = 0.4 + Math.random() * 0.2; // 40-60%
+            config.flipHorizontal = Math.random() < flipHProb;
+            config.flipVertical = Math.random() < flipVProb;
         }
 
-        // Random rotation
+        // Improved random rotation with better distribution
         if (options.rotation) {
-            config.rotation = Math.floor(Math.random() * (options.rotationMax - options.rotationMin + 1)) + options.rotationMin;
+            const range = options.rotationMax - options.rotationMin + 1;
+            // Use crypto.getRandomValues for better randomness if available
+            if (window.crypto && window.crypto.getRandomValues) {
+                const array = new Uint32Array(1);
+                window.crypto.getRandomValues(array);
+                config.rotation = options.rotationMin + (array[0] % range);
+            } else {
+                config.rotation = options.rotationMin + Math.floor(Math.random() * range);
+            }
         }
 
-        // Random color adjustments
+        // Improved random color adjustments with better distribution
         if (options.color) {
-            config.brightness = Math.floor(Math.random() * (options.brightnessMax - options.brightnessMin + 1)) + options.brightnessMin;
-            config.contrast = Math.floor(Math.random() * (options.contrastMax - options.contrastMin + 1)) + options.contrastMin;
-            config.saturation = Math.floor(Math.random() * (options.saturationMax - options.saturationMin + 1)) + options.saturationMin;
+            // Helper function for better random distribution
+            const betterRandom = (min, max) => {
+                const range = max - min + 1;
+                if (window.crypto && window.crypto.getRandomValues) {
+                    const array = new Uint32Array(1);
+                    window.crypto.getRandomValues(array);
+                    return min + (array[0] % range);
+                }
+                return min + Math.floor(Math.random() * range);
+            };
+
+            config.brightness = betterRandom(options.brightnessMin, options.brightnessMax);
+            config.contrast = betterRandom(options.contrastMin, options.contrastMax);
+            config.saturation = betterRandom(options.saturationMin, options.saturationMax);
         }
 
         return config;
@@ -1698,43 +1756,24 @@ class YOLOAnnotator {
                 return;
             }
 
-            const preprocessor = new ImagePreprocessor();
-            const projectType = this.projectManager.currentProject.type;
-
             this.ui.showToast(window.i18n.t('augmentation.batchProcessing', { count: images.length }), 'info');
 
             let processed = 0;
             for (const imageData of images) {
-                const annotations = keepAnnotations ? imageData.annotations : [];
-                const result = await preprocessor.applyAugmentation(
-                    imageData.image,
-                    config,
-                    annotations,
-                    projectType
-                );
+                // Use the improved applyAugmentationToImage with serialized naming
+                // Refresh gallery every 5 images for better UX
+                const shouldRefresh = (processed + 1) % 5 === 0 || (processed + 1) === images.length;
+                await this.applyAugmentationToImage(imageData, config, keepAnnotations, null, shouldRefresh);
 
-                // Generate new filename
-                const baseName = imageData.name.replace(/\.[^/.]+$/, '');
-                const extension = imageData.name.match(/\.[^/.]+$/)?.[0] || '.png';
-                const suffix = ImagePreprocessor.generateAugmentationSuffix(config);
-                const newName = baseName + suffix + extension;
-
-                // Save as new image
-                const newImageData = {
-                    projectId: this.projectManager.currentProject.id,
-                    name: newName,
-                    image: result.blob,
-                    annotations: result.annotations,
-                    width: result.width,
-                    height: result.height,
-                    timestamp: Date.now()
-                };
-
-                await this.db.saveImage(newImageData);
                 processed++;
+
+                // Small delay to prevent UI blocking
+                if (processed < images.length) {
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
             }
 
-            // Refresh gallery
+            // Final gallery refresh and stats update
             await this.galleryManager.loadImages(this.projectManager.currentProject.id);
             this.updateStats();
 
@@ -1766,12 +1805,21 @@ class YOLOAnnotator {
             for (const imageData of images) {
                 for (let i = 0; i < variations; i++) {
                     const config = this.generateRandomConfig(randomOptions);
-                    await this.applyAugmentationToImage(imageData, config, keepAnnotations, i + 1);
+
+                    // Refresh gallery every 5 augmentations for better UX
+                    const shouldRefresh = (processed + 1) % 5 === 0 || (processed + 1) === totalVariations;
+                    await this.applyAugmentationToImage(imageData, config, keepAnnotations, i + 1, shouldRefresh);
+
                     processed++;
+
+                    // Small delay to prevent UI blocking
+                    if (processed < totalVariations) {
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    }
                 }
             }
 
-            // Refresh gallery
+            // Final gallery refresh and stats update
             await this.galleryManager.loadImages(this.projectManager.currentProject.id);
             this.updateStats();
 
