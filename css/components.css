@@ -1378,3 +1378,111 @@ color: white;
     font-size: 0.9em;
     color: var(--dark);
 }
+
+/* Help Icon Tooltips */
+.help-icon {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 6px;
+    cursor: help;
+    position: relative;
+    color: var(--primary);
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.help-icon:hover {
+    opacity: 1;
+}
+
+.help-icon i {
+    font-size: 0.9em;
+}
+
+/* Tooltip on hover */
+.help-icon::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    line-height: 1.4;
+    white-space: normal;
+    width: 280px;
+    max-width: 90vw;
+    text-align: left;
+    font-weight: normal;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 10000;
+}
+
+.help-icon::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    border: 6px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.9);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 10000;
+}
+
+.help-icon:hover::after,
+.help-icon:hover::before {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-4px);
+}
+
+/* Tooltip for checkbox labels */
+.checkbox-label[data-tooltip] {
+    position: relative;
+}
+
+.checkbox-label[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    transform: translateY(-8px);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    line-height: 1.4;
+    white-space: normal;
+    width: 280px;
+    max-width: 90vw;
+    text-align: left;
+    font-weight: normal;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+}
+
+.checkbox-label[data-tooltip]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 20px;
+    transform: translateY(4px);
+    border: 6px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.9);
+    z-index: 10000;
+}
+
+/* Section title tooltips */
+.config-section-title .help-icon {
+    margin-left: 8px;
+    font-size: 0.9em;
+}
