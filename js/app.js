@@ -2381,37 +2381,44 @@ class YOLOAnnotator {
             }
         } else {
             // Canvas mode (detection, segmentation, etc.)
+            console.log(`Deleting class ${classId} from all images in project...`);
 
-            // Delete annotations from current image
-            this.canvasManager.annotations = this.canvasManager.annotations.filter(a => a.class !== classId);
-            this.canvasManager.redraw();
-            this.canvasManager.updateAnnotationsBar();
-
-            // Delete annotations from ALL images in the project
+            // Delete annotations from ALL images in the project (including current one)
             if (this.projectManager.currentProject) {
-                console.log(`Deleting class ${classId} from all images in project...`);
-
                 // Get all images for this project
                 const allImages = await this.db.getImagesByProject(this.projectManager.currentProject.id);
                 let updatedCount = 0;
+                let deletedAnnotations = 0;
 
                 // Process each image
                 for (const imageData of allImages) {
                     const originalCount = imageData.annotations?.length || 0;
 
                     // Filter out annotations with this class
-                    imageData.annotations = (imageData.annotations || []).filter(a => a.class !== classId);
+                    const filtered = (imageData.annotations || []).filter(a => a.class !== classId);
+                    const removed = originalCount - filtered.length;
 
-                    const newCount = imageData.annotations.length;
+                    imageData.annotations = filtered;
 
                     // Update if annotations were removed
-                    if (originalCount !== newCount) {
+                    if (removed > 0) {
                         await this.db.saveImage(imageData);
                         updatedCount++;
+                        deletedAnnotations += removed;
                     }
                 }
 
-                console.log(`✓ Updated ${updatedCount} images, removed annotations with class ${classId}`);
+                console.log(`✓ Deleted ${deletedAnnotations} annotations from ${updatedCount} images`);
+
+                // If current image is loaded, update it from database
+                if (this.canvasManager.imageId) {
+                    const currentImageData = await this.db.getImage(this.canvasManager.imageId);
+                    if (currentImageData) {
+                        this.canvasManager.annotations = currentImageData.annotations || [];
+                        this.canvasManager.redraw();
+                        this.canvasManager.updateAnnotationsBar();
+                    }
+                }
             }
 
             // Remove class from list
