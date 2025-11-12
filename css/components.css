@@ -19,16 +19,16 @@
     color: var(--white);
 }
 
-/* Botones Header */
+/* Botones Header - VSCode Flat Style */
 .btn-header {
-    background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     color: var(--white);
     padding: 6px 12px;
-    border-radius: 6px;
+    border-radius: 4px;
     font-size: 0.9em;
     cursor: pointer;
-    transition: var(--transition);
+    transition: all 0.15s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -37,30 +37,61 @@
     height: 36px;
 }
 
-.btn-header:hover {
-    background: rgba(255, 255, 255, 0.25);
+.btn-header:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.25);
 }
 
-/* GitHub Button - No background */
-.btn-github {
-    background: transparent !important;
-    border: none !important;
+.btn-header:active:not(:disabled) {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(1px);
+}
+
+.btn-header:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Icon Only Buttons - More compact, slightly visible */
+.btn-icon-only {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     padding: 6px;
+    min-width: 32px;
+    height: 32px;
 }
 
-.btn-github:hover {
-    background: rgba(255, 255, 255, 0.1) !important;
-    transform: scale(1.1);
+.btn-icon-only:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.18);
 }
 
-/* Language Selector - Match other buttons size */
+/* Ghost Buttons - No background or border (for help, shortcuts, language, github) */
+.btn-icon-ghost {
+    background: transparent;
+    border: none;
+    padding: 6px;
+    min-width: 32px;
+    height: 32px;
+}
+
+.btn-icon-ghost:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+/* Language Selector - Match ghost button style */
 .language-selector-btn {
-    min-width: 36px !important;
-    height: 36px !important;
+    min-width: 32px !important;
+    height: 32px !important;
     padding: 6px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+.language-selector-btn:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
 }
 
 .language-selector-btn .flag {
