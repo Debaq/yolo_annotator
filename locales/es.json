@@ -191,7 +191,10 @@
         "useCases": "Texto en ángulos, objetos aéreos, satélites",
         "models": "Rotated-YOLO, RRPN",
         "difficulty": "Avanzado"
-      }
+      },
+      "useCasesLabel": "Casos de uso",
+      "modelsLabel": "Modelos recomendados",
+      "difficultyLabel": "Dificultad"
     },
     "initialClasses": "Clases Iniciales (opcional)",
     "classesPlaceholder": "clase1, clase2, clase3",
