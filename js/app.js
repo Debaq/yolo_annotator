@@ -2979,8 +2979,7 @@ IMPORTANTE: YOLOv5 usa CLI, no API de Python
     --weights runs/train/${projectName}/weights/best.pt \\
     --data ../data.yaml \\
     --img ${imgsz} \\
-    --task val${saveConfMatrix ? ' \\
-    --save-json --save-conf' : ''}
+    --task val${saveConfMatrix ? ' \\\n    --save-json --save-conf' : ''}
 
 print("✅ Entrenamiento YOLOv5 completado!")
 print("📁 Resultados en: runs/train/${projectName}")
