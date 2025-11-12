@@ -1047,6 +1047,10 @@ color: white;
     transform: translateY(-2px);
 }
 
+.export-card.full-width {
+    grid-column: 1 / -1;
+}
+
 .export-card-header {
     display: flex;
     align-items: center;

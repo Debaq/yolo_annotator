@@ -2438,9 +2438,19 @@ class YOLOAnnotator {
                     document.querySelectorAll('.export-tab-content').forEach(c => c.classList.remove('active'));
                     document.getElementById(`tab-${tabName}`)?.classList.add('active');
 
-                    // Generate code if switching to code tab
+                    // Show/hide project card and adjust training card width
+                    const projectCard = document.querySelector('.export-card:not(.export-card-training)');
+                    const trainingCard = document.querySelector('.export-card-training');
+
                     if (tabName === 'code') {
+                        // Hide project card and expand training card to full width
+                        if (projectCard) projectCard.style.display = 'none';
+                        if (trainingCard) trainingCard.classList.add('full-width');
                         this.generateTrainingCode();
+                    } else {
+                        // Show project card and restore normal width
+                        if (projectCard) projectCard.style.display = 'flex';
+                        if (trainingCard) trainingCard.classList.remove('full-width');
                     }
                 });
             });
