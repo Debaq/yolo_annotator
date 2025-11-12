@@ -730,25 +730,45 @@ color: white;
 .project-type-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    gap: 12px;
     margin-top: 8px;
 }
 
 .project-type-card-compact {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
-    padding: 12px;
+    gap: 12px;
+    padding: 14px;
     border: 2px solid var(--gray-light);
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
     background: white;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Subtle color background using data attribute */
+.project-type-card-compact::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.project-type-card-compact:hover::before {
+    opacity: 0.05;
 }
 
 .project-type-card-compact:hover {
     border-color: var(--primary);
-    background: rgba(102, 126, 234, 0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .project-type-card-compact input[type="radio"] {
@@ -757,11 +777,47 @@ color: white;
     flex-shrink: 0;
 }
 
-.project-type-card-compact input[type="radio"]:checked + .type-card-compact-content {
-    color: var(--primary);
+/* Icon styling */
+.type-card-icon {
+    font-size: 1.8em;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: currentColor;
+    background-clip: content-box;
+    opacity: 0.15;
+    border-radius: 8px;
+    padding: 8px;
+    transition: all 0.2s ease;
 }
 
-.project-type-card-compact input[type="radio"]:checked + .type-card-compact-content .type-name {
+.type-card-icon i {
+    position: relative;
+    z-index: 1;
+    opacity: 1;
+}
+
+.project-type-card-compact:has(input[type="radio"]:checked) .type-card-icon {
+    opacity: 1;
+    background: linear-gradient(135deg, currentColor 0%, currentColor 100%);
+    color: white;
+    transform: scale(1.05);
+}
+
+.project-type-card-compact:has(input[type="radio"]:checked) .type-card-icon i {
+    color: white;
+}
+
+/* Selected state */
+.project-type-card-compact:has(input[type="radio"]:checked) {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary), 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.project-type-card-compact:has(input[type="radio"]:checked) .type-name {
     color: var(--primary);
 }
 
@@ -779,6 +835,10 @@ color: white;
     gap: 8px;
 }
 
+.type-name {
+    font-size: 0.95em;
+}
+
 .type-difficulty-badge {
     width: 10px;
     height: 10px;
@@ -790,7 +850,7 @@ color: white;
     margin: 0;
     font-size: 0.85em;
     color: var(--gray-dark);
-    line-height: 1.3;
+    line-height: 1.4;
 }
 
 /* Dimension Mode Options */

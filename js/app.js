@@ -582,15 +582,15 @@ class YOLOAnnotator {
         const preprocessor = new ImagePreprocessor();
         const sizeOptions = preprocessor.standardSizes;
 
-        // Define project types with their internal IDs
+        // Define project types with their internal IDs, icons and colors
         const projectTypes = [
-            { id: 'classification', key: 'classification' },
-            { id: 'multiLabel', key: 'multiLabel' },
-            { id: 'detection', key: 'detection' },
-            { id: 'segmentation', key: 'segmentation' },
-            { id: 'instanceSeg', key: 'instanceSeg' },
-            { id: 'keypoints', key: 'keypoints' },
-            { id: 'obb', key: 'obb' }
+            { id: 'classification', key: 'classification', icon: 'fa-tag', color: '#667eea' },
+            { id: 'multiLabel', key: 'multiLabel', icon: 'fa-tags', color: '#9333ea' },
+            { id: 'detection', key: 'detection', icon: 'fa-vector-square', color: '#10b981' },
+            { id: 'segmentation', key: 'segmentation', icon: 'fa-fill-drip', color: '#f59e0b' },
+            { id: 'instanceSeg', key: 'instanceSeg', icon: 'fa-object-group', color: '#ef4444' },
+            { id: 'keypoints', key: 'keypoints', icon: 'fa-braille', color: '#06b6d4' },
+            { id: 'obb', key: 'obb', icon: 'fa-rotate', color: '#6366f1' }
         ];
 
         const content = `
@@ -614,8 +614,11 @@ class YOLOAnnotator {
                             difficulty === 'Intermedio' || difficulty === 'Intermediate' ? '#f59e0b' : '#ef4444';
 
                         return `
-                            <label class="project-type-card-compact">
+                            <label class="project-type-card-compact" data-type-color="${type.color}">
                                 <input type="radio" name="projectType" value="${type.id}" ${type.id === 'detection' ? 'checked' : ''}>
+                                <div class="type-card-icon" style="color: ${type.color};">
+                                    <i class="fas ${type.icon}"></i>
+                                </div>
                                 <div class="type-card-compact-content">
                                     <div class="type-card-compact-header">
                                         <strong class="type-name">${name}</strong>
