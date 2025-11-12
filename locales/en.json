@@ -26,6 +26,7 @@
     "mask": "Mask",
     "select": "Select",
     "pan": "Pan",
+    "newInstance": "New Instance",
     "tooltips": {
       "bbox": "Bounding Box (B)",
       "obb": "Oriented Box (O)",

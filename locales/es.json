@@ -25,6 +25,7 @@
     "select": "Select",
     "pan": "Pan",
     "eraseMode": "Borrador",
+    "newInstance": "Nueva Instancia",
     "tooltips": {
       "bbox": "Bounding Box (B)",
       "obb": "Oriented Box (O)",
