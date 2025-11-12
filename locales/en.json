@@ -217,7 +217,7 @@
     "deleted": "Project deleted",
     "duplicated": "Project \"{name}\" duplicated",
     "renamed": "Project renamed",
-    "imported": "Project "{name}" imported",
+    "imported": "Project \"{name}\" imported",
     "exported": "Project exported",
     "configExported": "Configuration exported",
     "selectFirst": "Select a project first",

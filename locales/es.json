@@ -248,7 +248,7 @@
     "deleted": "Proyecto eliminado",
     "duplicated": "Proyecto \"{name}\" duplicado",
     "renamed": "Proyecto renombrado",
-    "imported": "Proyecto "{name}" importado",
+    "imported": "Proyecto \"{name}\" importado",
     "exported": "Proyecto exportado",
     "configExported": "Configuración exportada",
     "selectFirst": "Selecciona un proyecto primero",
