@@ -141,15 +141,23 @@ class YOLOAnnotator {
         // Erase mode button (mask tool)
         document.getElementById('btnEraseMode')?.addEventListener('click', () => {
             if (!this.canvasManager) return;
+
             const isEraseMode = !this.canvasManager.toolManager.isEraseMode();
+
+            // When enabling erase mode, automatically switch to mask tool
+            if (isEraseMode) {
+                this.setTool('mask');
+            }
+
             this.canvasManager.toolManager.setEraseMode(isEraseMode);
             const btn = document.getElementById('btnEraseMode');
             if (btn) {
                 btn.classList.toggle('active', isEraseMode);
                 // Visual feedback
-                const icon = btn.querySelector('i');
-                if (icon && isEraseMode) {
-                    this.ui.showToast('Modo borrador activado', 'info');
+                if (isEraseMode) {
+                    this.ui.showToast('Erase mode ON', 'info');
+                } else {
+                    this.ui.showToast('Erase mode OFF', 'info');
                 }
             }
         });
