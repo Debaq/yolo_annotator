@@ -2300,22 +2300,112 @@ class YOLOAnnotator {
                 </div>
 
                 <!-- Export for Training -->
-                <div class="export-card">
+                <div class="export-card export-card-training">
                     <div class="export-card-header">
                         <i class="fas fa-graduation-cap"></i>
                         <h4>${window.i18n.t('export.training.title')}</h4>
                     </div>
                     <p class="export-card-description">${window.i18n.t('export.training.description')}</p>
-                    <div class="export-card-actions">
-                        <label class="form-label" style="margin-top: 8px;">${window.i18n.t('export.training.selectFormat')}</label>
-                        <select class="form-control form-select" id="trainingFormatSelect">
-                            ${this.getAvailableFormats().map(fmt => `
-                                <option value="${fmt.id}">${window.i18n.t(`export.formats.${fmt.key}.name`)}</option>
-                            `).join('')}
-                        </select>
-                        <button class="btn btn-success btn-block" id="btnExportTraining" style="margin-top: 8px;">
-                            <i class="fas fa-rocket"></i> ${window.i18n.t('export.training.button')}
+
+                    <!-- Tabs -->
+                    <div class="export-tabs">
+                        <button class="export-tab active" data-tab="export">
+                            <i class="fas fa-download"></i> ${window.i18n.t('export.training.tabExport') || 'Exportar'}
                         </button>
+                        <button class="export-tab" data-tab="code">
+                            <i class="fas fa-code"></i> ${window.i18n.t('export.training.tabCode') || 'Generar Código'}
+                        </button>
+                    </div>
+
+                    <!-- Tab Content: Export -->
+                    <div class="export-tab-content active" id="tab-export">
+                        <div class="export-card-actions">
+                            <label class="form-label" style="margin-top: 8px;">${window.i18n.t('export.training.selectFormat')}</label>
+                            <select class="form-control form-select" id="trainingFormatSelect">
+                                ${this.getAvailableFormats().map(fmt => `
+                                    <option value="${fmt.id}">${window.i18n.t(`export.formats.${fmt.key}.name`)}</option>
+                                `).join('')}
+                            </select>
+                            <button class="btn btn-success btn-block" id="btnExportTraining" style="margin-top: 8px;">
+                                <i class="fas fa-rocket"></i> ${window.i18n.t('export.training.button')}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tab Content: Generate Code -->
+                    <div class="export-tab-content" id="tab-code">
+                        <div class="code-generator">
+                            <div class="code-config">
+                                <div class="config-row">
+                                    <div class="config-item">
+                                        <label class="form-label">${window.i18n.t('export.code.framework') || 'Framework'}</label>
+                                        <select class="form-control form-select" id="codeFramework">
+                                            <option value="yolov8">YOLOv8 (Ultralytics)</option>
+                                            <option value="yolov5">YOLOv5</option>
+                                            <option value="yolov11">YOLOv11</option>
+                                            <option value="yolo-nas">YOLO-NAS</option>
+                                        </select>
+                                    </div>
+                                    <div class="config-item">
+                                        <label class="form-label">${window.i18n.t('export.code.model') || 'Modelo'}</label>
+                                        <select class="form-control form-select" id="codeModel">
+                                            <option value="n">Nano (más rápido)</option>
+                                            <option value="s">Small</option>
+                                            <option value="m" selected>Medium</option>
+                                            <option value="l">Large</option>
+                                            <option value="x">XLarge (más preciso)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="config-row">
+                                    <div class="config-item">
+                                        <label class="form-label">${window.i18n.t('export.code.device') || 'Device'}</label>
+                                        <select class="form-control form-select" id="codeDevice">
+                                            <option value="cpu">🖥️ CPU</option>
+                                            <option value="cuda:0" selected>🎮 GPU (CUDA)</option>
+                                            <option value="mps">🍎 Apple Silicon (MPS)</option>
+                                        </select>
+                                    </div>
+                                    <div class="config-item">
+                                        <label class="form-label">${window.i18n.t('export.code.epochs') || 'Epochs'}</label>
+                                        <input type="number" class="form-control" id="codeEpochs" value="100" min="1">
+                                    </div>
+                                </div>
+                                <div class="config-row">
+                                    <div class="config-item">
+                                        <label class="form-label">${window.i18n.t('export.code.batch') || 'Batch Size'}</label>
+                                        <input type="number" class="form-control" id="codeBatch" value="16" min="1">
+                                    </div>
+                                    <div class="config-item">
+                                        <label class="form-label">${window.i18n.t('export.code.imgsz') || 'Image Size'}</label>
+                                        <select class="form-control form-select" id="codeImgsz">
+                                            <option value="416">416</option>
+                                            <option value="640" selected>640</option>
+                                            <option value="1280">1280</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="code-preview-container">
+                                <div class="code-preview-header">
+                                    <span class="code-preview-title">
+                                        <i class="fas fa-terminal"></i> ${window.i18n.t('export.code.preview') || 'Vista Previa'}
+                                    </span>
+                                    <div class="code-preview-actions">
+                                        <button class="btn-icon" id="btnCopyCode" title="${window.i18n.t('export.code.copy') || 'Copiar'}">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <button class="btn-icon" id="btnDownloadPy" title="${window.i18n.t('export.code.downloadPy') || 'Descargar .py'}">
+                                            <i class="fas fa-file-code"></i>
+                                        </button>
+                                        <button class="btn-icon" id="btnDownloadIpynb" title="${window.i18n.t('export.code.downloadIpynb') || 'Descargar .ipynb'}">
+                                            <i class="fas fa-book"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <pre class="code-preview" id="codePreview"><code class="language-python"># El código se generará aquí...</code></pre>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2334,6 +2424,37 @@ class YOLOAnnotator {
         setTimeout(() => {
             document.getElementById('btnExportProjectTix')?.addEventListener('click', () => this.exportProjectTix());
             document.getElementById('btnExportTraining')?.addEventListener('click', () => this.exportForTraining());
+
+            // Tab switching
+            document.querySelectorAll('.export-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    const tabName = e.currentTarget.dataset.tab;
+
+                    // Update tabs
+                    document.querySelectorAll('.export-tab').forEach(t => t.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+
+                    // Update content
+                    document.querySelectorAll('.export-tab-content').forEach(c => c.classList.remove('active'));
+                    document.getElementById(`tab-${tabName}`)?.classList.add('active');
+
+                    // Generate code if switching to code tab
+                    if (tabName === 'code') {
+                        this.generateTrainingCode();
+                    }
+                });
+            });
+
+            // Code generation controls
+            ['codeFramework', 'codeModel', 'codeDevice', 'codeEpochs', 'codeBatch', 'codeImgsz'].forEach(id => {
+                document.getElementById(id)?.addEventListener('change', () => this.generateTrainingCode());
+                document.getElementById(id)?.addEventListener('input', () => this.generateTrainingCode());
+            });
+
+            // Code actions
+            document.getElementById('btnCopyCode')?.addEventListener('click', () => this.copyCode());
+            document.getElementById('btnDownloadPy')?.addEventListener('click', () => this.downloadCode('py'));
+            document.getElementById('btnDownloadIpynb')?.addEventListener('click', () => this.downloadCode('ipynb'));
         }, 100);
     }
 
@@ -2387,6 +2508,250 @@ class YOLOAnnotator {
         console.log('Export for training:', format);
     }
 
+    generateTrainingCode() {
+        const framework = document.getElementById('codeFramework')?.value || 'yolov8';
+        const model = document.getElementById('codeModel')?.value || 'm';
+        const device = document.getElementById('codeDevice')?.value || 'cuda:0';
+        const epochs = document.getElementById('codeEpochs')?.value || '100';
+        const batch = document.getElementById('codeBatch')?.value || '16';
+        const imgsz = document.getElementById('codeImgsz')?.value || '640';
+
+        const projectType = this.projectManager.currentProject?.type || 'detection';
+        const projectName = this.projectManager.currentProject?.name || 'mi_proyecto';
+
+        let code = '';
+
+        if (framework === 'yolov8' || framework === 'yolov11') {
+            const task = this.getYOLOTask(projectType);
+            const modelName = framework === 'yolov11' ? `yolo11${model}${task}.pt` : `yolov8${model}${task}.pt`;
+
+            code = `"""
+${projectName} - Training Script
+Generado automáticamente por Annotix
+Tipo de proyecto: ${this.getProjectTypeLabel(projectType)}
+"""
+
+from ultralytics import YOLO
+
+# 1. Cargar modelo preentrenado
+model = YOLO('${modelName}')
+
+# 2. Entrenar el modelo
+results = model.train(
+    data='data.yaml',       # Ruta al archivo de configuración del dataset
+    epochs=${epochs},               # Número de épocas de entrenamiento
+    batch=${batch},                # Tamaño del batch
+    imgsz=${imgsz},                # Tamaño de las imágenes
+    device='${device}',     # Dispositivo (CPU, GPU, MPS)
+    patience=50,            # Early stopping patience
+    save=True,              # Guardar checkpoints
+    plots=True,             # Generar gráficas de entrenamiento
+    cache=False,            # No cachear imágenes (usa más RAM)
+    workers=8               # Número de workers para DataLoader
+)
+
+# 3. Evaluar el modelo
+metrics = model.val()
+
+# 4. Exportar el modelo entrenado (opcional)
+# model.export(format='onnx')  # Para deployment
+
+print("✅ Entrenamiento completado!")
+print(f"📊 mAP50: {metrics.box.map50:.3f}")
+print(f"📊 mAP50-95: {metrics.box.map:.3f}")
+`;
+        } else if (framework === 'yolov5') {
+            code = `"""
+${projectName} - Training Script (YOLOv5)
+Generado automáticamente por Annotix
+"""
+
+import torch
+
+# 1. Clonar repositorio YOLOv5 (si no lo tienes)
+# !git clone https://github.com/ultralytics/yolov5
+# %cd yolov5
+# !pip install -r requirements.txt
+
+# 2. Entrenar
+!python train.py \\
+    --img ${imgsz} \\
+    --batch ${batch} \\
+    --epochs ${epochs} \\
+    --data data.yaml \\
+    --weights yolov5${model}.pt \\
+    --device ${device === 'cuda:0' ? '0' : 'cpu'} \\
+    --cache \\
+    --patience 50
+
+# 3. Validar
+!python val.py \\
+    --weights runs/train/exp/weights/best.pt \\
+    --data data.yaml \\
+    --img ${imgsz}
+
+print("✅ Entrenamiento YOLOv5 completado!")
+`;
+        } else if (framework === 'yolo-nas') {
+            code = `"""
+${projectName} - Training Script (YOLO-NAS)
+Generado automáticamente por Annotix
+"""
+
+from super_gradients.training import Trainer
+from super_gradients.training import dataloaders
+from super_gradients.training import models
+from super_gradients.training.losses import PPYoloELoss
+from super_gradients.training.metrics import DetectionMetrics_050
+
+# 1. Preparar trainer
+trainer = Trainer(experiment_name='${projectName}', ckpt_root_dir='checkpoints')
+
+# 2. Configurar dataset
+train_data = dataloaders.coco_detection_yolo_format_train(
+    dataset_params={
+        'data_dir': 'dataset/',
+        'images_dir': 'images/train',
+        'labels_dir': 'labels/train',
+        'classes': ${this.canvasManager.classes.length}
+    },
+    dataloader_params={
+        'batch_size': ${batch},
+        'num_workers': 2
+    }
+)
+
+val_data = dataloaders.coco_detection_yolo_format_val(
+    dataset_params={
+        'data_dir': 'dataset/',
+        'images_dir': 'images/val',
+        'labels_dir': 'labels/val',
+        'classes': ${this.canvasManager.classes.length}
+    },
+    dataloader_params={
+        'batch_size': ${batch},
+        'num_workers': 2
+    }
+)
+
+# 3. Cargar modelo
+model = models.get('yolo_nas_${model}', num_classes=${this.canvasManager.classes.length}, pretrained_weights="coco")
+
+# 4. Entrenar
+trainer.train(
+    model=model,
+    training_params={
+        'max_epochs': ${epochs},
+        'lr_mode': 'cosine',
+        'initial_lr': 5e-4,
+        'optimizer': 'Adam',
+        'loss': PPYoloELoss(),
+        'valid_metrics_list': [DetectionMetrics_050(num_cls=${this.canvasManager.classes.length})],
+        'metric_to_watch': 'mAP@0.50',
+        'save_checkpoints': True
+    },
+    train_loader=train_data,
+    valid_loader=val_data
+)
+
+print("✅ Entrenamiento YOLO-NAS completado!")
+`;
+        }
+
+        const codePreview = document.getElementById('codePreview');
+        if (codePreview) {
+            codePreview.textContent = code;
+        }
+    }
+
+    getYOLOTask(projectType) {
+        if (projectType === 'classification' || projectType === 'multiLabel') return '-cls';
+        if (projectType === 'segmentation' || projectType === 'instanceSeg') return '-seg';
+        if (projectType === 'keypoints') return '-pose';
+        if (projectType === 'obb') return '-obb';
+        return '';  // detection
+    }
+
+    getProjectTypeLabel(projectType) {
+        const labels = {
+            'classification': 'Clasificación Simple',
+            'multiLabel': 'Clasificación Multi-Etiqueta',
+            'detection': 'Detección de Objetos',
+            'segmentation': 'Segmentación Semántica',
+            'instanceSeg': 'Segmentación de Instancias',
+            'keypoints': 'Puntos Clave',
+            'obb': 'Cajas Rotadas (OBB)'
+        };
+        return labels[projectType] || projectType;
+    }
+
+    async copyCode() {
+        const code = document.getElementById('codePreview')?.textContent;
+        if (code) {
+            try {
+                await navigator.clipboard.writeText(code);
+                this.ui.showToast('Código copiado al portapapeles', 'success');
+            } catch (err) {
+                this.ui.showToast('Error al copiar código', 'error');
+            }
+        }
+    }
+
+    downloadCode(format) {
+        const code = document.getElementById('codePreview')?.textContent;
+        const projectName = this.projectManager.currentProject?.name || 'training';
+
+        if (format === 'py') {
+            const blob = new Blob([code], { type: 'text/x-python' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${projectName}_train.py`;
+            a.click();
+            URL.revokeObjectURL(url);
+            this.ui.showToast('Archivo .py descargado', 'success');
+        } else if (format === 'ipynb') {
+            // Create Jupyter notebook format
+            const notebook = {
+                cells: [
+                    {
+                        cell_type: 'markdown',
+                        metadata: {},
+                        source: [`# ${projectName} - Training Notebook\n\nGenerado automáticamente por Annotix`]
+                    },
+                    {
+                        cell_type: 'code',
+                        execution_count: null,
+                        metadata: {},
+                        outputs: [],
+                        source: code.split('\n')
+                    }
+                ],
+                metadata: {
+                    kernelspec: {
+                        display_name: 'Python 3',
+                        language: 'python',
+                        name: 'python3'
+                    },
+                    language_info: {
+                        name: 'python',
+                        version: '3.8.0'
+                    }
+                },
+                nbformat: 4,
+                nbformat_minor: 4
+            };
+
+            const blob = new Blob([JSON.stringify(notebook, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${projectName}_train.ipynb`;
+            a.click();
+            URL.revokeObjectURL(url);
+            this.ui.showToast('Notebook .ipynb descargado', 'success');
+        }
+    }
 
     startTour() {
         if (window.startAppTour) {

@@ -112,8 +112,22 @@
     "training": {
       "title": "Exportar para Entrenamiento",
       "description": "Dataset listo para entrenar tu modelo (siempre incluye imágenes)",
+      "tabExport": "Exportar",
+      "tabCode": "Generar Código",
       "selectFormat": "Selecciona el formato:",
       "button": "Exportar Dataset"
+    },
+    "code": {
+      "framework": "Framework",
+      "model": "Modelo",
+      "device": "Dispositivo",
+      "epochs": "Epochs",
+      "batch": "Batch Size",
+      "imgsz": "Tamaño Imagen",
+      "preview": "Vista Previa",
+      "copy": "Copiar Código",
+      "downloadPy": "Descargar .py",
+      "downloadIpynb": "Descargar .ipynb"
     },
     "formats": {
       "yolo": {
