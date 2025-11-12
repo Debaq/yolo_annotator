@@ -2430,15 +2430,15 @@ class YOLOAnnotator {
                                                 <div class="config-item">
                                                     <label class="form-label">
                                                         Optimizer
-                                                        <span class="help-icon" data-tooltip="Algoritmo que ajusta los pesos del modelo. Adam es el más popular y funciona bien en la mayoría de casos.">
+                                                        <span class="help-icon" data-tooltip="Algoritmo que ajusta los pesos del modelo durante entrenamiento. Adam: equilibrado y popular. AdamW: Adam con weight decay mejorado. SGD: clásico, más lento pero a veces mejor resultado final. RMSprop: bueno para RNNs.">
                                                             <i class="fas fa-question-circle"></i>
                                                         </span>
                                                     </label>
                                                     <select class="form-control form-select" id="codeOptimizer">
-                                                        <option value="Adam" selected>Adam</option>
-                                                        <option value="AdamW">AdamW</option>
-                                                        <option value="SGD">SGD</option>
-                                                        <option value="RMSprop">RMSprop</option>
+                                                        <option value="Adam" selected>Adam (recomendado para principiantes)</option>
+                                                        <option value="AdamW">AdamW (Adam mejorado con weight decay)</option>
+                                                        <option value="SGD">SGD (clásico, requiere más ajuste)</option>
+                                                        <option value="RMSprop">RMSprop (bueno para redes recurrentes)</option>
                                                     </select>
                                                 </div>
                                                 <div class="config-item">
@@ -2598,17 +2598,25 @@ class YOLOAnnotator {
                     // Show/hide project card and adjust training card width
                     const projectCard = document.querySelector('.export-card:not(.export-card-training)');
                     const trainingCard = document.querySelector('.export-card-training');
+                    const modal = document.querySelector('.modal');
 
                     if (tabName === 'code') {
                         // Hide project card and expand training card to full width
                         if (projectCard) projectCard.style.display = 'none';
                         if (trainingCard) trainingCard.classList.add('full-width');
+
+                        // Expand modal to full screen mode
+                        if (modal) modal.classList.add('code-mode');
+
                         this.populateFrameworks();
                         this.generateTrainingCode();
                     } else {
                         // Show project card and restore normal width
                         if (projectCard) projectCard.style.display = 'flex';
                         if (trainingCard) trainingCard.classList.remove('full-width');
+
+                        // Restore normal modal size
+                        if (modal) modal.classList.remove('code-mode');
                     }
                 });
             });

@@ -1153,6 +1153,49 @@ color: white;
     gap: 16px;
 }
 
+/* Two column layout in code mode */
+.modal.code-mode .code-generator {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 20px;
+    max-height: calc(90vh - 180px);
+}
+
+.modal.code-mode .code-config {
+    overflow-y: auto;
+    padding-right: 12px;
+}
+
+/* Custom scrollbar for code config in code mode */
+.modal.code-mode .code-config::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal.code-mode .code-config::-webkit-scrollbar-track {
+    background: var(--light);
+    border-radius: 4px;
+}
+
+.modal.code-mode .code-config::-webkit-scrollbar-thumb {
+    background: var(--gray);
+    border-radius: 4px;
+}
+
+.modal.code-mode .code-config::-webkit-scrollbar-thumb:hover {
+    background: var(--dark);
+}
+
+.modal.code-mode .code-preview-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal.code-mode .code-preview {
+    flex: 1;
+    max-height: none;
+}
+
 .code-config {
     display: flex;
     flex-direction: column;
@@ -1323,6 +1366,21 @@ color: white;
     background: white;
 }
 
+/* In code mode, always show advanced options */
+.modal.code-mode .config-accordion {
+    border: none;
+    margin-top: 12px;
+}
+
+.modal.code-mode .config-accordion-toggle {
+    display: none;
+}
+
+.modal.code-mode .config-accordion-content {
+    max-height: none !important;
+    overflow: visible;
+}
+
 .config-section {
     padding: 16px;
     border-bottom: 1px solid var(--light);
@@ -1330,6 +1388,20 @@ color: white;
 
 .config-section:last-child {
     border-bottom: none;
+}
+
+/* In code mode, add visual separation */
+.modal.code-mode .config-section {
+    padding: 12px;
+    margin-bottom: 8px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+
+.modal.code-mode .config-section:last-child {
+    margin-bottom: 0;
 }
 
 .config-section-title {

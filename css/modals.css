@@ -115,6 +115,18 @@
     max-height: 80vh;
     overflow-y: auto;
     animation: scaleIn 0.2s ease;
+    transition: max-width 0.3s ease, width 0.3s ease, max-height 0.3s ease;
+}
+
+/* Expanded modal for code generation */
+.modal.code-mode {
+    max-width: 95vw;
+    width: 95%;
+    max-height: 90vh;
+}
+
+.modal.code-mode .modal-body {
+    padding: 10px 20px 20px 20px;
 }
 
 @keyframes scaleIn {
