@@ -5,6 +5,7 @@
  * Features:
  * - Draw masks with brush tool
  * - Erase mode to remove painted areas
+ * - Edit existing masks: Double-click on a mask to load it for editing
  * - Adjustable brush size
  * - Multiple instances (for instance segmentation)
  * - Opacity control
@@ -36,6 +37,9 @@ class CanvasMask extends CanvasBase {
         this.isDragging = false;
         this.dragOffsetX = 0;
         this.dragOffsetY = 0;
+
+        // Double-click detection for editing masks
+        this.lastClickTime = null;
 
         // Current tool
         this.currentTool = 'mask'; // 'mask', 'select', 'pan'
@@ -185,13 +189,26 @@ class CanvasMask extends CanvasBase {
             // Check if clicking on existing mask
             const clickedMask = this.getMaskAtPosition(x, y);
             if (clickedMask) {
+                // Check for double-click to edit mask
+                const now = Date.now();
+                if (this.selectedAnnotation === clickedMask &&
+                    this.lastClickTime &&
+                    (now - this.lastClickTime) < 300) {
+                    // Double-click detected - load mask for editing
+                    this.loadMaskForEditing(clickedMask);
+                    this.lastClickTime = null;
+                    return;
+                }
+
                 this.selectedAnnotation = clickedMask;
                 this.isDragging = true;
                 this.dragOffsetX = x - clickedMask.data.x;
                 this.dragOffsetY = y - clickedMask.data.y;
+                this.lastClickTime = now;
                 this.redraw();
             } else {
                 this.selectedAnnotation = null;
+                this.lastClickTime = null;
                 this.redraw();
             }
         }
@@ -536,6 +553,46 @@ class CanvasMask extends CanvasBase {
             this.saveMask();
         }
         this.ui.showToast('New mask instance started', 'success');
+    }
+
+    loadMaskForEditing(maskAnnotation) {
+        // Save any current mask being edited
+        if (this.currentMaskCanvas) {
+            this.saveMask();
+        }
+
+        // Create canvas at full image size
+        this.currentMaskCanvas = document.createElement('canvas');
+        this.currentMaskCanvas.width = this.image.width;
+        this.currentMaskCanvas.height = this.image.height;
+        this.currentMaskCtx = this.currentMaskCanvas.getContext('2d');
+
+        // Load the mask image onto the canvas
+        const img = new Image();
+        img.onload = () => {
+            const { x, y, width, height } = maskAnnotation.data;
+            this.currentMaskCtx.drawImage(img, x, y, width, height);
+
+            // Set the current class to match the mask's class
+            this.currentClass = maskAnnotation.class;
+            this.emit('classChanged', { classId: this.currentClass });
+
+            // Remove the annotation from the array (we're editing it now)
+            const index = this.annotations.indexOf(maskAnnotation);
+            if (index !== -1) {
+                this.annotations.splice(index, 1);
+            }
+
+            // Switch to mask tool for editing
+            this.setTool('mask');
+            this.selectedAnnotation = null;
+
+            // Redraw to show the editable mask
+            this.redraw();
+
+            this.ui.showToast('Mask loaded for editing - you can now paint or erase', 'info');
+        };
+        img.src = maskAnnotation.data.imageData;
     }
 
     // ============================================
