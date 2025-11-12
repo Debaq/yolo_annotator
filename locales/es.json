@@ -12,9 +12,7 @@
   "header": {
     "selectProject": "Seleccionar proyecto...",
     "newProject": "Nuevo",
-    "exportProject": "Exportar Proyecto Completo",
-    "exportConfig": "Exportar Configuración",
-    "importConfig": "Importar Configuración",
+    "export": "Exportar",
     "help": "Ayuda"
   },
   "tools": {
@@ -104,11 +102,33 @@
     "deleteConfirm": "¿Eliminar esta imagen?"
   },
   "export": {
-    "title": "Exportar",
-    "downloadDataset": "Descargar Dataset ZIP",
-    "downloadClasses": "Descargar classes.txt",
-    "selectFormat": "Seleccionar Formato de Exportación",
-    "formatDescription": "Elige el formato en el que deseas exportar las anotaciones:",
+    "title": "Exportar Proyecto",
+    "project": {
+      "title": "Exportar Proyecto (.tix)",
+      "description": "Para continuar trabajando después o compartir con tu equipo",
+      "withImages": "Incluir imágenes (proyecto completo)",
+      "button": "Exportar Proyecto"
+    },
+    "training": {
+      "title": "Exportar para Entrenamiento",
+      "description": "Dataset listo para entrenar tu modelo (siempre incluye imágenes)",
+      "tabExport": "Exportar",
+      "tabCode": "Generar Código",
+      "selectFormat": "Selecciona el formato:",
+      "button": "Exportar Dataset"
+    },
+    "code": {
+      "framework": "Framework",
+      "model": "Modelo",
+      "device": "Dispositivo",
+      "epochs": "Epochs",
+      "batch": "Batch Size",
+      "imgsz": "Tamaño Imagen",
+      "preview": "Vista Previa",
+      "copy": "Copiar Código",
+      "downloadPy": "Descargar .py",
+      "downloadIpynb": "Descargar .ipynb"
+    },
     "formats": {
       "yolo": {
         "name": "YOLO Detection",
@@ -133,6 +153,10 @@
       "csv": {
         "name": "CSV Simple",
         "description": "Formato CSV para procesamiento con pandas"
+      },
+      "folders": {
+        "name": "Carpetas por Clase",
+        "description": "Imágenes organizadas en carpetas por clase"
       }
     }
   },
@@ -191,7 +215,10 @@
         "useCases": "Texto en ángulos, objetos aéreos, satélites",
         "models": "Rotated-YOLO, RRPN",
         "difficulty": "Avanzado"
-      }
+      },
+      "useCasesLabel": "Casos de uso",
+      "modelsLabel": "Modelos recomendados",
+      "difficultyLabel": "Dificultad"
     },
     "initialClasses": "Clases Iniciales (opcional)",
     "classesPlaceholder": "clase1, clase2, clase3",

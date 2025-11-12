@@ -119,63 +119,84 @@ class I18N {
         container.style.cssText = 'position: relative; display: inline-block;';
 
         const currentLang = this.availableLanguages.find(l => l.code === this.currentLanguage);
-        
+
         const button = document.createElement('button');
         button.className = 'btn-header language-selector-btn';
-        button.innerHTML = `<span class="flag">${currentLang.flag}</span> <span class="lang-name">${currentLang.name}</span> <i class="fas fa-chevron-down"></i>`;
-        button.style.cssText = 'min-width: 140px; justify-content: space-between;';
-        
+        button.innerHTML = `<span class="flag" style="font-size: 1.4em;">${currentLang.flag}</span>`;
+        button.style.cssText = 'min-width: auto; padding: 8px 12px;';
+        button.title = currentLang.name;
+
         const dropdown = document.createElement('div');
         dropdown.className = 'language-dropdown';
         dropdown.style.cssText = `
             position: absolute;
             top: 100%;
             right: 0;
-            margin-top: 5px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            min-width: 180px;
+            margin-top: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+            padding: 16px;
             display: none;
             z-index: 10000;
-            max-height: 400px;
-            overflow-y: auto;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        `;
+
+        // Create grid container
+        const grid = document.createElement('div');
+        grid.style.cssText = `
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
         `;
 
         this.availableLanguages.forEach(lang => {
-            const item = document.createElement('div');
-            item.className = 'language-item';
+            const item = document.createElement('button');
+            item.className = 'language-flag-btn';
             item.style.cssText = `
-                padding: 10px 15px;
+                padding: 12px;
                 cursor: pointer;
+                font-size: 2em;
+                background: ${lang.code === this.currentLanguage ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.2)'};
+                border: 2px solid ${lang.code === this.currentLanguage ? 'white' : 'transparent'};
+                border-radius: 8px;
+                transition: all 0.2s ease;
                 display: flex;
                 align-items: center;
-                gap: 10px;
-                transition: background 0.2s;
-                font-size: 0.9em;
+                justify-content: center;
+                aspect-ratio: 1;
+                box-shadow: ${lang.code === this.currentLanguage ? '0 4px 12px rgba(0, 0, 0, 0.2)' : 'none'};
             `;
-            
-            if (lang.code === this.currentLanguage) {
-                item.style.background = '#f0f0f0';
-                item.style.fontWeight = 'bold';
-            }
-            
-            item.innerHTML = `<span class="flag" style="font-size: 1.2em;">${lang.flag}</span> <span>${lang.name}</span>`;
-            
-            item.onmouseover = () => item.style.background = '#f8f9fa';
-            item.onmouseout = () => {
-                item.style.background = lang.code === this.currentLanguage ? '#f0f0f0' : 'white';
+
+            item.title = lang.name;
+            item.innerHTML = lang.flag;
+
+            item.onmouseover = () => {
+                if (lang.code !== this.currentLanguage) {
+                    item.style.background = 'rgba(255, 255, 255, 0.4)';
+                    item.style.transform = 'scale(1.1)';
+                }
             };
-            
-            item.onclick = async () => {
+
+            item.onmouseout = () => {
+                if (lang.code !== this.currentLanguage) {
+                    item.style.background = 'rgba(255, 255, 255, 0.2)';
+                    item.style.transform = 'scale(1)';
+                }
+            };
+
+            item.onclick = async (e) => {
+                e.stopPropagation();
                 dropdown.style.display = 'none';
                 if (lang.code !== this.currentLanguage) {
                     await this.changeLanguage(lang.code);
                 }
             };
-            
-            dropdown.appendChild(item);
+
+            grid.appendChild(item);
         });
+
+        dropdown.appendChild(grid);
 
         button.onclick = (e) => {
             e.stopPropagation();
@@ -199,30 +220,32 @@ class I18N {
         const success = await this.loadLanguage(langCode);
         if (success) {
             this.updateDOM();
-            
-            // Update language selector button
+
+            // Update language selector button (only flag)
             const currentLang = this.availableLanguages.find(l => l.code === langCode);
             const selectorBtn = document.querySelector('.language-selector-btn');
             if (selectorBtn && currentLang) {
-                selectorBtn.innerHTML = `<span class="flag">${currentLang.flag}</span> <span class="lang-name">${currentLang.name}</span> <i class="fas fa-chevron-down"></i>`;
+                selectorBtn.innerHTML = `<span class="flag" style="font-size: 1.4em;">${currentLang.flag}</span>`;
+                selectorBtn.title = currentLang.name;
             }
-            
-            // Refresh highlights in dropdown
-            document.querySelectorAll('.language-item').forEach(item => {
-                const langName = item.querySelector('span:last-child').textContent;
-                const lang = this.availableLanguages.find(l => l.name === langName);
+
+            // Refresh highlights in dropdown grid
+            document.querySelectorAll('.language-flag-btn').forEach((item, index) => {
+                const lang = this.availableLanguages[index];
                 if (lang && lang.code === langCode) {
-                    item.style.background = '#f0f0f0';
-                    item.style.fontWeight = 'bold';
+                    item.style.background = 'rgba(255, 255, 255, 0.9)';
+                    item.style.border = '2px solid white';
+                    item.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
                 } else {
-                    item.style.background = 'white';
-                    item.style.fontWeight = 'normal';
+                    item.style.background = 'rgba(255, 255, 255, 0.2)';
+                    item.style.border = '2px solid transparent';
+                    item.style.boxShadow = 'none';
                 }
             });
-            
+
             // Trigger custom event for language change
             window.dispatchEvent(new CustomEvent('languageChanged', { detail: { language: langCode } }));
-            
+
             // Show toast notification if app is loaded
             if (window.app && window.app.ui) {
                 window.app.ui.showToast(this.t('notifications.appStarted'), 'success', 2000);

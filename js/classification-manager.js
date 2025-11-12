@@ -18,6 +18,7 @@ class ClassificationManager {
 
         // Project configuration
         this.classes = [];
+        this.currentClassIndex = 0; // For keyboard navigation (A/D keys)
 
         // UI Elements
         this.classificationUI = null;
@@ -99,10 +100,11 @@ class ClassificationManager {
 
         classList.innerHTML = this.classes.map((cls, index) => {
             const isSelected = this.labels.includes(cls.id);
+            const isCurrent = index === this.currentClassIndex;
             return `
-                <div class="class-item ${isSelected ? 'active' : ''}" data-class-id="${cls.id}">
+                <div class="class-item ${isSelected ? 'active' : ''} ${isCurrent ? 'highlighted' : ''}" data-class-id="${cls.id}" data-class-index="${index}">
                     <div class="class-color" style="background: ${cls.color}"></div>
-                    <span class="class-name">[${index}] ${cls.name}</span>
+                    <span class="class-name">[${index + 1}] ${cls.name}</span>
                     ${isSelected ? '<i class="fas fa-check" style="color: var(--success); margin-left: auto;"></i>' : ''}
                 </div>
             `;
@@ -138,12 +140,40 @@ class ClassificationManager {
         this.updateLabelsOverlay();
     }
 
+    // Cycle to next class (for A/D keyboard navigation)
+    cycleClassNext() {
+        if (this.classes.length === 0) return;
+        this.currentClassIndex = (this.currentClassIndex + 1) % this.classes.length;
+        this.renderClassList();
+    }
+
+    // Cycle to previous class (for A/D keyboard navigation)
+    cycleClassPrevious() {
+        if (this.classes.length === 0) return;
+        this.currentClassIndex = (this.currentClassIndex - 1 + this.classes.length) % this.classes.length;
+        this.renderClassList();
+    }
+
+    // Toggle the currently highlighted class
+    toggleCurrentClass() {
+        if (this.classes.length === 0) return;
+        const currentClass = this.classes[this.currentClassIndex];
+        if (currentClass) {
+            this.toggleLabel(currentClass.id);
+        }
+    }
+
     // Update the labels overlay on the image
     updateLabelsOverlay() {
+        const imageContainer = document.querySelector('.classification-image-container');
         const overlay = document.getElementById('classificationLabelsOverlay');
-        if (!overlay) return;
+
+        if (!imageContainer || !overlay) return;
 
         if (this.labels.length === 0) {
+            // Remove border when no labels
+            imageContainer.style.border = 'none';
+            imageContainer.style.boxShadow = 'none';
             overlay.innerHTML = '';
             return;
         }
@@ -154,11 +184,47 @@ class ClassificationManager {
             return cls ? { name: cls.name, color: cls.color } : null;
         }).filter(c => c !== null);
 
-        overlay.innerHTML = selectedClasses.map(cls => `
-            <div class="classification-label-badge" style="background: ${cls.color}">
-                ${cls.name}
-            </div>
-        `).join('');
+        if (selectedClasses.length === 0) {
+            imageContainer.style.border = 'none';
+            imageContainer.style.boxShadow = 'none';
+            overlay.innerHTML = '';
+            return;
+        }
+
+        if (selectedClasses.length === 1) {
+            // Single label: solid border with class color
+            const cls = selectedClasses[0];
+            imageContainer.style.border = `8px solid ${cls.color}`;
+            imageContainer.style.boxShadow = `0 0 0 2px rgba(0,0,0,0.1), inset 0 0 0 2px rgba(255,255,255,0.5)`;
+
+            // Show class name in corner
+            overlay.innerHTML = `
+                <div class="classification-label-corner" style="background: ${cls.color}">
+                    ${cls.name}
+                </div>
+            `;
+        } else {
+            // Multiple labels: use multiple box-shadows for layered effect
+            const borderWidth = 8;
+            const boxShadows = selectedClasses.map((cls, index) => {
+                const offset = index * borderWidth;
+                return `0 0 0 ${offset + borderWidth}px ${cls.color}`;
+            }).join(', ');
+
+            imageContainer.style.border = 'none';
+            imageContainer.style.boxShadow = boxShadows + ', inset 0 0 0 2px rgba(255,255,255,0.5)';
+
+            // Show all class names in corner
+            overlay.innerHTML = `
+                <div class="classification-labels-corner">
+                    ${selectedClasses.map(cls => `
+                        <span class="classification-label-tag" style="background: ${cls.color}">
+                            ${cls.name}
+                        </span>
+                    `).join('')}
+                </div>
+            `;
+        }
     }
 
     // Load an image for classification

@@ -210,6 +210,19 @@
     font-weight: 600;
 }
 
+.class-item.highlighted {
+    border-color: #fbbf24;
+    border-width: 3px;
+    background: rgba(251, 191, 36, 0.1);
+    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2);
+}
+
+.class-item.highlighted.active {
+    border-color: var(--primary);
+    background: var(--primary);
+    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.3);
+}
+
 .class-color {
     width: 16px;
     height: 16px;
@@ -713,6 +726,171 @@ color: white;
     color: #666;
 }
 
+/* Compact Project Type Grid Layout */
+.project-type-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.project-type-card-compact {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    border: 2px solid var(--gray-light);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Subtle color background using data attribute */
+.project-type-card-compact::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.project-type-card-compact:hover::before {
+    opacity: 0.05;
+}
+
+.project-type-card-compact:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.project-type-card-compact input[type="radio"] {
+    margin-top: 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* Icon styling */
+.type-card-icon {
+    font-size: 1.8em;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: currentColor;
+    background-clip: content-box;
+    opacity: 0.15;
+    border-radius: 8px;
+    padding: 8px;
+    transition: all 0.2s ease;
+}
+
+.type-card-icon i {
+    position: relative;
+    z-index: 1;
+    opacity: 1;
+}
+
+.project-type-card-compact:has(input[type="radio"]:checked) .type-card-icon {
+    opacity: 1;
+    background: linear-gradient(135deg, currentColor 0%, currentColor 100%);
+    color: white;
+    transform: scale(1.05);
+}
+
+.project-type-card-compact:has(input[type="radio"]:checked) .type-card-icon i {
+    color: white;
+}
+
+/* Selected state */
+.project-type-card-compact:has(input[type="radio"]:checked) {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary), 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.project-type-card-compact:has(input[type="radio"]:checked) .type-name {
+    color: var(--primary);
+}
+
+.type-card-compact-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.type-card-compact-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.type-name {
+    font-size: 0.95em;
+}
+
+.type-difficulty-badge {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.type-description-compact {
+    margin: 0;
+    font-size: 0.85em;
+    color: var(--gray-dark);
+    line-height: 1.4;
+}
+
+/* Dimension Mode Options */
+.dimension-mode-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    border: 2px solid var(--gray-light);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.dimension-mode-option:hover {
+    border-color: var(--primary);
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.dimension-mode-option input[type="radio"] {
+    cursor: pointer;
+}
+
+.dimension-mode-option input[type="radio"]:checked + div {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.dimension-mode-option div {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9em;
+}
+
+.dimension-mode-option i {
+    font-size: 1.1em;
+}
+
 /* ============================================
    CLASSIFICATION UI
    ============================================ */
@@ -735,6 +913,7 @@ color: white;
     overflow: hidden;
     position: relative;
     min-height: 400px;
+    transition: border 0.3s ease, box-shadow 0.3s ease;
 }
 
 .classification-image {
@@ -770,12 +949,57 @@ color: white;
     top: 15px;
     left: 15px;
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 8px;
-    max-width: calc(100% - 30px);
     z-index: 10;
 }
 
+/* Single label corner badge */
+.classification-label-corner {
+    padding: 10px 20px;
+    border-radius: 0 0 8px 0;
+    color: white;
+    font-weight: 600;
+    font-size: 1.1em;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    animation: fadeInSlide 0.3s ease;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* Multiple labels corner container */
+.classification-labels-corner {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    animation: fadeInSlide 0.3s ease;
+}
+
+.classification-label-tag {
+    padding: 6px 14px;
+    border-radius: 4px;
+    color: white;
+    font-weight: 600;
+    font-size: 0.9em;
+    box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    display: inline-block;
+}
+
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Deprecated badge style - keeping for backwards compatibility */
 .classification-label-badge {
     padding: 8px 16px;
     border-radius: 20px;
@@ -798,3 +1022,511 @@ color: white;
     }
 }
 
+/* ============================================
+   EXPORT MODAL
+   ============================================ */
+
+.export-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.export-card {
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.export-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    transform: translateY(-2px);
+}
+
+.export-card.full-width {
+    grid-column: 1 / -1;
+}
+
+/* In code mode, adjust card padding and overflow */
+.modal.code-mode .export-card-training {
+    padding: 16px;
+    overflow: visible;
+}
+
+.modal.code-mode .export-card-training .export-card-header,
+.modal.code-mode .export-card-training .export-card-description {
+    padding: 0 4px;
+}
+
+.export-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.export-card-header i {
+    font-size: 1.5em;
+    color: var(--primary);
+}
+
+.export-card-header h4 {
+    margin: 0;
+    font-size: 1.1em;
+    color: var(--dark);
+}
+
+.export-card-description {
+    margin: 0 0 16px 0;
+    font-size: 0.9em;
+    color: var(--gray-dark);
+    line-height: 1.4;
+}
+
+.export-card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.export-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    font-size: 0.9em;
+    cursor: pointer;
+}
+
+.export-option input[type="checkbox"] {
+    cursor: pointer;
+}
+
+/* Responsive: single column on small screens */
+@media (max-width: 768px) {
+    .export-options {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Export Tabs */
+.export-tabs {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    border-bottom: 2px solid var(--border);
+}
+
+.export-tab {
+    background: transparent;
+    border: none;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 500;
+    color: var(--gray-dark);
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: -2px;
+}
+
+.export-tab:hover {
+    color: var(--primary);
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.export-tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    font-weight: 600;
+}
+
+.export-tab-content {
+    display: none;
+    padding: 16px 0;
+}
+
+.export-tab-content.active {
+    display: block;
+}
+
+/* Code Generator */
+.code-generator {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Three column layout in code mode: config spans 2 cols, code takes 1 col */
+.modal.code-mode .code-generator {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.2fr;
+    gap: 12px;
+    max-height: calc(90vh - 200px);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.modal.code-mode .code-config {
+    grid-column: 1 / 3;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 6px;
+    align-content: start;
+    min-width: 0;
+}
+
+/* Each section takes full width within config area */
+.modal.code-mode .code-config > * {
+    grid-column: span 2;
+}
+
+/* Custom scrollbar for code config in code mode */
+.modal.code-mode .code-config::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal.code-mode .code-config::-webkit-scrollbar-track {
+    background: var(--light);
+    border-radius: 4px;
+}
+
+.modal.code-mode .code-config::-webkit-scrollbar-thumb {
+    background: var(--gray);
+    border-radius: 4px;
+}
+
+.modal.code-mode .code-config::-webkit-scrollbar-thumb:hover {
+    background: var(--dark);
+}
+
+.modal.code-mode .code-preview-container {
+    grid-column: 3;
+    grid-row: 1 / -1;
+    height: calc(90vh - 200px);
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.modal.code-mode .code-preview {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+    max-height: none;
+}
+
+.code-config {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.config-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    min-width: 0;
+}
+
+.config-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.config-item .form-control,
+.config-item .form-select {
+    min-width: 0;
+}
+
+.config-item .form-label {
+    font-size: 0.85em;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Code Preview Terminal Style */
+.code-preview-container {
+    background: #1e1e1e;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.code-preview-header {
+    background: #2d2d30;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #3e3e42;
+}
+
+.code-preview-title {
+    color: #cccccc;
+    font-size: 0.85em;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.code-preview-title i {
+    color: #4ec9b0;
+}
+
+.code-preview-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.btn-icon {
+    background: transparent;
+    border: 1px solid #3e3e42;
+    color: #cccccc;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-icon:hover {
+    background: #3e3e42;
+    border-color: #569cd6;
+    color: #569cd6;
+}
+
+.code-preview {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 16px;
+    margin: 0;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.85em;
+    line-height: 1.6;
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+.code-preview code {
+    color: #d4d4d4;
+}
+
+/* Syntax highlighting colors (VS Code Dark+ theme) */
+.code-preview {
+    /* Comments */
+    --code-comment: #6a9955;
+    /* Strings */
+    --code-string: #ce9178;
+    /* Keywords */
+    --code-keyword: #569cd6;
+    /* Numbers */
+    --code-number: #b5cea8;
+    /* Functions */
+    --code-function: #dcdcaa;
+}
+
+/* Scrollbar styling for code preview */
+.code-preview::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.code-preview::-webkit-scrollbar-track {
+    background: #2d2d30;
+}
+
+.code-preview::-webkit-scrollbar-thumb {
+    background: #424242;
+    border-radius: 4px;
+}
+
+.code-preview::-webkit-scrollbar-thumb:hover {
+    background: #4e4e4e;
+}
+
+/* Advanced Options Accordion */
+.config-accordion {
+    margin-top: 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.config-accordion-toggle {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: none;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: 500;
+    color: var(--dark);
+    transition: all 0.2s ease;
+}
+
+.config-accordion-toggle:hover {
+    background: var(--light);
+}
+
+.config-accordion-toggle i {
+    font-size: 0.85em;
+    transition: transform 0.3s ease;
+    color: var(--primary);
+}
+
+.config-accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background: white;
+}
+
+/* In code mode, always show advanced options */
+.modal.code-mode .config-accordion {
+    border: none;
+    margin-top: 12px;
+}
+
+.modal.code-mode .config-accordion-toggle {
+    display: none;
+}
+
+.modal.code-mode .config-accordion-content {
+    max-height: none !important;
+    overflow: visible;
+}
+
+.config-section {
+    padding: 16px;
+    border-bottom: 1px solid var(--light);
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.config-section:last-child {
+    border-bottom: none;
+}
+
+/* In code mode, add visual separation */
+.modal.code-mode .config-section {
+    padding: 10px;
+    margin-bottom: 6px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    min-width: 0;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.modal.code-mode .config-section:last-child {
+    margin-bottom: 0;
+}
+
+.config-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 12px 0;
+    font-size: 0.9em;
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.config-section-title i {
+    color: var(--primary);
+    font-size: 1.1em;
+}
+
+.config-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 6px;
+    min-width: 0;
+}
+
+.modal.code-mode .config-checkboxes {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s ease;
+    border-radius: 4px;
+    min-width: 0;
+    word-break: break-word;
+}
+
+.checkbox-label:hover {
+    background: var(--light);
+}
+
+.checkbox-label input[type="checkbox"] {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
+
+.checkbox-label span {
+    font-size: 0.9em;
+    color: var(--dark);
+}
+
+/* Help Icon Tooltips - Tippy.js handles the tooltip rendering */
+.help-icon {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 6px;
+    cursor: help;
+    color: var(--primary);
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.help-icon:hover {
+    opacity: 1;
+}
+
+.help-icon i {
+    font-size: 0.9em;
+}
+
+.checkbox-label {
+    cursor: pointer;
+}
+
+.config-section-title .help-icon {
+    margin-left: 8px;
+    font-size: 0.9em;
+}
