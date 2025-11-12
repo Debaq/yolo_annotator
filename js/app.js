@@ -86,6 +86,8 @@ class YOLOAnnotator {
         document.querySelectorAll('.tool-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const tool = btn.dataset.tool;
+                // Skip if no tool attribute (e.g., erase mode button has its own handler)
+                if (!tool) return;
                 this.setTool(tool);
             });
         });
