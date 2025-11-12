@@ -27,19 +27,18 @@ class YOLOAnnotator {
 
     async init() {
         try {
-            console.log('Initializing YOLO Annotator...');
-            
             // Initialize database
             await this.db.init();
-            console.log('Database initialized');
-            
+
             // Initialize managers
             this.projectManager = new ProjectManager(this.db, this.ui);
             this.exportManager = new ExportManager(this.db, this.ui);
             this.shortcutsManager = new ShortcutsManager(this.ui);
 
+            // Canvas will be created dynamically when project is loaded (using CanvasFactory)
             const canvas = document.getElementById('canvas');
-            this.canvasManager = new CanvasManager(canvas, this.ui);
+            this.canvas = canvas;
+            this.canvasManager = null; // Will be set in loadProject()
 
             const canvasContainer = document.querySelector('.canvas-container');
             this.classificationManager = new ClassificationManager(canvasContainer, this.ui);
@@ -50,14 +49,12 @@ class YOLOAnnotator {
             // Initialize training code generator (requires projectManager and canvasManager)
             this.trainingCodeGenerator = new TrainingCodeGenerator(this.projectManager, this.canvasManager, this.ui);
 
-            console.log('Managers initialized');
-            
             // Setup UI event listeners
             this.setupEventListeners();
-            
+
             // Load projects
             await this.loadProjects();
-            
+
             // Setup keyboard shortcuts
             this.setupKeyboardShortcuts();
 
@@ -68,7 +65,6 @@ class YOLOAnnotator {
             this.startPeriodicAutoSave();
 
             this.ui.showToast(window.i18n.t('notifications.appStarted'), 'success');
-            console.log('Application initialized successfully');
         } catch (error) {
             console.error('Error initializing app:', error);
             this.ui.showToast(window.i18n.t('notifications.error.initApp'), 'error');
@@ -90,6 +86,8 @@ class YOLOAnnotator {
         document.querySelectorAll('.tool-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const tool = btn.dataset.tool;
+                // Skip if no tool attribute (e.g., erase mode button has its own handler)
+                if (!tool) return;
                 this.setTool(tool);
             });
         });
@@ -133,6 +131,7 @@ class YOLOAnnotator {
         const brushValue = document.getElementById('brushSizeValue');
         if (brushSlider && brushValue) {
             brushSlider.addEventListener('input', (e) => {
+                if (!this.canvasManager) return;
                 const size = parseInt(e.target.value);
                 this.canvasManager.toolManager.setBrushSize(size);
                 brushValue.textContent = `${size}px`;
@@ -141,21 +140,31 @@ class YOLOAnnotator {
 
         // Erase mode button (mask tool)
         document.getElementById('btnEraseMode')?.addEventListener('click', () => {
+            if (!this.canvasManager) return;
+
             const isEraseMode = !this.canvasManager.toolManager.isEraseMode();
+
+            // When enabling erase mode, automatically switch to mask tool
+            if (isEraseMode) {
+                this.setTool('mask');
+            }
+
             this.canvasManager.toolManager.setEraseMode(isEraseMode);
             const btn = document.getElementById('btnEraseMode');
             if (btn) {
                 btn.classList.toggle('active', isEraseMode);
                 // Visual feedback
-                const icon = btn.querySelector('i');
-                if (icon && isEraseMode) {
-                    this.ui.showToast('Modo borrador activado', 'info');
+                if (isEraseMode) {
+                    this.ui.showToast('Erase mode ON', 'info');
+                } else {
+                    this.ui.showToast('Erase mode OFF', 'info');
                 }
             }
         });
 
         // New instance button (start fresh mask)
         document.getElementById('btnNewInstance')?.addEventListener('click', () => {
+            if (!this.canvasManager) return;
             this.canvasManager.startNewMaskInstance();
             this.ui.showToast('Nueva instancia iniciada', 'success');
         });
@@ -165,6 +174,7 @@ class YOLOAnnotator {
         const rotationValue = document.getElementById('rotationValue');
         if (rotationSlider && rotationValue) {
             rotationSlider.addEventListener('input', (e) => {
+                if (!this.canvasManager) return;
                 const angle = parseInt(e.target.value);
                 this.canvasManager.setImageRotation(angle);
                 rotationValue.textContent = `${angle}°`;
@@ -172,6 +182,7 @@ class YOLOAnnotator {
         }
 
         document.getElementById('btnResetRotation')?.addEventListener('click', () => {
+            if (!this.canvasManager) return;
             this.canvasManager.resetImageRotation();
             if (rotationSlider) rotationSlider.value = 0;
             if (rotationValue) rotationValue.textContent = '0°';
@@ -281,6 +292,8 @@ class YOLOAnnotator {
             }
 
             // ALL other canvas-specific shortcuts below
+            // Skip if no canvas manager loaded
+            if (!this.canvasManager) return;
 
             // Numbers 1-9: select class
             if (e.key >= '1' && e.key <= '9') {
@@ -417,15 +430,47 @@ class YOLOAnnotator {
                 this.annotationMode = 'classification';
                 this.classificationManager.classes = project.classes || [];
                 this.classificationManager.init(project.type === 'multiLabel');
-                this.canvasManager.clear();
+
+                // Destroy canvas if exists
+                if (this.canvasManager) {
+                    this.canvasManager.destroy();
+                    this.canvasManager = null;
+                }
             } else {
                 // Switch to canvas mode
                 this.annotationMode = 'canvas';
                 if (this.classificationManager.classificationUI) {
                     this.classificationManager.destroy();
                 }
-                this.canvasManager.classes = project.classes || [];
-                this.canvasManager.setProjectType(project.type);
+
+                // Destroy previous canvas if exists and type changed
+                if (this.canvasManager) {
+                    // Check if project type changed
+                    if (this.canvasManager.projectType !== project.type) {
+                        this.canvasManager.destroy();
+                        this.canvasManager = null;
+                    }
+                }
+
+                // Create canvas using factory if not exists
+                if (!this.canvasManager) {
+                    try {
+                        this.canvasManager = CanvasFactory.create(project.type, this.canvas, this.ui);
+                    } catch (canvasError) {
+                        console.error('Failed to create canvas:', canvasError);
+                        this.ui.showToast(`Error creating canvas: ${canvasError.message}`, 'error');
+                        throw canvasError;
+                    }
+                }
+
+                // Set classes
+                if (this.canvasManager) {
+                    this.canvasManager.classes = project.classes || [];
+                    this.canvasManager.currentClass = (project.classes && project.classes.length > 0) ? project.classes[0].id : 0;
+                } else {
+                    console.error('Canvas manager is null after creation attempt');
+                    this.ui.showToast('Failed to initialize canvas', 'error');
+                }
             }
 
             // Update UI visibility based on mode
@@ -434,7 +479,6 @@ class YOLOAnnotator {
             this.updateClassUI();
             await this.galleryManager.loadImages(projectId);
             this.updateStats();
-            console.log('Project loaded successfully in', this.annotationMode, 'mode');
         } catch (error) {
             console.error('Error loading project:', error);
         }
@@ -802,6 +846,8 @@ class YOLOAnnotator {
 
 
     setTool(tool) {
+        if (!this.canvasManager) return;
+
         // Validate tool for project type
         if (!this.canvasManager.isToolValid(tool)) {
             const type = this.canvasManager.projectType;
@@ -838,11 +884,14 @@ class YOLOAnnotator {
                 loadedImages.push({ img, file });
             } catch (error) {
                 console.error(`Error loading ${file.name}:`, error);
-                this.ui.showToast(`Error loading ${file.name}`, 'error');
+                this.ui.showToast(`Error loading ${file.name}: ${error.message}`, 'error');
             }
         }
 
-        if (loadedImages.length === 0) return;
+        if (loadedImages.length === 0) {
+            this.ui.showToast('No images could be loaded', 'error');
+            return;
+        }
 
         // Check if preprocessing is needed
         const preprocessor = new ImagePreprocessor();
@@ -933,6 +982,8 @@ class YOLOAnnotator {
             }
 
             this.ui.showToast(window.i18n.t('notifications.imagesLoaded', { count: loadedCount }), 'success');
+        } else {
+            this.ui.showToast('Failed to save any images', 'error');
         }
     }
 
@@ -1432,20 +1483,13 @@ class YOLOAnnotator {
 
             } else {
                 // Canvas mode (detection, segmentation, etc.)
-                console.log('=== SAVING CANVAS IMAGE ===');
-                console.log('Canvas image exists?', !!this.canvasManager.image);
-                console.log('Image ID:', this.canvasManager.imageId);
-                console.log('Image name:', this.canvasManager.imageName);
-
                 if (!this.canvasManager.image) {
-                    console.log('⚠️ No canvas image to save');
                     return;
                 }
 
                 imageBlob = this.canvasManager.originalImageBlob;
 
                 if (!imageBlob) {
-                    console.log('⚠️ No original image blob');
                     if (!silent) {
                         this.ui.showToast('Error: No se encontró la imagen original', 'error');
                     }
@@ -1459,9 +1503,6 @@ class YOLOAnnotator {
                     return cleanAnn;
                 });
 
-                console.log('Annotations to save:', cleanAnnotations.length);
-                console.log('Annotations data:', JSON.stringify(cleanAnnotations, null, 2));
-
                 imageData = {
                     id: this.canvasManager.imageId,
                     projectId: this.projectManager.currentProject.id,
@@ -1473,20 +1514,29 @@ class YOLOAnnotator {
                     timestamp: Date.now()
                 };
 
-                console.log('Saving image data to IndexedDB...');
                 const id = await this.db.saveImage(imageData);
-                console.log('✓ Image saved with ID:', id);
-
                 this.canvasManager.imageId = id;
                 this.canvasManager.clearUnsavedChanges();
             }
 
-            await this.galleryManager.loadImages(this.projectManager.currentProject.id);
-            this.updateStats();
-
+            // Only reload gallery if this is a manual save, not auto-save
             if (!silent) {
+                await this.galleryManager.loadImages(this.projectManager.currentProject.id);
+                this.updateStats();
                 this.ui.showToast(window.i18n.t('notifications.imageSaved'), 'success');
             } else {
+                // For silent auto-save, only update the current thumbnail
+                const currentImageId = this.annotationMode === 'classification'
+                    ? this.classificationManager.imageId
+                    : this.canvasManager.imageId;
+
+                if (currentImageId) {
+                    // Update thumbnail badge count
+                    this.galleryManager.updateThumbnail(currentImageId);
+
+                    // Update stats quietly without any visual disruption
+                    this.updateStatsQuiet();
+                }
                 console.log('Auto-saved successfully');
             }
         } catch (error) {
@@ -2291,17 +2341,27 @@ class YOLOAnnotator {
             // Show number only if index is 0-8 (keys 1-9)
             const classNumber = index < 9 ? `[${index + 1}] ` : '';
 
+            // Count annotations using this class
+            const annotationCount = this.canvasManager.annotations.filter(a => a.class === cls.id).length;
+
             item.innerHTML = `
                 <div class="class-color" style="background: ${cls.color}"></div>
                 <span class="class-name">${classNumber}${cls.name}</span>
-                <button class="class-delete" data-id="${cls.id}">
+                <span class="class-count">${annotationCount}</span>
+                <button class="class-edit" data-id="${cls.id}" title="${window.i18n.t('classes.edit') || 'Edit'}">
+                    <i class="fas fa-pen"></i>
+                </button>
+                <button class="class-delete" data-id="${cls.id}" title="${window.i18n.t('classes.delete') || 'Delete'}">
                     <i class="fas fa-times"></i>
                 </button>
             `;
 
             item.onclick = (e) => {
                 if (e.target.closest('.class-delete')) {
-                    this.deleteClass(cls.id);
+                    this.showDeleteClassModal(cls.id, cls.name, annotationCount);
+                } else if (e.target.closest('.class-edit')) {
+                    e.stopPropagation();
+                    this.showEditClassModal(cls.id, cls.name, cls.color);
                 } else {
                     this.canvasManager.currentClass = index;
                     this.updateClassUI();
@@ -2312,7 +2372,7 @@ class YOLOAnnotator {
         });
     }
 
-    deleteClass(classId) {
+    async deleteClass(classId) {
         if (this.annotationMode === 'classification') {
             // Classification mode
             const hasLabels = this.classificationManager.labels.includes(classId);
@@ -2335,45 +2395,200 @@ class YOLOAnnotator {
             }
         } else {
             // Canvas mode (detection, segmentation, etc.)
-            const hasAnnotations = this.canvasManager.annotations.some(a => a.class === classId);
+            console.log(`Deleting class ${classId} from all images in project...`);
 
-            if (hasAnnotations) {
-                const confirmMsg = window.i18n.t('classes.deleteConfirm');
-                if (!confirm(confirmMsg)) {
-                    return;
+            // Delete annotations from ALL images in the project (including current one)
+            if (this.projectManager.currentProject) {
+                // Get all images for this project
+                const allImages = await this.db.getProjectImages(this.projectManager.currentProject.id);
+                let updatedCount = 0;
+                let deletedAnnotations = 0;
+
+                // Process each image
+                for (const imageData of allImages) {
+                    const originalCount = imageData.annotations?.length || 0;
+
+                    // Filter out annotations with this class
+                    const filtered = (imageData.annotations || []).filter(a => a.class !== classId);
+                    const removed = originalCount - filtered.length;
+
+                    imageData.annotations = filtered;
+
+                    // Update if annotations were removed
+                    if (removed > 0) {
+                        await this.db.saveImage(imageData);
+                        updatedCount++;
+                        deletedAnnotations += removed;
+                    }
                 }
-                this.canvasManager.annotations = this.canvasManager.annotations.filter(a => a.class !== classId);
+
+                console.log(`✓ Deleted ${deletedAnnotations} annotations from ${updatedCount} images`);
+
+                // If current image is loaded, update it from database
+                if (this.canvasManager.imageId) {
+                    const currentImageData = await this.db.getImage(this.canvasManager.imageId);
+                    if (currentImageData) {
+                        this.canvasManager.annotations = currentImageData.annotations || [];
+                        this.canvasManager.redraw();
+                        this.canvasManager.updateAnnotationsBar();
+                    }
+                }
             }
 
+            // Remove class from list
             this.canvasManager.classes = this.canvasManager.classes.filter(c => c.id !== classId);
             this.updateClassUI();
-            this.canvasManager.redraw();
 
             if (this.projectManager.currentProject) {
-                this.projectManager.updateProject({ classes: this.canvasManager.classes });
+                await this.projectManager.updateProject({ classes: this.canvasManager.classes });
             }
+
+            // Reload gallery to update counts
+            await this.galleryManager.loadImages(this.projectManager.currentProject.id);
+
+            // Update statistics
+            this.updateStats();
+
+            this.ui.showToast(window.i18n.t('notifications.classDeleted') || 'Class and all its annotations deleted', 'success');
         }
     }
 
+    showDeleteClassModal(classId, className, annotationCount) {
+        const warningMsg = annotationCount > 0
+            ? `<p style="color: #e74c3c; margin: 10px 0;"><i class="fas fa-exclamation-triangle"></i> ${window.i18n.t('classes.deleteWarning') || 'This class has'} <strong>${annotationCount}</strong> ${window.i18n.t('classes.annotations') || 'annotations'}.</p>`
+            : '';
+
+        this.ui.showModal(
+            `${window.i18n.t('classes.deleteTitle') || 'Delete Class'}: ${className}`,
+            `
+                <p>${window.i18n.t('classes.deleteQuestion') || 'What would you like to do with this class?'}</p>
+                ${warningMsg}
+            `,
+            [
+                {
+                    text: window.i18n.t('actions.cancel') || 'Cancel',
+                    type: 'secondary',
+                    action: 'cancel',
+                    handler: (modal, close) => close()
+                },
+                annotationCount > 0 ? {
+                    text: window.i18n.t('classes.rename') || 'Rename Class',
+                    type: 'info',
+                    icon: 'fas fa-pen',
+                    action: 'rename',
+                    handler: (modal, close) => {
+                        close();
+                        this.showEditClassModal(classId, className,
+                            this.canvasManager.classes.find(c => c.id === classId).color
+                        );
+                    }
+                } : null,
+                {
+                    text: annotationCount > 0
+                        ? (window.i18n.t('classes.deleteAll') || `Delete Class & ${annotationCount} Annotations`)
+                        : (window.i18n.t('classes.delete') || 'Delete Class'),
+                    type: 'danger',
+                    icon: 'fas fa-trash',
+                    action: 'delete',
+                    handler: (modal, close) => {
+                        this.deleteClass(classId);
+                        close();
+                    }
+                }
+            ].filter(btn => btn !== null)
+        );
+    }
+
+    showEditClassModal(classId, currentName, currentColor) {
+        const cls = this.canvasManager.classes.find(c => c.id === classId);
+        if (!cls) return;
+
+        this.ui.showModal(
+            window.i18n.t('classes.editTitle') || 'Edit Class',
+            `
+                <div class="form-group">
+                    <label class="form-label">${window.i18n.t('classes.name') || 'Name'}:</label>
+                    <input type="text" id="editClassName" class="form-control" value="${currentName}" placeholder="${window.i18n.t('classes.namePlaceholder') || 'Class name'}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">${window.i18n.t('classes.color') || 'Color'}:</label>
+                    <input type="color" id="editClassColor" class="color-input" value="${currentColor}">
+                </div>
+            `,
+            [
+                {
+                    text: window.i18n.t('actions.cancel') || 'Cancel',
+                    type: 'secondary',
+                    action: 'cancel',
+                    handler: (modal, close) => close()
+                },
+                {
+                    text: window.i18n.t('actions.save') || 'Save Changes',
+                    type: 'primary',
+                    icon: 'fas fa-save',
+                    action: 'save',
+                    handler: (modal, close) => {
+                        const newName = modal.querySelector('#editClassName').value.trim();
+                        const newColor = modal.querySelector('#editClassColor').value;
+
+                        if (!newName) {
+                            this.ui.showToast(window.i18n.t('classes.nameRequired') || 'Class name is required', 'error');
+                            return;
+                        }
+
+                        // Update class
+                        cls.name = newName;
+                        cls.color = newColor;
+
+                        // Update UI
+                        this.updateClassUI();
+                        this.canvasManager.redraw();
+
+                        // Save to project
+                        if (this.projectManager.currentProject) {
+                            this.projectManager.updateProject({ classes: this.canvasManager.classes });
+                        }
+
+                        this.ui.showToast(window.i18n.t('classes.updated') || 'Class updated successfully', 'success');
+                        close();
+                    }
+                }
+            ]
+        );
+
+        // Focus on name input
+        setTimeout(() => {
+            const input = document.getElementById('editClassName');
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        }, 100);
+    }
+
     zoomIn() {
+        if (!this.canvasManager) return;
         this.canvasManager.zoom = Math.min(this.canvasManager.maxZoom, this.canvasManager.zoom * 1.2);
         this.canvasManager.redraw();
         this.updateZoomDisplay();
     }
 
     zoomOut() {
+        if (!this.canvasManager) return;
         this.canvasManager.zoom = Math.max(this.canvasManager.minZoom, this.canvasManager.zoom / 1.2);
         this.canvasManager.redraw();
         this.updateZoomDisplay();
     }
 
     resetZoom() {
+        if (!this.canvasManager) return;
         this.canvasManager.fitImageToCanvas();
         this.canvasManager.redraw();
         this.updateZoomDisplay();
     }
 
     updateZoomDisplay() {
+        if (!this.canvasManager) return;
         const display = document.getElementById('zoomLevel');
         if (display) {
             display.textContent = `${Math.round(this.canvasManager.zoom * 100)}%`;
@@ -2381,6 +2596,7 @@ class YOLOAnnotator {
     }
 
     toggleLabels() {
+        if (!this.canvasManager) return;
         this.canvasManager.showLabels = !this.canvasManager.showLabels;
         const btn = document.getElementById('btnToggleLabels');
         if (btn) {
@@ -2390,6 +2606,7 @@ class YOLOAnnotator {
     }
 
     toggleGrid() {
+        if (!this.canvasManager) return;
         this.canvasManager.showGrid = !this.canvasManager.showGrid;
         const btn = document.getElementById('btnToggleGrid');
         if (btn) {
@@ -2399,7 +2616,7 @@ class YOLOAnnotator {
     }
 
     rotateImageLeft() {
-        if (!this.canvasManager.image) return;
+        if (!this.canvasManager || !this.canvasManager.image) return;
         const currentRotation = this.canvasManager.getImageRotation();
         const newRotation = (currentRotation - 5 + 360) % 360; // Rotate 5 degrees counterclockwise
         this.canvasManager.setImageRotation(newRotation);
@@ -2412,7 +2629,7 @@ class YOLOAnnotator {
     }
 
     rotateImageRight() {
-        if (!this.canvasManager.image) return;
+        if (!this.canvasManager || !this.canvasManager.image) return;
         const currentRotation = this.canvasManager.getImageRotation();
         const newRotation = (currentRotation + 5) % 360; // Rotate 5 degrees clockwise
         this.canvasManager.setImageRotation(newRotation);
@@ -2425,6 +2642,8 @@ class YOLOAnnotator {
     }
 
     updateButtonStates() {
+        if (!this.canvasManager) return;
+
         // Update labels button (default is true)
         const btnLabels = document.getElementById('btnToggleLabels');
         if (btnLabels) {
@@ -2439,6 +2658,7 @@ class YOLOAnnotator {
     }
 
     undo() {
+        if (!this.canvasManager) return;
         if (this.canvasManager.annotations.length > 0) {
             this.canvasManager.annotations.pop();
             this.canvasManager.redraw();
@@ -2465,17 +2685,45 @@ class YOLOAnnotator {
 
     updateStats() {
         const images = this.galleryManager.images;
-        const totalLabels = images.reduce((sum, img) => 
+        const totalLabels = images.reduce((sum, img) =>
             sum + (img.annotations ? img.annotations.length : 0), 0);
         const annotated = images.filter(img => img.annotations && img.annotations.length > 0).length;
-        
+
         document.getElementById('statTotalImages').textContent = images.length;
         document.getElementById('statAnnotated').textContent = annotated;
         document.getElementById('statLabels').textContent = totalLabels;
-        
+
         const progress = images.length > 0 ? (annotated / images.length) * 100 : 0;
         document.getElementById('progressBar').style.width = `${progress}%`;
         document.getElementById('progressText').textContent = `${annotated}/${images.length} ${window.i18n.t('stats.progress')}`;
+    }
+
+    updateStatsQuiet() {
+        // Update stats without causing any visual disruption (used for auto-save)
+        // Only update if elements exist
+        const statLabelsEl = document.getElementById('statLabels');
+        const statAnnotatedEl = document.getElementById('statAnnotated');
+        const progressBarEl = document.getElementById('progressBar');
+        const progressTextEl = document.getElementById('progressText');
+
+        if (!statLabelsEl || !statAnnotatedEl) return;
+
+        const images = this.galleryManager.images;
+        const totalLabels = images.reduce((sum, img) =>
+            sum + (img.annotations ? img.annotations.length : 0), 0);
+        const annotated = images.filter(img => img.annotations && img.annotations.length > 0).length;
+
+        // Use requestAnimationFrame to batch DOM updates and prevent reflow
+        requestAnimationFrame(() => {
+            statAnnotatedEl.textContent = annotated;
+            statLabelsEl.textContent = totalLabels;
+
+            if (progressBarEl && progressTextEl) {
+                const progress = images.length > 0 ? (annotated / images.length) * 100 : 0;
+                progressBarEl.style.width = `${progress}%`;
+                progressTextEl.textContent = `${annotated}/${images.length} ${window.i18n.t('stats.progress')}`;
+            }
+        });
     }
 
     showExportModal() {

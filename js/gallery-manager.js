@@ -22,13 +22,22 @@ class GalleryManager {
 
     async loadImages(projectId) {
         try {
-            console.log('Loading images for project:', projectId);
-            this.images = await this.db.getProjectImages(projectId);
-            console.log('Images loaded:', this.images.length);
-            
-            // Clean up old blob URLs
+            // IMPORTANT: Clean up old blob URLs BEFORE loading new images
             this.cleanupBlobUrls();
-            
+
+            // CRITICAL: Clear old images array to prevent showing images from previous project
+            this.images = [];
+
+            // Load images for the specific project
+            this.images = await this.db.getProjectImages(projectId);
+
+            // Verify all images belong to this project (safety check)
+            const wrongProjectImages = this.images.filter(img => img.projectId !== projectId);
+            if (wrongProjectImages.length > 0) {
+                console.error('WARNING: Found images from wrong project!', wrongProjectImages);
+                this.images = this.images.filter(img => img.projectId === projectId);
+            }
+
             this.render();
         } catch (error) {
             console.error('Error loading images:', error);
@@ -59,17 +68,15 @@ class GalleryManager {
     }
 
     render() {
-        console.log('Rendering gallery...');
         const filtered = this.getFilteredImages();
-        console.log('Filtered images:', filtered.length);
-        
+
         if (filtered.length === 0) {
             this.container.innerHTML = `<div class="empty-gallery">${window.i18n.t('gallery.empty')}</div>`;
             return;
         }
-        
+
         this.container.innerHTML = '';
-        
+
         filtered.forEach(imageData => {
             const item = document.createElement('div');
             item.className = 'gallery-item';
@@ -79,10 +86,14 @@ class GalleryManager {
                 item.classList.add('no-annotations');
             }
             // Check active image based on current mode
-            const currentImageId = this.app.annotationMode === 'classification'
-                ? this.app.classificationManager.imageId
-                : this.app.canvasManager.imageId;
-            if (imageData.id === currentImageId) {
+            let currentImageId = null;
+            if (this.app.annotationMode === 'classification') {
+                currentImageId = this.app.classificationManager.imageId;
+            } else if (this.app.canvasManager) {
+                currentImageId = this.app.canvasManager.imageId;
+            }
+
+            if (currentImageId && imageData.id === currentImageId) {
                 item.classList.add('active');
             }
             
@@ -147,43 +158,24 @@ class GalleryManager {
                     this.loadImage(imageData.id);
                 }
             };
-            
+
             this.container.appendChild(item);
         });
-        
-        console.log('Gallery rendered successfully');
     }
 
     async loadImage(imageId) {
         try {
-            console.log('=== LOADING NEW IMAGE ===');
-            console.log('Image ID:', imageId);
-
             // IMPORTANT: Save current image before loading a new one
             // This prevents losing unsaved changes when navigating between images
             if (this.app.annotationMode === 'classification') {
-                console.log('Classification mode - checking for unsaved changes...');
-                console.log('Has unsaved changes?', this.app.classificationManager.hasUnsavedChanges);
-                console.log('Current image ID:', this.app.classificationManager.imageId);
-
                 if (this.app.classificationManager.hasUnsavedChanges &&
                     this.app.classificationManager.imageId) {
-                    console.log('✓ Auto-saving classification changes before loading new image...');
                     await this.app.saveCurrentImage(true); // true = silent save
                 }
             } else {
-                console.log('Canvas mode - checking for unsaved changes...');
-                console.log('Has unsaved changes?', this.app.canvasManager.hasUnsavedChanges);
-                console.log('Current image ID:', this.app.canvasManager.imageId);
-                console.log('Current annotations count:', this.app.canvasManager.annotations?.length || 0);
-
                 if (this.app.canvasManager.hasUnsavedChanges &&
                     this.app.canvasManager.imageId) {
-                    console.log('✓ Auto-saving canvas changes before loading new image...');
-                    console.log('Annotations to save:', JSON.stringify(this.app.canvasManager.annotations));
                     await this.app.saveCurrentImage(true); // true = silent save
-                } else {
-                    console.log('⚠️ NOT saving - either no changes or no imageId');
                 }
             }
 
@@ -211,20 +203,10 @@ class GalleryManager {
                 this.app.classificationManager.clearUnsavedChanges();
             } else {
                 // Canvas mode (detection, segmentation, etc.)
-                console.log('Loading canvas image...');
-                console.log('Image data from DB:', {
-                    id: imageData.id,
-                    name: imageData.name,
-                    annotationsCount: imageData.annotations?.length || 0,
-                    annotations: imageData.annotations
-                });
-
                 await this.app.canvasManager.loadImage(file);
                 this.app.canvasManager.imageId = imageId;
                 this.app.canvasManager.imageName = imageData.name;
                 this.app.canvasManager.annotations = imageData.annotations || [];
-
-                console.log('✓ Annotations loaded into canvas:', this.app.canvasManager.annotations.length);
 
                 this.app.canvasManager.clearUnsavedChanges();
                 this.app.canvasManager.redraw();
@@ -233,8 +215,6 @@ class GalleryManager {
 
             // Update gallery display
             this.render();
-
-            console.log('✓ Image loaded successfully in', this.app.annotationMode, 'mode');
         } catch (error) {
             console.error('Error loading image:', error);
             this.ui.showToast(window.i18n.t('notifications.error.loadImage'), 'error');
@@ -328,5 +308,50 @@ class GalleryManager {
     canNavigatePrevious() {
         const currentIndex = this.getCurrentImageIndex();
         return currentIndex > 0;
+    }
+
+    async updateThumbnail(imageId) {
+        // Update only the thumbnail for a specific image without reloading entire gallery
+        try {
+            // Find the image in our current images array
+            const imageIndex = this.images.findIndex(img => img.id === imageId);
+            if (imageIndex === -1) {
+                return;
+            }
+
+            // Reload just this image's data from DB
+            const updatedImageData = await this.db.getImage(imageId);
+            if (!updatedImageData) {
+                return;
+            }
+
+            // Update our local array
+            this.images[imageIndex] = updatedImageData;
+
+            // Find the gallery item DOM element
+            const galleryItem = document.querySelector(`.gallery-item[data-image-id="${imageId}"]`);
+            if (!galleryItem) {
+                return;
+            }
+
+            // Update the annotation count badge
+            const annotationCount = updatedImageData.annotations?.length || 0;
+            const badge = galleryItem.querySelector('.annotation-badge');
+            if (badge) {
+                badge.textContent = annotationCount;
+                badge.style.display = annotationCount > 0 ? 'flex' : 'none';
+            }
+
+            // Update annotated/unannotated status
+            if (annotationCount > 0) {
+                galleryItem.classList.add('annotated');
+                galleryItem.classList.remove('unannotated');
+            } else {
+                galleryItem.classList.remove('annotated');
+                galleryItem.classList.add('unannotated');
+            }
+        } catch (error) {
+            console.error('Error updating thumbnail:', error);
+        }
     }
 }

@@ -328,6 +328,21 @@
     color: var(--white);
 }
 
+.class-edit {
+    background: transparent;
+    border: none;
+    color: var(--info);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: var(--transition);
+}
+
+.class-edit:hover {
+    background: var(--info);
+    color: var(--white);
+}
+
 /* Gestión de Clases */
 .class-manager {
     background: var(--gray-light);
