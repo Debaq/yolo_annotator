@@ -54,6 +54,13 @@ class CanvasMask extends CanvasBase {
             console.warn(`Tool "${tool}" not available for mask canvas`);
             return;
         }
+
+        // Clear any pending auto-save when switching tools
+        if (this.autoSaveTimeout) {
+            clearTimeout(this.autoSaveTimeout);
+            this.autoSaveTimeout = null;
+        }
+
         this.currentTool = tool;
         this.updateCursor();
     }
@@ -112,6 +119,13 @@ class CanvasMask extends CanvasBase {
 
     toggleEraseMode() {
         this.eraseMode = !this.eraseMode;
+
+        // Clear any pending auto-save when switching modes
+        if (this.autoSaveTimeout) {
+            clearTimeout(this.autoSaveTimeout);
+            this.autoSaveTimeout = null;
+        }
+
         this.updateEraseButton();
         this.ui.showToast(this.eraseMode ? 'Erase mode ON' : 'Erase mode OFF', 'info');
     }
@@ -202,12 +216,16 @@ class CanvasMask extends CanvasBase {
     handleDrawEnd(x, y) {
         if (this.currentTool === 'mask' && this.isDrawing) {
             this.isDrawing = false;
+
+            // ALWAYS clear any existing timeout first to prevent stale auto-saves
+            if (this.autoSaveTimeout) {
+                clearTimeout(this.autoSaveTimeout);
+                this.autoSaveTimeout = null;
+            }
+
             // Don't auto-save in erase mode, let user manually save or finish
             // Auto-save only when actually painting (not erasing)
             if (!this.eraseMode && this.currentMaskCanvas) {
-                if (this.autoSaveTimeout) {
-                    clearTimeout(this.autoSaveTimeout);
-                }
                 this.autoSaveTimeout = setTimeout(() => {
                     this.saveMask();
                 }, 2000); // Save 2 seconds after user stops drawing
@@ -282,6 +300,12 @@ class CanvasMask extends CanvasBase {
     }
 
     saveMask() {
+        console.log('=== SAVE MASK CALLED ===');
+        console.log('Erase mode:', this.eraseMode);
+        console.log('Current class:', this.currentClass);
+        console.log('Current image:', this.imageName);
+        console.log('Current imageId:', this.imageId);
+
         if (!this.currentMaskCanvas) {
             console.log('No mask canvas to save');
             return;
@@ -552,6 +576,13 @@ class CanvasMask extends CanvasBase {
 
     setEraseMode(enabled) {
         this.eraseMode = enabled;
+
+        // Clear any pending auto-save when switching modes
+        if (this.autoSaveTimeout) {
+            clearTimeout(this.autoSaveTimeout);
+            this.autoSaveTimeout = null;
+        }
+
         this.updateEraseButton();
         this.ui.showToast(this.eraseMode ? 'Erase mode ON' : 'Erase mode OFF', 'info');
     }
