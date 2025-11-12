@@ -2392,24 +2392,28 @@ class YOLOAnnotator {
     }
 
     zoomIn() {
+        if (!this.canvasManager) return;
         this.canvasManager.zoom = Math.min(this.canvasManager.maxZoom, this.canvasManager.zoom * 1.2);
         this.canvasManager.redraw();
         this.updateZoomDisplay();
     }
 
     zoomOut() {
+        if (!this.canvasManager) return;
         this.canvasManager.zoom = Math.max(this.canvasManager.minZoom, this.canvasManager.zoom / 1.2);
         this.canvasManager.redraw();
         this.updateZoomDisplay();
     }
 
     resetZoom() {
+        if (!this.canvasManager) return;
         this.canvasManager.fitImageToCanvas();
         this.canvasManager.redraw();
         this.updateZoomDisplay();
     }
 
     updateZoomDisplay() {
+        if (!this.canvasManager) return;
         const display = document.getElementById('zoomLevel');
         if (display) {
             display.textContent = `${Math.round(this.canvasManager.zoom * 100)}%`;
@@ -2417,6 +2421,7 @@ class YOLOAnnotator {
     }
 
     toggleLabels() {
+        if (!this.canvasManager) return;
         this.canvasManager.showLabels = !this.canvasManager.showLabels;
         const btn = document.getElementById('btnToggleLabels');
         if (btn) {
@@ -2426,6 +2431,7 @@ class YOLOAnnotator {
     }
 
     toggleGrid() {
+        if (!this.canvasManager) return;
         this.canvasManager.showGrid = !this.canvasManager.showGrid;
         const btn = document.getElementById('btnToggleGrid');
         if (btn) {
@@ -2435,7 +2441,7 @@ class YOLOAnnotator {
     }
 
     rotateImageLeft() {
-        if (!this.canvasManager.image) return;
+        if (!this.canvasManager || !this.canvasManager.image) return;
         const currentRotation = this.canvasManager.getImageRotation();
         const newRotation = (currentRotation - 5 + 360) % 360; // Rotate 5 degrees counterclockwise
         this.canvasManager.setImageRotation(newRotation);
@@ -2448,7 +2454,7 @@ class YOLOAnnotator {
     }
 
     rotateImageRight() {
-        if (!this.canvasManager.image) return;
+        if (!this.canvasManager || !this.canvasManager.image) return;
         const currentRotation = this.canvasManager.getImageRotation();
         const newRotation = (currentRotation + 5) % 360; // Rotate 5 degrees clockwise
         this.canvasManager.setImageRotation(newRotation);
@@ -2461,6 +2467,8 @@ class YOLOAnnotator {
     }
 
     updateButtonStates() {
+        if (!this.canvasManager) return;
+
         // Update labels button (default is true)
         const btnLabels = document.getElementById('btnToggleLabels');
         if (btnLabels) {
@@ -2475,6 +2483,7 @@ class YOLOAnnotator {
     }
 
     undo() {
+        if (!this.canvasManager) return;
         if (this.canvasManager.annotations.length > 0) {
             this.canvasManager.annotations.pop();
             this.canvasManager.redraw();
