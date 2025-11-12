@@ -2386,7 +2386,7 @@ class YOLOAnnotator {
             // Delete annotations from ALL images in the project (including current one)
             if (this.projectManager.currentProject) {
                 // Get all images for this project
-                const allImages = await this.db.getImagesByProject(this.projectManager.currentProject.id);
+                const allImages = await this.db.getProjectImages(this.projectManager.currentProject.id);
                 let updatedCount = 0;
                 let deletedAnnotations = 0;
 
