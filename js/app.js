@@ -1121,45 +1121,51 @@ class YOLOAnnotator {
                         const project = await this.db.getProject(projectId);
                         if (!project) return;
 
-                        const renameContent = `
-                            <div class="form-group">
-                                <label class="form-label">${window.i18n.t('project.newName')}</label>
-                                <input type="text" id="newProjectName" class="form-control" value="${project.name}" placeholder="${window.i18n.t('project.namePlaceholder')}">
-                            </div>
-                        `;
+                        // Close the manage projects modal first
+                        modal.querySelector('.modal-close')?.click();
 
-                        this.ui.showModal(window.i18n.t('project.renameProject'), renameContent, [
-                            {
-                                text: window.i18n.t('actions.cancel'),
-                                type: 'secondary',
-                                action: 'cancel',
-                                handler: (renameModal, closeRename) => {
-                                    closeRename();
-                                    setTimeout(() => this.showManageProjectsModal(), 100);
-                                }
-                            },
-                            {
-                                text: window.i18n.t('actions.save'),
-                                type: 'primary',
-                                icon: 'fas fa-save',
-                                action: 'save',
-                                handler: async (renameModal, closeRename) => {
-                                    const newName = renameModal.querySelector('#newProjectName').value.trim();
-                                    if (!newName) {
-                                        this.ui.showToast(window.i18n.t('project.enterName'), 'warning');
-                                        return;
-                                    }
-                                    try {
-                                        await this.projectManager.renameProject(projectId, newName);
-                                        await this.loadProjects();
+                        // Wait a bit for the close animation
+                        setTimeout(() => {
+                            const renameContent = `
+                                <div class="form-group">
+                                    <label class="form-label">${window.i18n.t('project.newName')}</label>
+                                    <input type="text" id="newProjectName" class="form-control" value="${project.name}" placeholder="${window.i18n.t('project.namePlaceholder')}">
+                                </div>
+                            `;
+
+                            this.ui.showModal(window.i18n.t('project.renameProject'), renameContent, [
+                                {
+                                    text: window.i18n.t('actions.cancel'),
+                                    type: 'secondary',
+                                    action: 'cancel',
+                                    handler: (renameModal, closeRename) => {
                                         closeRename();
                                         setTimeout(() => this.showManageProjectsModal(), 100);
-                                    } catch (error) {
-                                        console.error('Error renaming project:', error);
+                                    }
+                                },
+                                {
+                                    text: window.i18n.t('actions.save'),
+                                    type: 'primary',
+                                    icon: 'fas fa-save',
+                                    action: 'save',
+                                    handler: async (renameModal, closeRename) => {
+                                        const newName = renameModal.querySelector('#newProjectName').value.trim();
+                                        if (!newName) {
+                                            this.ui.showToast(window.i18n.t('project.enterName'), 'warning');
+                                            return;
+                                        }
+                                        try {
+                                            await this.projectManager.renameProject(projectId, newName);
+                                            await this.loadProjects();
+                                            closeRename();
+                                            setTimeout(() => this.showManageProjectsModal(), 100);
+                                        } catch (error) {
+                                            console.error('Error renaming project:', error);
+                                        }
                                     }
                                 }
-                            }
-                        ]);
+                            ]);
+                        }, 200);
                     });
                 });
 
@@ -1170,29 +1176,34 @@ class YOLOAnnotator {
                         const project = await this.db.getProject(projectId);
                         if (!project) return;
 
-                        const deleteContent = `
-                            <div class="warning-box">
-                                <div class="warning-icon">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                </div>
-                                <h3>${window.i18n.t('project.deleteWarning.title')}</h3>
-                                <p><strong>${window.i18n.t('project.deleteWarning.projectName')}</strong> ${project.name}</p>
-                                <div class="warning-details">
-                                    <p>${window.i18n.t('project.deleteWarning.message')}</p>
-                                    <ul class="warning-list">
-                                        <li><i class="fas fa-times-circle"></i> ${window.i18n.t('project.deleteWarning.permanent')}</li>
-                                        <li><i class="fas fa-times-circle"></i> ${window.i18n.t('project.deleteWarning.allData')}</li>
-                                        <li><i class="fas fa-times-circle"></i> ${window.i18n.t('project.deleteWarning.noUndo')}</li>
-                                    </ul>
-                                    <p class="warning-recommendation">
-                                        <i class="fas fa-lightbulb"></i>
-                                        ${window.i18n.t('project.deleteWarning.recommendation')}
-                                    </p>
-                                </div>
-                            </div>
-                        `;
+                        // Close the manage projects modal first
+                        modal.querySelector('.modal-close')?.click();
 
-                        this.ui.showModal(window.i18n.t('project.deleteWarning.confirmTitle'), deleteContent, [
+                        // Wait a bit for the close animation
+                        setTimeout(() => {
+                            const deleteContent = `
+                                <div class="warning-box">
+                                    <div class="warning-icon">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <h3>${window.i18n.t('project.deleteWarning.title')}</h3>
+                                    <p><strong>${window.i18n.t('project.deleteWarning.projectName')}</strong> ${project.name}</p>
+                                    <div class="warning-details">
+                                        <p>${window.i18n.t('project.deleteWarning.message')}</p>
+                                        <ul class="warning-list">
+                                            <li><i class="fas fa-times-circle"></i> ${window.i18n.t('project.deleteWarning.permanent')}</li>
+                                            <li><i class="fas fa-times-circle"></i> ${window.i18n.t('project.deleteWarning.allData')}</li>
+                                            <li><i class="fas fa-times-circle"></i> ${window.i18n.t('project.deleteWarning.noUndo')}</li>
+                                        </ul>
+                                        <p class="warning-recommendation">
+                                            <i class="fas fa-lightbulb"></i>
+                                            ${window.i18n.t('project.deleteWarning.recommendation')}
+                                        </p>
+                                    </div>
+                                </div>
+                            `;
+
+                            this.ui.showModal(window.i18n.t('project.deleteWarning.confirmTitle'), deleteContent, [
                             {
                                 text: window.i18n.t('actions.cancel'),
                                 type: 'secondary',
