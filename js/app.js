@@ -452,13 +452,22 @@ class YOLOAnnotator {
                 // Create canvas using factory if not exists
                 if (!this.canvasManager) {
                     console.log(`Creating canvas for project type: ${project.type}`);
-                    this.canvasManager = CanvasFactory.create(project.type, this.canvas, this.ui);
+                    try {
+                        this.canvasManager = CanvasFactory.create(project.type, this.canvas, this.ui);
+                    } catch (canvasError) {
+                        console.error('Failed to create canvas:', canvasError);
+                        this.ui.showToast(`Error creating canvas: ${canvasError.message}`, 'error');
+                        throw canvasError;
+                    }
                 }
 
                 // Set classes
                 if (this.canvasManager) {
                     this.canvasManager.classes = project.classes || [];
                     this.canvasManager.currentClass = (project.classes && project.classes.length > 0) ? project.classes[0].id : 0;
+                } else {
+                    console.error('Canvas manager is null after creation attempt');
+                    this.ui.showToast('Failed to initialize canvas', 'error');
                 }
             }
 
@@ -866,19 +875,31 @@ class YOLOAnnotator {
             return;
         }
 
+        console.log(`=== LOADING ${files.length} IMAGES ===`);
+        console.log('Project type:', this.projectManager.currentProject.type);
+        console.log('Annotation mode:', this.annotationMode);
+        console.log('Canvas manager exists:', !!this.canvasManager);
+
         // Load all images first to check dimensions
         const loadedImages = [];
         for (const file of files) {
             try {
+                console.log(`Loading image: ${file.name}`);
                 const img = await Utils.loadImageFile(file);
                 loadedImages.push({ img, file });
+                console.log(`✓ Loaded: ${file.name} (${img.width}x${img.height})`);
             } catch (error) {
                 console.error(`Error loading ${file.name}:`, error);
-                this.ui.showToast(`Error loading ${file.name}`, 'error');
+                this.ui.showToast(`Error loading ${file.name}: ${error.message}`, 'error');
             }
         }
 
-        if (loadedImages.length === 0) return;
+        if (loadedImages.length === 0) {
+            this.ui.showToast('No images could be loaded', 'error');
+            return;
+        }
+
+        console.log(`Successfully loaded ${loadedImages.length} images`);
 
         // Check if preprocessing is needed
         const preprocessor = new ImagePreprocessor();
@@ -960,15 +981,25 @@ class YOLOAnnotator {
             }
         }
 
+        console.log(`=== IMAGES SAVED: ${loadedCount}/${processedImages.length} ===`);
+
         if (loadedCount > 0) {
+            console.log('Reloading gallery...');
             await this.galleryManager.loadImages(this.projectManager.currentProject.id);
+
+            console.log('Updating stats...');
             this.updateStats();
 
             if (firstImageId) {
+                console.log(`Loading first image: ${firstImageId}`);
                 await this.galleryManager.loadImage(firstImageId);
             }
 
             this.ui.showToast(window.i18n.t('notifications.imagesLoaded', { count: loadedCount }), 'success');
+            console.log('=== IMAGE LOADING COMPLETE ===');
+        } else {
+            console.error('No images were saved!');
+            this.ui.showToast('Failed to save any images', 'error');
         }
     }
 
