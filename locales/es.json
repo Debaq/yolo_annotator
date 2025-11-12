@@ -103,29 +103,17 @@
   },
   "export": {
     "title": "Exportar Proyecto",
-    "selectOption": "Selecciona qué deseas exportar:",
     "project": {
       "title": "Exportar Proyecto (.tix)",
       "description": "Para continuar trabajando después o compartir con tu equipo",
       "withImages": "Incluir imágenes (proyecto completo)",
-      "withoutImages": "Solo anotaciones (más ligero)",
       "button": "Exportar Proyecto"
-    },
-    "config": {
-      "title": "Exportar Configuración (.yoloconfig)",
-      "description": "Solo las clases para sincronizar con tu equipo",
-      "button": "Exportar Configuración"
     },
     "training": {
       "title": "Exportar para Entrenamiento",
-      "description": "Dataset listo para entrenar tu modelo",
+      "description": "Dataset listo para entrenar tu modelo (siempre incluye imágenes)",
       "selectFormat": "Selecciona el formato:",
       "button": "Exportar Dataset"
-    },
-    "classes": {
-      "title": "Exportar classes.txt",
-      "description": "Archivo de texto con los nombres de las clases",
-      "button": "Descargar classes.txt"
     },
     "formats": {
       "yolo": {

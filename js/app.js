@@ -2299,20 +2299,6 @@ class YOLOAnnotator {
                     </div>
                 </div>
 
-                <!-- Export Config -->
-                <div class="export-card">
-                    <div class="export-card-header">
-                        <i class="fas fa-cog"></i>
-                        <h4>${window.i18n.t('export.config.title')}</h4>
-                    </div>
-                    <p class="export-card-description">${window.i18n.t('export.config.description')}</p>
-                    <div class="export-card-actions">
-                        <button class="btn btn-outline btn-block" id="btnExportConfigFromModal">
-                            <i class="fas fa-download"></i> ${window.i18n.t('export.config.button')}
-                        </button>
-                    </div>
-                </div>
-
                 <!-- Export for Training -->
                 <div class="export-card">
                     <div class="export-card-header">
@@ -2332,20 +2318,6 @@ class YOLOAnnotator {
                         </button>
                     </div>
                 </div>
-
-                <!-- Export classes.txt -->
-                <div class="export-card">
-                    <div class="export-card-header">
-                        <i class="fas fa-file-lines"></i>
-                        <h4>${window.i18n.t('export.classes.title')}</h4>
-                    </div>
-                    <p class="export-card-description">${window.i18n.t('export.classes.description')}</p>
-                    <div class="export-card-actions">
-                        <button class="btn btn-outline btn-block" id="btnExportClassesFromModal">
-                            <i class="fas fa-download"></i> ${window.i18n.t('export.classes.button')}
-                        </button>
-                    </div>
-                </div>
             </div>
         `;
 
@@ -2361,9 +2333,7 @@ class YOLOAnnotator {
         // Setup event listeners for buttons in modal
         setTimeout(() => {
             document.getElementById('btnExportProjectTix')?.addEventListener('click', () => this.exportProjectTix());
-            document.getElementById('btnExportConfigFromModal')?.addEventListener('click', () => this.exportConfig());
             document.getElementById('btnExportTraining')?.addEventListener('click', () => this.exportForTraining());
-            document.getElementById('btnExportClassesFromModal')?.addEventListener('click', () => this.exportClasses());
         }, 100);
     }
 
@@ -2417,59 +2387,6 @@ class YOLOAnnotator {
         console.log('Export for training:', format);
     }
 
-    async exportClasses() {
-        if (this.canvasManager.classes.length > 0) {
-            const sortedClasses = [...this.canvasManager.classes].sort((a, b) => a.id - b.id);
-            const classesContent = sortedClasses.map(cls => cls.name).join('\n');
-
-            const blob = new Blob([classesContent], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'classes.txt';
-            a.click();
-            URL.revokeObjectURL(url);
-
-            this.ui.showToast('classes.txt descargado', 'success');
-        } else {
-            this.ui.showToast('No hay clases para descargar', 'warning');
-        }
-    }
-
-    async exportProject() {
-        await this.projectManager.exportProject();
-    }
-
-    async exportConfig() {
-        await this.projectManager.exportConfig();
-    }
-
-    async importConfig() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.yoloconfig';
-        
-        input.onchange = async (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                try {
-                    const config = await this.projectManager.importConfig(file);
-                    
-                    await this.projectManager.createProject(
-                        config.name,
-                        config.type,
-                        config.classes
-                    );
-                    
-                    await this.loadProjects();
-                } catch (error) {
-                    console.error('Error importing config:', error);
-                }
-            }
-        };
-        
-        input.click();
-    }
 
     startTour() {
         if (window.startAppTour) {
