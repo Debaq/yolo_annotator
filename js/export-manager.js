@@ -97,6 +97,14 @@ class ExportManager {
      * Format: <class_id> <x_center> <y_center> <width> <height> (normalized 0-1)
      */
     async exportYOLODetection(project, images) {
+        console.log(`=== YOLO Detection Export ===`);
+        console.log(`Project: ${project.name}`);
+        console.log(`Total images: ${images.length}`);
+
+        // Count images with annotations
+        const imagesWithAnnotations = images.filter(img => img.annotations && img.annotations.length > 0);
+        console.log(`Images with annotations: ${imagesWithAnnotations.length}`);
+
         const zip = new JSZip();
 
         // Create data.yaml
@@ -109,29 +117,40 @@ class ExportManager {
 
         // Process each image
         for (const img of images) {
-            if (!img.annotations || img.annotations.length === 0) continue;
-
             // Add image
             const imageBlob = img.image;
             zip.file(`images/${img.name}`, imageBlob);
 
-            // Generate label file
+            // Generate label file (even if empty - YOLO format requires .txt for each image)
             const labelContent = this.generateYOLODetectionLabels(img);
-            if (labelContent) {
-                const labelFilename = img.name.replace(/\.[^.]+$/, '.txt');
-                zip.file(`labels/${labelFilename}`, labelContent);
-            }
+            const labelFilename = img.name.replace(/\.[^.]+$/, '.txt');
+            zip.file(`labels/${labelFilename}`, labelContent || ''); // Always create .txt, even if empty
         }
 
         // Generate and download ZIP
         const blob = await zip.generateAsync({ type: 'blob' });
         this.downloadFile(blob, `${project.name}_yolo_detection.zip`);
-        this.ui.showToast(window.i18n.t('export.success'), 'success');
+
+        // Show summary
+        if (imagesWithAnnotations.length === 0) {
+            this.ui.showToast(`⚠️ Exportado: ${images.length} imágenes, pero ninguna tiene anotaciones. Asegúrate de guardar (Ctrl+S) después de anotar cada imagen.`, 'warning');
+        } else if (imagesWithAnnotations.length < images.length) {
+            this.ui.showToast(`✓ Exportado: ${images.length} imágenes (${imagesWithAnnotations.length} con anotaciones, ${images.length - imagesWithAnnotations.length} sin anotaciones)`, 'success');
+        } else {
+            this.ui.showToast(`✓ Exportado: ${images.length} imágenes con anotaciones`, 'success');
+        }
     }
 
     generateYOLODetectionLabels(image) {
         let content = '';
 
+        // Check if annotations exist
+        if (!image.annotations || !Array.isArray(image.annotations)) {
+            console.warn(`Image "${image.name}" has no annotations array`);
+            return content;
+        }
+
+        let bboxCount = 0;
         image.annotations.forEach(ann => {
             if (ann.type === 'bbox') {
                 const { x, y, width, height } = ann.data;
@@ -141,9 +160,11 @@ class ExportManager {
                 const h = height / image.height;
 
                 content += `${ann.class} ${x_center.toFixed(6)} ${y_center.toFixed(6)} ${w.toFixed(6)} ${h.toFixed(6)}\n`;
+                bboxCount++;
             }
         });
 
+        console.log(`Image "${image.name}": ${bboxCount} bounding boxes exported`);
         return content;
     }
 
