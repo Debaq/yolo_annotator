@@ -46,6 +46,7 @@
     "enterName": "Ingresa un nombre para la clase",
     "edit": "Editar",
     "delete": "Eliminar",
+    "rename": "Renombrar Clase",
     "editTitle": "Editar Clase",
     "deleteTitle": "Eliminar Clase",
     "deleteQuestion": "¿Qué deseas hacer con esta clase?",
@@ -292,6 +293,7 @@
     "noImages": "No hay imágenes en el proyecto",
     "noAnnotations": "No hay anotaciones para descargar",
     "appStarted": "Aplicación iniciada",
+    "classDeleted": "Clase y todas sus anotaciones eliminadas",
     "error": {
       "createProject": "Error al crear proyecto",
       "loadProject": "Error al cargar proyecto",

@@ -2358,7 +2358,7 @@ class YOLOAnnotator {
         });
     }
 
-    deleteClass(classId) {
+    async deleteClass(classId) {
         if (this.annotationMode === 'classification') {
             // Classification mode
             const hasLabels = this.classificationManager.labels.includes(classId);
@@ -2381,23 +2381,54 @@ class YOLOAnnotator {
             }
         } else {
             // Canvas mode (detection, segmentation, etc.)
-            const hasAnnotations = this.canvasManager.annotations.some(a => a.class === classId);
 
-            if (hasAnnotations) {
-                const confirmMsg = window.i18n.t('classes.deleteConfirm');
-                if (!confirm(confirmMsg)) {
-                    return;
+            // Delete annotations from current image
+            this.canvasManager.annotations = this.canvasManager.annotations.filter(a => a.class !== classId);
+            this.canvasManager.redraw();
+            this.canvasManager.updateAnnotationsBar();
+
+            // Delete annotations from ALL images in the project
+            if (this.projectManager.currentProject) {
+                console.log(`Deleting class ${classId} from all images in project...`);
+
+                // Get all images for this project
+                const allImages = await this.db.getImagesByProject(this.projectManager.currentProject.id);
+                let updatedCount = 0;
+
+                // Process each image
+                for (const imageData of allImages) {
+                    const originalCount = imageData.annotations?.length || 0;
+
+                    // Filter out annotations with this class
+                    imageData.annotations = (imageData.annotations || []).filter(a => a.class !== classId);
+
+                    const newCount = imageData.annotations.length;
+
+                    // Update if annotations were removed
+                    if (originalCount !== newCount) {
+                        await this.db.saveImage(imageData);
+                        updatedCount++;
+                    }
                 }
-                this.canvasManager.annotations = this.canvasManager.annotations.filter(a => a.class !== classId);
+
+                console.log(`✓ Updated ${updatedCount} images, removed annotations with class ${classId}`);
             }
 
+            // Remove class from list
             this.canvasManager.classes = this.canvasManager.classes.filter(c => c.id !== classId);
             this.updateClassUI();
-            this.canvasManager.redraw();
 
             if (this.projectManager.currentProject) {
-                this.projectManager.updateProject({ classes: this.canvasManager.classes });
+                await this.projectManager.updateProject({ classes: this.canvasManager.classes });
             }
+
+            // Reload gallery to update counts
+            await this.galleryManager.loadImages(this.projectManager.currentProject.id);
+
+            // Update statistics
+            this.updateStats();
+
+            this.ui.showToast(window.i18n.t('notifications.classDeleted') || 'Class and all its annotations deleted', 'success');
         }
     }
 
