@@ -1233,11 +1233,20 @@ class YOLOAnnotator {
 
             } else {
                 // Canvas mode (detection, segmentation, etc.)
-                if (!this.canvasManager.image) return;
+                console.log('=== SAVING CANVAS IMAGE ===');
+                console.log('Canvas image exists?', !!this.canvasManager.image);
+                console.log('Image ID:', this.canvasManager.imageId);
+                console.log('Image name:', this.canvasManager.imageName);
+
+                if (!this.canvasManager.image) {
+                    console.log('⚠️ No canvas image to save');
+                    return;
+                }
 
                 imageBlob = this.canvasManager.originalImageBlob;
 
                 if (!imageBlob) {
+                    console.log('⚠️ No original image blob');
                     if (!silent) {
                         this.ui.showToast('Error: No se encontró la imagen original', 'error');
                     }
@@ -1251,6 +1260,9 @@ class YOLOAnnotator {
                     return cleanAnn;
                 });
 
+                console.log('Annotations to save:', cleanAnnotations.length);
+                console.log('Annotations data:', JSON.stringify(cleanAnnotations, null, 2));
+
                 imageData = {
                     id: this.canvasManager.imageId,
                     projectId: this.projectManager.currentProject.id,
@@ -1262,7 +1274,10 @@ class YOLOAnnotator {
                     timestamp: Date.now()
                 };
 
+                console.log('Saving image data to IndexedDB...');
                 const id = await this.db.saveImage(imageData);
+                console.log('✓ Image saved with ID:', id);
+
                 this.canvasManager.imageId = id;
                 this.canvasManager.clearUnsavedChanges();
             }

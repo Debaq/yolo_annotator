@@ -533,7 +533,7 @@ class CanvasManager {
             const height = Math.abs(imgEnd.y - imgStart.y);
 
             if (width > 5 && height > 5) {
-                this.annotations.push({
+                const newAnnotation = {
                     type: 'bbox',
                     class: this.classes[this.currentClass]?.id || 0,
                     data: {
@@ -542,8 +542,21 @@ class CanvasManager {
                         width,
                         height
                     }
-                });
+                };
+
+                console.log('=== NEW BBOX ANNOTATION CREATED ===');
+                console.log('Class:', newAnnotation.class);
+                console.log('Data:', newAnnotation.data);
+                console.log('Total annotations before push:', this.annotations.length);
+
+                this.annotations.push(newAnnotation);
+
+                console.log('Total annotations after push:', this.annotations.length);
+                console.log('All annotations:', JSON.stringify(this.annotations));
+
                 this.markUnsavedChanges();
+            } else {
+                console.log('⚠️ Bbox too small, not creating annotation (width:', width, 'height:', height, ')');
             }
         } else if (tool === 'obb') {
             // Calculate width/height from SCREEN coordinates (visual rectangle)
