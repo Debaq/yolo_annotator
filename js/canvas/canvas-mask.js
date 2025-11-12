@@ -84,6 +84,7 @@ class CanvasMask extends CanvasBase {
             ']': { handler: () => this.increaseBrushSize(), description: 'Increase Brush Size' },
 
             // Mask management
+            'Enter': { handler: () => this.finishCurrentMask(), description: 'Save Current Mask (Enter)' },
             'n': { handler: () => this.newMaskInstance(), description: 'New Mask Instance' },
             'Delete': { handler: () => this.deleteSelected(), description: 'Delete Selected' },
             'Backspace': { handler: () => this.deleteSelected(), description: 'Delete Selected' },
@@ -201,14 +202,16 @@ class CanvasMask extends CanvasBase {
     handleDrawEnd(x, y) {
         if (this.currentTool === 'mask' && this.isDrawing) {
             this.isDrawing = false;
-            // Auto-save mask after finishing drawing
-            // Use a timeout to allow multiple strokes before saving
-            if (this.autoSaveTimeout) {
-                clearTimeout(this.autoSaveTimeout);
+            // Don't auto-save in erase mode, let user manually save or finish
+            // Auto-save only when actually painting (not erasing)
+            if (!this.eraseMode && this.currentMaskCanvas) {
+                if (this.autoSaveTimeout) {
+                    clearTimeout(this.autoSaveTimeout);
+                }
+                this.autoSaveTimeout = setTimeout(() => {
+                    this.saveMask();
+                }, 2000); // Save 2 seconds after user stops drawing
             }
-            this.autoSaveTimeout = setTimeout(() => {
-                this.saveMask();
-            }, 2000); // Save 2 seconds after user stops drawing
         } else if (this.currentTool === 'select' && this.isDragging) {
             this.isDragging = false;
         }
@@ -300,26 +303,51 @@ class CanvasMask extends CanvasBase {
         }
 
         if (!hasContent) {
-            console.log('No mask content detected');
-            // Don't show toast, just clear silently
+            console.log('Mask is empty after erasing - discarding');
+            // Clear the temporary canvas
             this.currentMaskCanvas = null;
             this.currentMaskCtx = null;
+            // Clear the auto-save timeout if exists
+            if (this.autoSaveTimeout) {
+                clearTimeout(this.autoSaveTimeout);
+                this.autoSaveTimeout = null;
+            }
+            // Just redraw to show clean canvas
+            this.redraw();
             return;
         }
 
-        // Validate and clamp bounds
-        const x = Math.max(0, Math.floor(this.currentMaskBounds.minX));
-        const y = Math.max(0, Math.floor(this.currentMaskBounds.minY));
-        const width = Math.min(
-            Math.ceil(this.currentMaskBounds.maxX - this.currentMaskBounds.minX),
-            this.currentMaskCanvas.width - x
-        );
-        const height = Math.min(
-            Math.ceil(this.currentMaskBounds.maxY - this.currentMaskBounds.minY),
-            this.currentMaskCanvas.height - y
-        );
+        // Recalculate tight bounds based on actual painted pixels
+        let minX = this.currentMaskCanvas.width;
+        let minY = this.currentMaskCanvas.height;
+        let maxX = 0;
+        let maxY = 0;
 
-        console.log('Saving mask with bounds:', { x, y, width, height });
+        for (let y = 0; y < this.currentMaskCanvas.height; y++) {
+            for (let x = 0; x < this.currentMaskCanvas.width; x++) {
+                const i = (y * this.currentMaskCanvas.width + x) * 4 + 3; // Alpha channel
+                if (fullImageData.data[i] > 0) {
+                    minX = Math.min(minX, x);
+                    minY = Math.min(minY, y);
+                    maxX = Math.max(maxX, x);
+                    maxY = Math.max(maxY, y);
+                }
+            }
+        }
+
+        // Add some padding
+        const padding = Math.ceil(this.brushSize / 2);
+        minX = Math.max(0, minX - padding);
+        minY = Math.max(0, minY - padding);
+        maxX = Math.min(this.currentMaskCanvas.width - 1, maxX + padding);
+        maxY = Math.min(this.currentMaskCanvas.height - 1, maxY + padding);
+
+        const x = minX;
+        const y = minY;
+        const width = maxX - minX + 1;
+        const height = maxY - minY + 1;
+
+        console.log('Saving mask with recalculated bounds:', { x, y, width, height });
 
         // Create a temporary canvas for the cropped region
         const croppedCanvas = document.createElement('canvas');
@@ -352,6 +380,12 @@ class CanvasMask extends CanvasBase {
         // Clear current mask canvas BEFORE adding annotation to prevent flash
         this.currentMaskCanvas = null;
         this.currentMaskCtx = null;
+
+        // Clear auto-save timeout
+        if (this.autoSaveTimeout) {
+            clearTimeout(this.autoSaveTimeout);
+            this.autoSaveTimeout = null;
+        }
 
         // Add annotation (this will trigger markUnsavedChanges -> scheduleAutoSave)
         this.addAnnotation(annotation);
