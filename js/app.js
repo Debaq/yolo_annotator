@@ -8,6 +8,7 @@ class YOLOAnnotator {
         this.db = new DatabaseManager();
         this.ui = new UIManager();
         this.projectManager = null;
+        this.exportManager = null;
         this.canvasManager = null;
         this.classificationManager = null;
         this.galleryManager = null;
@@ -32,6 +33,7 @@ class YOLOAnnotator {
             
             // Initialize managers
             this.projectManager = new ProjectManager(this.db, this.ui);
+            this.exportManager = new ExportManager(this.db, this.ui);
 
             const canvas = document.getElementById('canvas');
             this.canvasManager = new CanvasManager(canvas, this.ui);
@@ -1906,20 +1908,9 @@ class YOLOAnnotator {
     async executeExport(format, images) {
         console.log(`Formato seleccionado: ${format}`);
 
-        // Classification projects should only export to CSV
-        if (this.annotationMode === 'classification') {
-            await this.exportClassificationCSV(images);
-            return;
-        }
-
-        // Other formats for detection/segmentation projects
-        if (format === 'yolo') {
-            await this.exportYOLODetection(images);
-        } else if (format === 'csv') {
-            await this.exportClassificationCSV(images);
-        } else {
-            this.ui.showToast(`Formato ${format} - Falta implementar`, 'info');
-        }
+        // Use ExportManager for all exports
+        const project = this.projectManager.currentProject;
+        await this.exportManager.exportDataset(format, project, images);
     }
 
     async exportClassificationCSV(images) {
@@ -2750,9 +2741,10 @@ class YOLOAnnotator {
 
     async exportForTraining() {
         const format = document.getElementById('trainingFormatSelect')?.value;
-        // TODO: Route to appropriate export handler based on format
-        this.ui.showToast(`Exportando en formato ${format}...`, 'info');
-        console.log('Export for training:', format);
+        const project = this.projectManager.currentProject;
+        const images = await this.db.getProjectImages(project.id);
+
+        await this.exportManager.exportDataset(format, project, images);
     }
 
     populateFrameworks() {

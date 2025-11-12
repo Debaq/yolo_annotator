@@ -126,8 +126,18 @@
       "csv": {
         "name": "Simple CSV",
         "description": "CSV format for pandas processing"
+      },
+      "folders": {
+        "name": "Folders by Class",
+        "description": "Images organized in folders by class"
+      },
+      "json": {
+        "name": "Complete JSON",
+        "description": "JSON export with all annotations"
       }
-    }
+    },
+    "preparing": "Preparing export...",
+    "success": "Dataset exported successfully"
   },
   "project": {
     "new": "New Project",

@@ -157,8 +157,15 @@
       "folders": {
         "name": "Carpetas por Clase",
         "description": "Imágenes organizadas en carpetas por clase"
+      },
+      "json": {
+        "name": "JSON Completo",
+        "description": "Exportación JSON con todas las anotaciones"
       }
-    }
+    },
+    "preparing": "Preparando exportación...",
+    "success": "Dataset exportado exitosamente",
+    "downloadDataset": "Descargar Dataset"
   },
   "project": {
     "new": "Nuevo Proyecto",
