@@ -70,9 +70,7 @@ class YOLOAnnotator {
     setupEventListeners() {
         // Project management
         document.getElementById('btnNewProject')?.addEventListener('click', () => this.showNewProjectModal());
-        document.getElementById('btnExportProject')?.addEventListener('click', () => this.exportProject());
-        document.getElementById('btnExportConfig')?.addEventListener('click', () => this.exportConfig());
-        document.getElementById('btnImportConfig')?.addEventListener('click', () => this.importConfig());
+        document.getElementById('btnExport')?.addEventListener('click', () => this.showExportModal());
         document.getElementById('btnHelp')?.addEventListener('click', () => this.startTour());
         
         // Tool selection
@@ -2273,6 +2271,169 @@ class YOLOAnnotator {
         const progress = images.length > 0 ? (annotated / images.length) * 100 : 0;
         document.getElementById('progressBar').style.width = `${progress}%`;
         document.getElementById('progressText').textContent = `${annotated}/${images.length} ${window.i18n.t('stats.progress')}`;
+    }
+
+    showExportModal() {
+        if (!this.projectManager.currentProject) {
+            this.ui.showToast(window.i18n.t('project.selectFirst'), 'warning');
+            return;
+        }
+
+        const content = `
+            <div class="export-options">
+                <!-- Export Project .tix -->
+                <div class="export-card">
+                    <div class="export-card-header">
+                        <i class="fas fa-box-archive"></i>
+                        <h4>${window.i18n.t('export.project.title')}</h4>
+                    </div>
+                    <p class="export-card-description">${window.i18n.t('export.project.description')}</p>
+                    <div class="export-card-actions">
+                        <label class="export-option">
+                            <input type="checkbox" id="exportWithImages" checked>
+                            <span>${window.i18n.t('export.project.withImages')}</span>
+                        </label>
+                        <button class="btn btn-primary btn-block" id="btnExportProjectTix">
+                            <i class="fas fa-file-zipper"></i> ${window.i18n.t('export.project.button')}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Export Config -->
+                <div class="export-card">
+                    <div class="export-card-header">
+                        <i class="fas fa-cog"></i>
+                        <h4>${window.i18n.t('export.config.title')}</h4>
+                    </div>
+                    <p class="export-card-description">${window.i18n.t('export.config.description')}</p>
+                    <div class="export-card-actions">
+                        <button class="btn btn-outline btn-block" id="btnExportConfigFromModal">
+                            <i class="fas fa-download"></i> ${window.i18n.t('export.config.button')}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Export for Training -->
+                <div class="export-card">
+                    <div class="export-card-header">
+                        <i class="fas fa-graduation-cap"></i>
+                        <h4>${window.i18n.t('export.training.title')}</h4>
+                    </div>
+                    <p class="export-card-description">${window.i18n.t('export.training.description')}</p>
+                    <div class="export-card-actions">
+                        <label class="form-label" style="margin-top: 8px;">${window.i18n.t('export.training.selectFormat')}</label>
+                        <select class="form-control form-select" id="trainingFormatSelect">
+                            ${this.getAvailableFormats().map(fmt => `
+                                <option value="${fmt.id}">${window.i18n.t(`export.formats.${fmt.key}.name`)}</option>
+                            `).join('')}
+                        </select>
+                        <button class="btn btn-success btn-block" id="btnExportTraining" style="margin-top: 8px;">
+                            <i class="fas fa-rocket"></i> ${window.i18n.t('export.training.button')}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Export classes.txt -->
+                <div class="export-card">
+                    <div class="export-card-header">
+                        <i class="fas fa-file-lines"></i>
+                        <h4>${window.i18n.t('export.classes.title')}</h4>
+                    </div>
+                    <p class="export-card-description">${window.i18n.t('export.classes.description')}</p>
+                    <div class="export-card-actions">
+                        <button class="btn btn-outline btn-block" id="btnExportClassesFromModal">
+                            <i class="fas fa-download"></i> ${window.i18n.t('export.classes.button')}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        this.ui.showModal(window.i18n.t('export.title'), content, [
+            {
+                text: window.i18n.t('actions.cancel'),
+                type: 'secondary',
+                action: 'cancel',
+                handler: (modal, close) => close()
+            }
+        ]);
+
+        // Setup event listeners for buttons in modal
+        setTimeout(() => {
+            document.getElementById('btnExportProjectTix')?.addEventListener('click', () => this.exportProjectTix());
+            document.getElementById('btnExportConfigFromModal')?.addEventListener('click', () => this.exportConfig());
+            document.getElementById('btnExportTraining')?.addEventListener('click', () => this.exportForTraining());
+            document.getElementById('btnExportClassesFromModal')?.addEventListener('click', () => this.exportClasses());
+        }, 100);
+    }
+
+    getAvailableFormats() {
+        const projectType = this.projectManager.currentProject?.type;
+
+        // Return formats based on project type
+        if (projectType === 'classification' || projectType === 'multiLabel') {
+            return [
+                { id: 'folders', key: 'folders' },
+                { id: 'csv', key: 'csv' }
+            ];
+        } else if (projectType === 'detection' || projectType === 'obb') {
+            return [
+                { id: 'yolo', key: 'yolo' },
+                { id: 'coco', key: 'coco' },
+                { id: 'voc', key: 'voc' }
+            ];
+        } else if (projectType === 'segmentation' || projectType === 'instanceSeg') {
+            return [
+                { id: 'yoloSeg', key: 'yoloSeg' },
+                { id: 'coco', key: 'coco' },
+                { id: 'masksPng', key: 'masksPng' }
+            ];
+        } else if (projectType === 'keypoints') {
+            return [
+                { id: 'coco', key: 'coco' },
+                { id: 'yolo', key: 'yolo' }
+            ];
+        }
+
+        // Default: all formats
+        return [
+            { id: 'yolo', key: 'yolo' },
+            { id: 'coco', key: 'coco' },
+            { id: 'csv', key: 'csv' }
+        ];
+    }
+
+    async exportProjectTix() {
+        const includeImages = document.getElementById('exportWithImages')?.checked;
+        // TODO: Implement .tix export
+        this.ui.showToast('Exportando proyecto...', 'info');
+        console.log('Export .tix with images:', includeImages);
+    }
+
+    async exportForTraining() {
+        const format = document.getElementById('trainingFormatSelect')?.value;
+        // TODO: Route to appropriate export handler based on format
+        this.ui.showToast(`Exportando en formato ${format}...`, 'info');
+        console.log('Export for training:', format);
+    }
+
+    async exportClasses() {
+        if (this.canvasManager.classes.length > 0) {
+            const sortedClasses = [...this.canvasManager.classes].sort((a, b) => a.id - b.id);
+            const classesContent = sortedClasses.map(cls => cls.name).join('\n');
+
+            const blob = new Blob([classesContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'classes.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+
+            this.ui.showToast('classes.txt descargado', 'success');
+        } else {
+            this.ui.showToast('No hay clases para descargar', 'warning');
+        }
     }
 
     async exportProject() {

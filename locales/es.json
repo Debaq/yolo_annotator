@@ -12,9 +12,7 @@
   "header": {
     "selectProject": "Seleccionar proyecto...",
     "newProject": "Nuevo",
-    "exportProject": "Exportar Proyecto Completo",
-    "exportConfig": "Exportar Configuración",
-    "importConfig": "Importar Configuración",
+    "export": "Exportar",
     "help": "Ayuda"
   },
   "tools": {
@@ -104,11 +102,31 @@
     "deleteConfirm": "¿Eliminar esta imagen?"
   },
   "export": {
-    "title": "Exportar",
-    "downloadDataset": "Descargar Dataset ZIP",
-    "downloadClasses": "Descargar classes.txt",
-    "selectFormat": "Seleccionar Formato de Exportación",
-    "formatDescription": "Elige el formato en el que deseas exportar las anotaciones:",
+    "title": "Exportar Proyecto",
+    "selectOption": "Selecciona qué deseas exportar:",
+    "project": {
+      "title": "Exportar Proyecto (.tix)",
+      "description": "Para continuar trabajando después o compartir con tu equipo",
+      "withImages": "Incluir imágenes (proyecto completo)",
+      "withoutImages": "Solo anotaciones (más ligero)",
+      "button": "Exportar Proyecto"
+    },
+    "config": {
+      "title": "Exportar Configuración (.yoloconfig)",
+      "description": "Solo las clases para sincronizar con tu equipo",
+      "button": "Exportar Configuración"
+    },
+    "training": {
+      "title": "Exportar para Entrenamiento",
+      "description": "Dataset listo para entrenar tu modelo",
+      "selectFormat": "Selecciona el formato:",
+      "button": "Exportar Dataset"
+    },
+    "classes": {
+      "title": "Exportar classes.txt",
+      "description": "Archivo de texto con los nombres de las clases",
+      "button": "Descargar classes.txt"
+    },
     "formats": {
       "yolo": {
         "name": "YOLO Detection",
@@ -133,6 +151,10 @@
       "csv": {
         "name": "CSV Simple",
         "description": "Formato CSV para procesamiento con pandas"
+      },
+      "folders": {
+        "name": "Carpetas por Clase",
+        "description": "Imágenes organizadas en carpetas por clase"
       }
     }
   },
