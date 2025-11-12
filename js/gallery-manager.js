@@ -23,12 +23,24 @@ class GalleryManager {
     async loadImages(projectId) {
         try {
             console.log('Loading images for project:', projectId);
-            this.images = await this.db.getProjectImages(projectId);
-            console.log('Images loaded:', this.images.length);
-            
-            // Clean up old blob URLs
+
+            // IMPORTANT: Clean up old blob URLs BEFORE loading new images
             this.cleanupBlobUrls();
-            
+
+            // CRITICAL: Clear old images array to prevent showing images from previous project
+            this.images = [];
+
+            // Load images for the specific project
+            this.images = await this.db.getProjectImages(projectId);
+            console.log('Images loaded:', this.images.length, 'for project:', projectId);
+
+            // Verify all images belong to this project (safety check)
+            const wrongProjectImages = this.images.filter(img => img.projectId !== projectId);
+            if (wrongProjectImages.length > 0) {
+                console.error('WARNING: Found images from wrong project!', wrongProjectImages);
+                this.images = this.images.filter(img => img.projectId === projectId);
+            }
+
             this.render();
         } catch (error) {
             console.error('Error loading images:', error);
@@ -79,10 +91,14 @@ class GalleryManager {
                 item.classList.add('no-annotations');
             }
             // Check active image based on current mode
-            const currentImageId = this.app.annotationMode === 'classification'
-                ? this.app.classificationManager.imageId
-                : this.app.canvasManager.imageId;
-            if (imageData.id === currentImageId) {
+            let currentImageId = null;
+            if (this.app.annotationMode === 'classification') {
+                currentImageId = this.app.classificationManager.imageId;
+            } else if (this.app.canvasManager) {
+                currentImageId = this.app.canvasManager.imageId;
+            }
+
+            if (currentImageId && imageData.id === currentImageId) {
                 item.classList.add('active');
             }
             
