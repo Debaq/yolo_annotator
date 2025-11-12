@@ -43,7 +43,19 @@
     "empty": "Crea un proyecto primero",
     "deleteConfirm": "Hay anotaciones con esta clase. ¿Eliminarla igual?",
     "exists": "Ya existe una clase con ese nombre",
-    "enterName": "Ingresa un nombre para la clase"
+    "enterName": "Ingresa un nombre para la clase",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "editTitle": "Editar Clase",
+    "deleteTitle": "Eliminar Clase",
+    "deleteQuestion": "¿Qué deseas hacer con esta clase?",
+    "deleteWarning": "Esta clase tiene",
+    "annotations": "anotaciones",
+    "deleteAll": "Eliminar Clase y Anotaciones",
+    "name": "Nombre",
+    "namePlaceholder": "Nombre de clase",
+    "color": "Color",
+    "nameRequired": "El nombre de la clase es requerido"
   },
   "annotations": {
     "title": "Anotaciones",
