@@ -932,6 +932,8 @@ class YOLOAnnotator {
                 const imageData = {
                     projectId: this.projectManager.currentProject.id,
                     name: file.name.replace(/\.[^/.]+$/, ''),
+                    originalFileName: file.name,  // Store full filename with extension
+                    mimeType: finalBlob.type,     // Store MIME type (image/jpeg, image/png, etc.)
                     image: finalBlob,
                     annotations: [],
                     width: finalWidth,

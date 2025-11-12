@@ -117,13 +117,14 @@ class ExportManager {
 
         // Process each image
         for (const img of images) {
-            // Add image
+            // Add image with proper extension
             const imageBlob = img.image;
-            zip.file(`images/${img.name}`, imageBlob);
+            const imageFilename = this.getImageFilename(img);
+            zip.file(`images/${imageFilename}`, imageBlob);
 
             // Generate label file (even if empty - YOLO format requires .txt for each image)
             const labelContent = this.generateYOLODetectionLabels(img);
-            const labelFilename = img.name.replace(/\.[^.]+$/, '.txt');
+            const labelFilename = imageFilename.replace(/\.[^.]+$/, '.txt');
             zip.file(`labels/${labelFilename}`, labelContent || ''); // Always create .txt, even if empty
         }
 
@@ -185,18 +186,15 @@ class ExportManager {
 
         // Process each image
         for (const img of images) {
-            if (!img.annotations || img.annotations.length === 0) continue;
-
-            // Add image
+            // Add image with proper extension
             const imageBlob = img.image;
-            zip.file(`images/${img.name}`, imageBlob);
+            const imageFilename = this.getImageFilename(img);
+            zip.file(`images/${imageFilename}`, imageBlob);
 
-            // Generate label file with polygons
+            // Generate label file with polygons (even if empty)
             const labelContent = await this.generateYOLOSegmentationLabels(img);
-            if (labelContent) {
-                const labelFilename = img.name.replace(/\.[^.]+$/, '.txt');
-                zip.file(`labels/${labelFilename}`, labelContent);
-            }
+            const labelFilename = imageFilename.replace(/\.[^.]+$/, '.txt');
+            zip.file(`labels/${labelFilename}`, labelContent || '');
         }
 
         // Generate and download ZIP
@@ -441,10 +439,11 @@ names: [${classNames.map(n => `'${n}'`).join(', ')}]
         // Process images
         for (let i = 0; i < images.length; i++) {
             const img = images[i];
+            const imageFilename = this.getImageFilename(img);
 
             const imageInfo = {
                 id: i + 1,
-                file_name: img.name,
+                file_name: imageFilename,
                 width: img.width,
                 height: img.height,
                 date_captured: new Date(img.timestamp).toISOString()
@@ -479,7 +478,8 @@ names: [${classNames.map(n => `'${n}'`).join(', ')}]
         // Add images
         for (const img of images) {
             if (img.image) {
-                zip.file(`images/${img.name}`, img.image);
+                const imageFilename = this.getImageFilename(img);
+                zip.file(`images/${imageFilename}`, img.image);
             }
         }
 
@@ -515,10 +515,11 @@ names: [${classNames.map(n => `'${n}'`).join(', ')}]
         // Process images
         for (let i = 0; i < images.length; i++) {
             const img = images[i];
+            const imageFilename = this.getImageFilename(img);
 
             const imageInfo = {
                 id: i + 1,
-                file_name: img.name,
+                file_name: imageFilename,
                 width: img.width,
                 height: img.height,
                 date_captured: new Date(img.timestamp).toISOString()
@@ -560,7 +561,8 @@ names: [${classNames.map(n => `'${n}'`).join(', ')}]
         // Add images
         for (const img of images) {
             if (img.image) {
-                zip.file(`images/${img.name}`, img.image);
+                const imageFilename = this.getImageFilename(img);
+                zip.file(`images/${imageFilename}`, img.image);
             }
         }
 
@@ -597,14 +599,13 @@ names: [${classNames.map(n => `'${n}'`).join(', ')}]
         const zip = new JSZip();
 
         for (const img of images) {
-            if (!img.annotations || img.annotations.length === 0) continue;
+            // Add image with proper extension
+            const imageFilename = this.getImageFilename(img);
+            zip.file(`JPEGImages/${imageFilename}`, img.image);
 
-            // Add image
-            zip.file(`JPEGImages/${img.name}`, img.image);
-
-            // Generate XML annotation
-            const xmlContent = this.generateVOCXML(img, project);
-            const xmlFilename = img.name.replace(/\.[^.]+$/, '.xml');
+            // Generate XML annotation (even if empty)
+            const xmlContent = this.generateVOCXML(img, project, imageFilename);
+            const xmlFilename = imageFilename.replace(/\.[^.]+$/, '.xml');
             zip.file(`Annotations/${xmlFilename}`, xmlContent);
         }
 
@@ -613,11 +614,12 @@ names: [${classNames.map(n => `'${n}'`).join(', ')}]
         this.ui.showToast(window.i18n.t('export.success'), 'success');
     }
 
-    generateVOCXML(image, project) {
+    generateVOCXML(image, project, imageFilename) {
+        const filename = imageFilename || this.getImageFilename(image);
         let xml = `<annotation>
     <folder>VOC</folder>
-    <filename>${image.name}</filename>
-    <path>${image.name}</path>
+    <filename>${filename}</filename>
+    <path>${filename}</path>
     <source>
         <database>Annotix</database>
     </source>
@@ -662,15 +664,14 @@ names: [${classNames.map(n => `'${n}'`).join(', ')}]
         const zip = new JSZip();
 
         for (const img of images) {
-            if (!img.annotations || img.annotations.length === 0) continue;
+            // Add original image with proper extension
+            const imageFilename = this.getImageFilename(img);
+            zip.file(`images/${imageFilename}`, img.image);
 
-            // Add original image
-            zip.file(`images/${img.name}`, img.image);
-
-            // Generate combined mask image
+            // Generate combined mask image (even if empty)
             const maskBlob = await this.generateCombinedMask(img, project);
             if (maskBlob) {
-                const maskFilename = img.name.replace(/\.[^.]+$/, '.png');
+                const maskFilename = imageFilename.replace(/\.[^.]+$/, '.png');
                 zip.file(`masks/${maskFilename}`, maskBlob);
             }
         }
@@ -841,6 +842,44 @@ names: [${classNames.map(n => `'${n}'`).join(', ')}]
         const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
         this.downloadFile(blob, `${project.name}_annotations.json`);
         this.ui.showToast(window.i18n.t('export.success'), 'success');
+    }
+
+    /**
+     * HELPER: Get image filename with proper extension
+     */
+    getImageFilename(image) {
+        // If originalFileName is stored (new format), use it
+        if (image.originalFileName) {
+            return image.originalFileName;
+        }
+
+        // Otherwise, reconstruct from name + mimeType
+        let extension = '.jpg'; // default
+
+        if (image.mimeType) {
+            const mimeToExt = {
+                'image/jpeg': '.jpg',
+                'image/jpg': '.jpg',
+                'image/png': '.png',
+                'image/gif': '.gif',
+                'image/bmp': '.bmp',
+                'image/webp': '.webp'
+            };
+            extension = mimeToExt[image.mimeType] || '.jpg';
+        } else if (image.image && image.image.type) {
+            // Try to get from blob type
+            const mimeToExt = {
+                'image/jpeg': '.jpg',
+                'image/jpg': '.jpg',
+                'image/png': '.png',
+                'image/gif': '.gif',
+                'image/bmp': '.bmp',
+                'image/webp': '.webp'
+            };
+            extension = mimeToExt[image.image.type] || '.jpg';
+        }
+
+        return image.name + extension;
     }
 
     /**
