@@ -27,10 +27,11 @@ class TimeSeriesCanvasManager {
         this.annotations = [];
         this.activeAnnotation = null;
         this.isDrawing = false;
+        this.hasUnsavedChanges = false;
 
         // Current tool - set default based on project type
         this.currentTool = this.projectConfig.tools[0] || 'select';
-        this.selectedClassId = 0;
+        this.currentClass = 0;
 
         // Compatibility properties (set before data loads)
         this.imageName = null;
@@ -202,6 +203,7 @@ class TimeSeriesCanvasManager {
             // Set compatibility properties for UI
             this.imageName = dataEntry.name;
             this.imageId = dataEntry.id;
+            this.originalImageBlob = dataEntry.image;  // Store original CSV blob for saving
             // Create pseudo-image object for compatibility with UI code
             this.image = {
                 width: parsed.data.length,  // Number of time points
@@ -210,6 +212,9 @@ class TimeSeriesCanvasManager {
 
             // Render chart
             this.renderChart();
+
+            // Clear unsaved changes flag after loading
+            this.hasUnsavedChanges = false;
 
         } catch (error) {
             console.error('Error loading time series data:', error);
@@ -477,7 +482,7 @@ class TimeSeriesCanvasManager {
 
         const annotation = {
             type: 'point',
-            class: this.selectedClassId,
+            class: this.currentClass,
             data: {
                 x: xValue,
                 y: yValue,
@@ -514,7 +519,7 @@ class TimeSeriesCanvasManager {
 
         const annotation = {
             type: 'range',
-            class: this.selectedClassId,
+            class: this.currentClass,
             data: {
                 start: start,
                 end: end,
@@ -619,7 +624,7 @@ class TimeSeriesCanvasManager {
      * Set selected class
      */
     setSelectedClass(classId) {
-        this.selectedClassId = classId;
+        this.currentClass = classId;
     }
 
     /**
@@ -633,8 +638,19 @@ class TimeSeriesCanvasManager {
      * Callback when annotations change
      */
     onAnnotationsChanged() {
+        // Mark as having unsaved changes
+        this.hasUnsavedChanges = true;
+
         // Override this method to handle annotation changes
         // (e.g., trigger auto-save)
+
+        // Emit event for UI updates
+        if (window.eventBus) {
+            window.eventBus.emit('annotationModified', {
+                imageId: this.imageId,
+                annotations: this.annotations
+            });
+        }
     }
 
     /**
