@@ -443,6 +443,8 @@ class YOLOAnnotator {
             this.updateStats();
             this.galleryManager.render(); // Update thumbnail counts (annotations were deleted)
         });
+
+        console.log('EventBus listeners registered:', window.eventBus.listeners.size);
     }
 
     async loadProjects() {
