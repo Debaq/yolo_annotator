@@ -188,6 +188,9 @@ class CanvasManager {
         this.canvas.width = rect.width * this.dpr;
         this.canvas.height = rect.height * this.dpr;
 
+        // Reset transform before scaling to avoid accumulation
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+
         // Scale context to match device pixel ratio
         this.ctx.scale(this.dpr, this.dpr);
 
