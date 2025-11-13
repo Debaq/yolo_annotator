@@ -1,0 +1,371 @@
+{
+  "language": "English",
+  "code": "en",
+  "app": {
+    "title": "Annotix",
+    "subtitle": "Professional annotation tool",
+    "branding": {
+      "fablab": "TecMedHub",
+      "university": "Universidad Austral de Chile - Puerto Montt Campus"
+    }
+  },
+  "header": {
+    "selectProject": "Select project...",
+    "newProject": "New Project",
+    "openProject": "Open Project",
+    "manageProjects": "Manage Projects",
+    "exportProject": "Export Complete Project",
+    "exportConfig": "Export Configuration",
+    "importConfig": "Import Configuration",
+    "help": "Help"
+  },
+  "tools": {
+    "title": "Tools",
+    "bbox": "Box",
+    "obb": "OBB",
+    "mask": "Mask",
+    "select": "Select",
+    "pan": "Pan",
+    "newInstance": "New Instance",
+    "tooltips": {
+      "bbox": "Bounding Box (B)",
+      "obb": "Oriented Box (O)",
+      "mask": "Mask (M)",
+      "select": "Select (V)",
+      "pan": "Pan (H)"
+    }
+  },
+  "classes": {
+    "title": "Active Classes",
+    "manage": "Manage Classes",
+    "add": "Add Class",
+    "placeholder": "Class name",
+    "empty": "Create a project first",
+    "deleteConfirm": "There are annotations with this class. Delete anyway?",
+    "exists": "A class with that name already exists",
+    "enterName": "Enter a name for the class"
+  },
+  "images": {
+    "title": "Load Image",
+    "select": "Select images",
+    "upload": "Select images",
+    "noImages": "No images"
+  },
+  "actions": {
+    "title": "Actions",
+    "save": "Save",
+    "undo": "Undo",
+    "clear": "Clear",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "create": "Create",
+    "confirm": "Confirm",
+    "close": "Close",
+    "duplicate": "Duplicate",
+    "rename": "Rename",
+    "exportBackup": "Export Backup",
+    "deleteConfirm": "Yes, delete",
+    "clearConfirm": "Clear all annotations from this image?"
+  },
+  "shortcuts": {
+    "title": "Shortcuts",
+    "save": "Save",
+    "undo": "Undo",
+    "delete": "Delete",
+    "navigation": "Navigation",
+    "bbox": "Bbox",
+    "mask": "Mask",
+    "select": "Select",
+    "pan": "Pan",
+    "classes": "Class 1-9"
+  },
+  "canvas": {
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
+    "resetZoom": "Reset Zoom",
+    "toggleLabels": "Show/Hide Labels",
+    "toggleGrid": "Show/Hide Grid",
+    "prevImage": "Previous Image (←)",
+    "nextImage": "Next Image (→)"
+  },
+  "stats": {
+    "title": "Statistics",
+    "images": "Images",
+    "annotated": "Annotated",
+    "labels": "Labels",
+    "classes": "Classes",
+    "progress": "images annotated"
+  },
+  "gallery": {
+    "title": "Gallery",
+    "all": "All",
+    "annotated": "Annotated",
+    "unannotated": "Unannotated",
+    "empty": "No images",
+    "deleteConfirm": "Delete this image?"
+  },
+  "export": {
+    "title": "Export",
+    "downloadDataset": "Download Dataset ZIP",
+    "downloadClasses": "Download classes.txt",
+    "selectFormat": "Select Export Format",
+    "formatDescription": "Choose the format you want to export annotations:",
+    "formats": {
+      "yolo": {
+        "name": "YOLO Detection",
+        "description": "Bounding boxes in YOLO format (.txt) with data.yaml"
+      },
+      "yoloSeg": {
+        "name": "YOLO Segmentation",
+        "description": "Polygons in YOLO format (.txt) with data.yaml"
+      },
+      "coco": {
+        "name": "COCO JSON",
+        "description": "COCO format for Mask R-CNN, RetinaNet, etc."
+      },
+      "masksPng": {
+        "name": "PNG Masks (U-Net)",
+        "description": "PNG mask images for semantic segmentation"
+      },
+      "voc": {
+        "name": "Pascal VOC XML",
+        "description": "XML format with pixel coordinates"
+      },
+      "csv": {
+        "name": "Simple CSV",
+        "description": "CSV format for pandas processing"
+      },
+      "folders": {
+        "name": "Folders by Class",
+        "description": "Images organized in folders by class"
+      },
+      "json": {
+        "name": "Complete JSON",
+        "description": "JSON export with all annotations"
+      }
+    },
+    "preparing": "Preparing export...",
+    "success": "Dataset exported successfully"
+  },
+  "project": {
+    "new": "New Project",
+    "name": "Project Name",
+    "namePlaceholder": "My Annotix Project",
+    "type": "Annotation Type",
+    "typeSelectHelper": "Select the annotation type based on your training goal",
+    "types": {
+      "classification": {
+        "name": "Simple Classification",
+        "description": "Assign a single label to each complete image",
+        "useCases": "Identify what the image contains (e.g., cat, dog, car)",
+        "models": "ResNet, VGG, EfficientNet, MobileNet",
+        "difficulty": "Beginner"
+      },
+      "multiLabel": {
+        "name": "Multi-Label Classification",
+        "description": "Assign multiple labels to each image",
+        "useCases": "Image with several elements (e.g., park + dog + sky)",
+        "models": "ResNet, VGG with multi-label output",
+        "difficulty": "Beginner"
+      },
+      "detection": {
+        "name": "Object Detection",
+        "description": "Locate objects with rectangular boxes (bounding boxes)",
+        "useCases": "Find and locate specific objects in the image",
+        "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+        "difficulty": "Intermediate"
+      },
+      "segmentation": {
+        "name": "Semantic Segmentation",
+        "description": "Classify each pixel of the image by class",
+        "useCases": "Separate regions (e.g., road, sky, buildings)",
+        "models": "U-Net, DeepLab, FCN",
+        "difficulty": "Advanced"
+      },
+      "instanceSeg": {
+        "name": "Instance Segmentation",
+        "description": "Outline each individual object",
+        "useCases": "Separate individual objects at pixel level",
+        "models": "Mask R-CNN, YOLACT, YOLOv8-seg",
+        "difficulty": "Advanced"
+      },
+      "keypoints": {
+        "name": "Keypoints",
+        "description": "Mark specific points on objects",
+        "useCases": "Pose estimation, facial recognition, anatomy",
+        "models": "OpenPose, HRNet, MediaPipe",
+        "difficulty": "Intermediate"
+      },
+      "obb": {
+        "name": "Oriented Boxes (OBB)",
+        "description": "Bounding boxes with free rotation",
+        "useCases": "Angled text, aerial objects, satellites",
+        "models": "Rotated-YOLO, RRPN",
+        "difficulty": "Advanced"
+      }
+    },
+    "initialClasses": "Initial Classes (optional)",
+    "classesPlaceholder": "class1, class2, class3",
+    "classesHelp": "Comma separated. You can add more later.",
+    "imageDimensions": "Image Dimensions",
+    "dimensionsAuto": "Automatic - Accept any size",
+    "dimensionsFixed": "Fixed - All images will be resized",
+    "targetSize": "Target size",
+    "resizeStrategy": "Strategy",
+    "enterName": "Enter a name for the project",
+    "created": "Project \"{name}\" created",
+    "loaded": "Project \"{name}\" loaded",
+    "deleted": "Project deleted",
+    "duplicated": "Project \"{name}\" duplicated",
+    "renamed": "Project renamed",
+    "imported": "Project \"{name}\" imported",
+    "exported": "Project exported",
+    "configExported": "Configuration exported",
+    "selectFirst": "Select a project first",
+    "noProjects": "No projects available",
+    "manageProjects": "Manage Projects",
+    "renameProject": "Rename Project",
+    "newName": "New name",
+    "images": "images",
+    "annotations": "annotations",
+    "exportBackup": "Download .tix backup before deleting",
+    "deleteWarning": {
+      "title": "⚠️ WARNING: PERMANENT DELETION",
+      "confirmTitle": "Confirm Deletion?",
+      "projectName": "Project:",
+      "message": "You are about to PERMANENTLY delete this project.",
+      "permanent": "This action CANNOT be undone",
+      "allData": "ALL images and annotations will be deleted",
+      "noUndo": "There is no way to recover deleted data",
+      "recommendation": "💡 Recommendation: Export the project in .tix format as a backup BEFORE deleting it"
+    }
+  },
+  "notifications": {
+    "imageSaved": "Image saved",
+    "datasetDownloaded": "Dataset downloaded",
+    "classesDownloaded": "classes.txt downloaded",
+    "noClasses": "No classes to download",
+    "noImages": "No images in project",
+    "noAnnotations": "No annotations to download",
+    "appStarted": "Application started",
+    "error": {
+      "createProject": "Error creating project",
+      "loadProject": "Error loading project",
+      "updateProject": "Error updating project",
+      "deleteProject": "Error deleting project",
+      "duplicateProject": "Error duplicating project",
+      "renameProject": "Error renaming project",
+      "loadProjects": "Error loading projects",
+      "exportProject": "Error exporting project",
+      "exportConfig": "Error exporting configuration",
+      "importConfig": "Error importing configuration",
+      "importProject": "Error importing project",
+      "loadImage": "Error loading image",
+      "saveImage": "Error saving image",
+      "deleteImage": "Error deleting image",
+      "loadImages": "Error loading images",
+      "downloadDataset": "Error downloading dataset",
+      "initApp": "Error starting application"
+    }
+  },
+  "tour": {
+    "welcome": "Welcome to <strong>Annotix</strong>. This tool allows you to annotate images for training machine learning models.",
+    "project": "First, create a new project or select an existing one. Each project can be <strong>Bounding Box</strong> or <strong>Segmentation</strong> type.",
+    "tools": "Here you'll find the annotation <strong>tools</strong>: Box for rectangles, Mask for paintable masks, Select for editing, and Pan to move the view.",
+    "classes": "Define your annotation <strong>classes</strong>. Each class has a name and color. You can add, edit or delete classes.",
+    "workspace": "The main <strong>workspace</strong>. Here you'll load your images and create annotations. Use the mouse to draw and wheel to zoom.",
+    "management": "Management panel where you'll see project <strong>statistics</strong>, image <strong>gallery</strong> and can <strong>export</strong> your dataset in YOLO format.",
+    "next": "Next →",
+    "prev": "← Previous",
+    "done": "Done!",
+    "skip": "Skip"
+  },
+  "imageInfo": {
+    "noName": "No name",
+    "dimensions": "Dimensions"
+  },
+  "preprocessing": {
+    "title": "Preprocess Images",
+    "detected": "Detected {count} non-square images",
+    "description": "Images will be adjusted to a square size to optimize training. Choose the resizing strategy:",
+    "targetSize": "Target size (pixels)",
+    "recommended": "Recommended: {size}px",
+    "strategy": "Resizing strategy",
+    "strategies": {
+      "resize": {
+        "name": "Resize + Padding",
+        "description": "Scales down the image and adds padding (optimizes space and memory)"
+      },
+      "padding": {
+        "name": "Padding Only",
+        "description": "Keeps original size and adds padding (better quality)"
+      }
+    },
+    "options": {
+      "apply": "Apply preprocessing",
+      "skip": "Upload without preprocessing"
+    },
+    "progress": "Processing image {current} of {total}...",
+    "complete": "{count} images preprocessed successfully",
+    "preview": "Preview",
+    "original": "Original",
+    "processed": "Processed",
+    "aspectRatio": "Original aspect ratio preserved",
+    "paddingInfo": "Symmetric black padding will be added"
+  },
+  "classification": {
+    "selectOne": "Select the correct label",
+    "selectMultiple": "Select all labels that apply",
+    "singleHint": "You can only select one label",
+    "multiHint": "You can select multiple labels",
+    "noLabels": "No labels assigned",
+    "labeled": "Labeled"
+  },
+  "augmentation": {
+    "title": "Data Augmentation",
+    "batchButton": "Data Augmentation",
+    "augmentImage": "Apply augmentation",
+    "variationsCount": "Number of variations",
+    "variationsCountHelp": "How many augmented images to create? (1-20)",
+    "generationMode": "Generation mode",
+    "modeManual": "Manual (fixed configuration)",
+    "modeRandom": "Random (configurable ranges)",
+    "modeManualHelp": "Apply the same configuration N times",
+    "modeRandomHelp": "Generate N variations with random values within specified ranges",
+    "geometricTransforms": "Geometric Transformations",
+    "flipHorizontal": "Flip Horizontal",
+    "flipVertical": "Flip Vertical",
+    "rotation": "Rotation",
+    "noRotation": "No rotation",
+    "customRotation": "Custom rotation",
+    "colorAdjustments": "Color Adjustments",
+    "brightness": "Brightness",
+    "contrast": "Contrast",
+    "saturation": "Saturation",
+    "randomOptions": "Random Options",
+    "randomFlip": "Random flip (horizontal/vertical)",
+    "randomRotation": "Random rotation",
+    "randomColor": "Random color adjustments",
+    "rotationRange": "Rotation range (degrees)",
+    "brightnessRange": "Brightness range",
+    "contrastRange": "Contrast range",
+    "saturationRange": "Saturation range",
+    "min": "Min",
+    "max": "Max",
+    "keepAnnotations": "Keep transformed annotations",
+    "keepAnnotationsHelp": "Bounding boxes will be automatically transformed with the image",
+    "maskProjectWarning": "Mask Project",
+    "maskProjectWarningText": "Annotations will NOT be preserved. You'll need to manually paint masks on each augmented image.",
+    "apply": "Apply",
+    "processing": "Processing augmentation...",
+    "generatingVariations": "Generating {count} variations...",
+    "variationsSuccess": "{count} variations created successfully",
+    "success": "Augmented image created successfully",
+    "error": "Error applying augmentation",
+    "batchProcessing": "Applying augmentation to {count} images...",
+    "batchRandomProcessing": "Generating {variations} variations for {images} images ({total} total)...",
+    "batchSuccess": "{count} augmented images created successfully",
+    "batchRandomSuccess": "{count} random variations created successfully",
+    "batchError": "Error applying batch augmentation"
+  }
+}

@@ -1,0 +1,417 @@
+{
+  "language": "Español",
+  "code": "es",
+  "app": {
+    "title": "Annotix",
+    "subtitle": "Herramienta profesional de anotación",
+    "branding": {
+      "fablab": "TecMedHub",
+      "university": "Universidad Austral de Chile - Sede Puerto Montt"
+    }
+  },
+  "header": {
+    "selectProject": "Seleccionar proyecto...",
+    "newProject": "Nuevo Proyecto",
+    "openProject": "Abrir Proyecto",
+    "manageProjects": "Gestionar Proyectos",
+    "export": "Exportar",
+    "help": "Ayuda"
+  },
+  "tools": {
+    "title": "Herramientas",
+    "bbox": "Box",
+    "obb": "OBB",
+    "mask": "Mask",
+    "select": "Select",
+    "pan": "Pan",
+    "eraseMode": "Borrador",
+    "newInstance": "Nueva Instancia",
+    "tooltips": {
+      "bbox": "Bounding Box (B)",
+      "obb": "Oriented Box (O)",
+      "mask": "Máscara (M)",
+      "select": "Seleccionar (V)",
+      "pan": "Pan (H)"
+    }
+  },
+  "classes": {
+    "title": "Clases Activas",
+    "active": "Clases Activas",
+    "manage": "Gestionar Clases",
+    "add": "Agregar Clase",
+    "placeholder": "Nombre de clase",
+    "empty": "Crea un proyecto primero",
+    "deleteConfirm": "Hay anotaciones con esta clase. ¿Eliminarla igual?",
+    "exists": "Ya existe una clase con ese nombre",
+    "enterName": "Ingresa un nombre para la clase",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "rename": "Renombrar Clase",
+    "editTitle": "Editar Clase",
+    "deleteTitle": "Eliminar Clase",
+    "deleteQuestion": "¿Qué deseas hacer con esta clase?",
+    "deleteWarning": "Esta clase tiene",
+    "annotations": "anotaciones",
+    "deleteAll": "Eliminar Clase y Anotaciones",
+    "name": "Nombre",
+    "namePlaceholder": "Nombre de clase",
+    "color": "Color",
+    "nameRequired": "El nombre de la clase es requerido"
+  },
+  "annotations": {
+    "title": "Anotaciones",
+    "empty": "Sin anotaciones"
+  },
+  "images": {
+    "load": "Cargar imágenes",
+    "title": "Titulo",
+    "select": "Seleccionar imágenes",
+    "upload": "Seleccionar imágenes",
+    "noImages": "No hay imágenes"
+  },
+  "actions": {
+    "title": "Acciones",
+    "save": "Guardar",
+    "undo": "Deshacer",
+    "clear": "Limpiar",
+    "delete": "Eliminar",
+    "cancel": "Cancelar",
+    "create": "Crear",
+    "confirm": "Confirmar",
+    "close": "Cerrar",
+    "duplicate": "Duplicar",
+    "rename": "Renombrar",
+    "exportBackup": "Exportar Backup",
+    "deleteConfirm": "Sí, eliminar",
+    "clearConfirm": "¿Limpiar todas las anotaciones de esta imagen?"
+  },
+  "shortcuts": {
+    "title": "Atajos",
+    "save": "Guardar",
+    "undo": "Deshacer",
+    "delete": "Eliminar",
+    "navigation": "Navegación",
+    "bbox": "Bbox",
+    "mask": "Mask",
+    "select": "Select",
+    "pan": "Pan",
+    "classes": "Clase 1-9"
+  },
+  "canvas": {
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
+    "resetZoom": "Restablecer Zoom",
+    "toggleLabels": "Mostrar/Ocultar Etiquetas",
+    "toggleGrid": "Mostrar/Ocultar Grilla",
+    "prevImage": "Imagen Anterior (←)",
+    "nextImage": "Imagen Siguiente (→)"
+  },
+  "stats": {
+    "title": "Estadísticas",
+    "images": "Imágenes",
+    "annotated": "Anotadas",
+    "labels": "Etiquetas",
+    "classes": "Clases",
+    "progress": "imágenes anotadas"
+  },
+  "gallery": {
+    "title": "Galería",
+    "all": "Todas",
+    "annotated": "Anotadas",
+    "unannotated": "Sin anotar",
+    "empty": "No hay imágenes",
+    "deleteConfirm": "¿Eliminar esta imagen?"
+  },
+  "export": {
+    "title": "Exportar Proyecto",
+    "project": {
+      "title": "Exportar Proyecto (.tix)",
+      "description": "Para continuar trabajando después o compartir con tu equipo",
+      "withImages": "Incluir imágenes (proyecto completo)",
+      "button": "Exportar Proyecto"
+    },
+    "training": {
+      "title": "Exportar para Entrenamiento",
+      "description": "Dataset listo para entrenar tu modelo (siempre incluye imágenes)",
+      "tabExport": "Exportar",
+      "tabCode": "Generar Código",
+      "selectFormat": "Selecciona el formato:",
+      "button": "Exportar Dataset"
+    },
+    "code": {
+      "framework": "Framework",
+      "model": "Modelo",
+      "device": "Dispositivo",
+      "epochs": "Epochs",
+      "batch": "Batch Size",
+      "imgsz": "Tamaño Imagen",
+      "preview": "Vista Previa",
+      "copy": "Copiar Código",
+      "downloadPy": "Descargar .py",
+      "downloadIpynb": "Descargar .ipynb"
+    },
+    "formats": {
+      "yolo": {
+        "name": "YOLO Detection",
+        "description": "Bounding boxes en formato YOLO (.txt) con data.yaml"
+      },
+      "yoloSeg": {
+        "name": "YOLO Segmentation",
+        "description": "Polígonos en formato YOLO (.txt) con data.yaml"
+      },
+      "coco": {
+        "name": "COCO JSON",
+        "description": "Formato COCO para Mask R-CNN, RetinaNet, etc."
+      },
+      "masksPng": {
+        "name": "Máscaras PNG (U-Net)",
+        "description": "Imágenes PNG de máscaras para segmentación semántica"
+      },
+      "voc": {
+        "name": "Pascal VOC XML",
+        "description": "Formato XML con coordenadas en píxeles"
+      },
+      "csv": {
+        "name": "CSV Simple",
+        "description": "Formato CSV para procesamiento con pandas"
+      },
+      "folders": {
+        "name": "Carpetas por Clase",
+        "description": "Imágenes organizadas en carpetas por clase"
+      },
+      "json": {
+        "name": "JSON Completo",
+        "description": "Exportación JSON con todas las anotaciones"
+      }
+    },
+    "preparing": "Preparando exportación...",
+    "success": "Dataset exportado exitosamente",
+    "downloadDataset": "Descargar Dataset"
+  },
+  "project": {
+    "new": "Nuevo Proyecto",
+    "name": "Nombre del Proyecto",
+    "namePlaceholder": "Mi Proyecto Annotix",
+    "type": "Tipo de Anotación",
+    "typeSelectHelper": "Selecciona el tipo de anotación según tu objetivo de entrenamiento",
+    "types": {
+      "classification": {
+        "name": "Clasificación Simple",
+        "description": "Asignar una sola etiqueta a cada imagen completa",
+        "useCases": "Identificar qué contiene la imagen (ej: gato, perro, coche)",
+        "models": "ResNet, VGG, EfficientNet, MobileNet",
+        "difficulty": "Principiante"
+      },
+      "multiLabel": {
+        "name": "Clasificación Multi-Etiqueta",
+        "description": "Asignar múltiples etiquetas a cada imagen",
+        "useCases": "Imagen con varios elementos (ej: parque + perro + cielo)",
+        "models": "ResNet, VGG con salida multi-label",
+        "difficulty": "Principiante"
+      },
+      "detection": {
+        "name": "Detección de Objetos",
+        "description": "Localizar objetos con cajas rectangulares (bounding boxes)",
+        "useCases": "Encontrar y ubicar objetos específicos en la imagen",
+        "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+        "difficulty": "Intermedio"
+      },
+      "segmentation": {
+        "name": "Segmentación Semántica",
+        "description": "Clasificar cada píxel de la imagen por clase",
+        "useCases": "Separar regiones (ej: carretera, cielo, edificios)",
+        "models": "U-Net, DeepLab, FCN",
+        "difficulty": "Avanzado"
+      },
+      "instanceSeg": {
+        "name": "Segmentación de Instancias",
+        "description": "Delinear contorno de cada objeto individual",
+        "useCases": "Separar objetos individuales a nivel de píxel",
+        "models": "Mask R-CNN, YOLACT, YOLOv8-seg",
+        "difficulty": "Avanzado"
+      },
+      "keypoints": {
+        "name": "Puntos Clave",
+        "description": "Marcar puntos específicos en objetos",
+        "useCases": "Pose estimation, reconocimiento facial, anatomía",
+        "models": "OpenPose, HRNet, MediaPipe",
+        "difficulty": "Intermedio"
+      },
+      "obb": {
+        "name": "Cajas Rotadas (OBB)",
+        "description": "Bounding boxes con rotación libre",
+        "useCases": "Texto en ángulos, objetos aéreos, satélites",
+        "models": "Rotated-YOLO, RRPN",
+        "difficulty": "Avanzado"
+      },
+      "useCasesLabel": "Casos de uso",
+      "modelsLabel": "Modelos recomendados",
+      "difficultyLabel": "Dificultad"
+    },
+    "initialClasses": "Clases Iniciales (opcional)",
+    "classesPlaceholder": "clase1, clase2, clase3",
+    "classesHelp": "Separadas por comas. Puedes agregar más después.",
+    "imageDimensions": "Dimensiones de Imágenes",
+    "dimensionsAuto": "Automático - Acepta cualquier tamaño",
+    "dimensionsFixed": "Fijo - Todas las imágenes se redimensionarán",
+    "targetSize": "Tamaño objetivo",
+    "resizeStrategy": "Estrategia",
+    "enterName": "Ingresa un nombre para el proyecto",
+    "created": "Proyecto \"{name}\" creado",
+    "loaded": "Proyecto \"{name}\" cargado",
+    "deleted": "Proyecto eliminado",
+    "duplicated": "Proyecto \"{name}\" duplicado",
+    "renamed": "Proyecto renombrado",
+    "imported": "Proyecto \"{name}\" importado",
+    "exported": "Proyecto exportado",
+    "configExported": "Configuración exportada",
+    "selectFirst": "Selecciona un proyecto primero",
+    "noProjects": "No hay proyectos disponibles",
+    "manageProjects": "Gestionar Proyectos",
+    "renameProject": "Renombrar Proyecto",
+    "newName": "Nuevo nombre",
+    "images": "imágenes",
+    "annotations": "anotaciones",
+    "exportBackup": "Descargar backup .tix antes de eliminar",
+    "deleteWarning": {
+      "title": "⚠️ ADVERTENCIA: ELIMINACIÓN PERMANENTE",
+      "confirmTitle": "¿Confirmar Eliminación?",
+      "projectName": "Proyecto:",
+      "message": "Estás a punto de eliminar este proyecto de forma PERMANENTE.",
+      "permanent": "Esta acción NO se puede deshacer",
+      "allData": "Se eliminarán TODAS las imágenes y anotaciones",
+      "noUndo": "No hay forma de recuperar los datos eliminados",
+      "recommendation": "💡 Recomendación: Exporta el proyecto en formato .tix como backup ANTES de eliminarlo"
+    }
+  },
+  "notifications": {
+    "imageSaved": "Imagen guardada",
+    "imagesLoaded": "{count} imágenes cargadas",
+    "datasetDownloaded": "Dataset descargado",
+    "classesDownloaded": "classes.txt descargado",
+    "noClasses": "No hay clases para descargar",
+    "noImages": "No hay imágenes en el proyecto",
+    "noAnnotations": "No hay anotaciones para descargar",
+    "appStarted": "Aplicación iniciada",
+    "classDeleted": "Clase y todas sus anotaciones eliminadas",
+    "error": {
+      "createProject": "Error al crear proyecto",
+      "loadProject": "Error al cargar proyecto",
+      "updateProject": "Error al actualizar proyecto",
+      "deleteProject": "Error al eliminar proyecto",
+      "duplicateProject": "Error al duplicar proyecto",
+      "renameProject": "Error al renombrar proyecto",
+      "loadProjects": "Error al cargar proyectos",
+      "exportProject": "Error al exportar proyecto",
+      "exportConfig": "Error al exportar configuración",
+      "importConfig": "Error al importar configuración",
+      "importProject": "Error al importar proyecto",
+      "loadImage": "Error al cargar imagen",
+      "saveImage": "Error al guardar imagen",
+      "deleteImage": "Error al eliminar imagen",
+      "loadImages": "Error al cargar imágenes",
+      "downloadDataset": "Error al descargar dataset",
+      "initApp": "Error al iniciar la aplicación"
+    }
+  },
+  "tour": {
+    "welcome": "Bienvenido a <strong>Annotix</strong>. Esta herramienta te permite anotar imágenes para entrenar modelos de machine learning.",
+    "project": "Primero, crea un nuevo proyecto o selecciona uno existente. Cada proyecto puede ser de tipo <strong>Bounding Box</strong> o <strong>Segmentación</strong>.",
+    "tools": "Aquí encontrarás las <strong>herramientas</strong> de anotación: Box para rectángulos, Mask para máscaras pintables, Select para editar, y Pan para mover la vista.",
+    "classes": "Define tus <strong>clases</strong> de anotación. Cada clase tiene un nombre y un color. Puedes agregar, editar o eliminar clases.",
+    "workspace": "El <strong>área de trabajo</strong> principal. Aquí cargarás tus imágenes y crearás las anotaciones. Usa el mouse para dibujar y la rueda para hacer zoom.",
+    "management": "Panel de gestión donde verás las <strong>estadísticas</strong> del proyecto, la <strong>galería</strong> de imágenes y podrás <strong>exportar</strong> tu dataset en formato YOLO.",
+    "next": "Siguiente →",
+    "prev": "← Anterior",
+    "done": "¡Listo!",
+    "skip": "Saltar"
+  },
+  "imageInfo": {
+    "noName": "Sin nombre",
+    "dimensions": "Dimensiones"
+  },
+  "preprocessing": {
+    "title": "Preprocesar Imágenes",
+    "detected": "Detectadas {count} imágenes no cuadradas",
+    "description": "Las imágenes se ajustarán a un tamaño cuadrado para optimizar el entrenamiento. Elige la estrategia de redimensionamiento:",
+    "targetSize": "Tamaño objetivo (píxeles)",
+    "recommended": "Recomendado: {size}px",
+    "strategy": "Estrategia de redimensionamiento",
+    "strategies": {
+      "resize": {
+        "name": "Redimensionar + Padding",
+        "description": "Reduce la imagen y añade padding (optimiza espacio y memoria)"
+      },
+      "padding": {
+        "name": "Solo Padding",
+        "description": "Mantiene tamaño original y añade padding (mejor calidad)"
+      }
+    },
+    "options": {
+      "apply": "Aplicar preprocesamiento",
+      "skip": "Subir sin preprocesar"
+    },
+    "progress": "Procesando imagen {current} de {total}...",
+    "complete": "{count} imágenes preprocesadas correctamente",
+    "preview": "Vista previa",
+    "original": "Original",
+    "processed": "Procesada",
+    "aspectRatio": "Aspect ratio original preservado",
+    "paddingInfo": "Se añadirá padding negro simétrico"
+  },
+  "classification": {
+    "selectOne": "Selecciona la etiqueta correcta",
+    "selectMultiple": "Selecciona las etiquetas que aplican",
+    "singleHint": "Solo puedes seleccionar una etiqueta",
+    "multiHint": "Puedes seleccionar múltiples etiquetas",
+    "noLabels": "Sin etiquetas asignadas",
+    "labeled": "Etiquetada"
+  },
+  "augmentation": {
+    "title": "Data Augmentation",
+    "batchButton": "Data Augmentation",
+    "augmentImage": "Aplicar augmentation",
+    "variationsCount": "Número de variaciones",
+    "variationsCountHelp": "¿Cuántas imágenes aumentadas crear? (1-20)",
+    "generationMode": "Modo de generación",
+    "modeManual": "Manual (configuración fija)",
+    "modeRandom": "Aleatorio (rangos configurables)",
+    "modeManualHelp": "Aplicar la misma configuración N veces",
+    "modeRandomHelp": "Generar N variaciones con valores aleatorios dentro de los rangos especificados",
+    "geometricTransforms": "Transformaciones Geométricas",
+    "flipHorizontal": "Voltear Horizontal",
+    "flipVertical": "Voltear Vertical",
+    "rotation": "Rotación",
+    "noRotation": "Sin rotación",
+    "customRotation": "Rotación personalizada",
+    "colorAdjustments": "Ajustes de Color",
+    "brightness": "Brillo",
+    "contrast": "Contraste",
+    "saturation": "Saturación",
+    "randomOptions": "Opciones Aleatorias",
+    "randomFlip": "Flip aleatorio (horizontal/vertical)",
+    "randomRotation": "Rotación aleatoria",
+    "randomColor": "Ajustes de color aleatorios",
+    "rotationRange": "Rango de rotación (grados)",
+    "brightnessRange": "Rango de brillo",
+    "contrastRange": "Rango de contraste",
+    "saturationRange": "Rango de saturación",
+    "min": "Mín",
+    "max": "Máx",
+    "keepAnnotations": "Conservar anotaciones transformadas",
+    "keepAnnotationsHelp": "Las cajas se transformarán automáticamente con la imagen",
+    "maskProjectWarning": "Proyecto de máscaras",
+    "maskProjectWarningText": "Las anotaciones NO se conservarán. Deberás pintar las máscaras manualmente en cada imagen aumentada.",
+    "apply": "Aplicar",
+    "processing": "Procesando augmentation...",
+    "generatingVariations": "Generando {count} variaciones...",
+    "variationsSuccess": "{count} variaciones creadas correctamente",
+    "success": "Imagen aumentada creada correctamente",
+    "error": "Error al aplicar augmentation",
+    "batchProcessing": "Aplicando augmentation a {count} imágenes...",
+    "batchRandomProcessing": "Generando {variations} variaciones para {images} imágenes ({total} total)...",
+    "batchSuccess": "{count} imágenes aumentadas creadas correctamente",
+    "batchRandomSuccess": "{count} variaciones aleatorias creadas correctamente",
+    "batchError": "Error al aplicar augmentation por lotes"
+  }
+}

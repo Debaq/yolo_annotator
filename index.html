@@ -3,578 +3,416 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Annotix - TecMedHub</title>
+    <title>Annotix - Image Annotation Tool</title>
 
-    <!-- External Libraries -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/introjs.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css">
-    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/themes/light.css">
-
-    <!-- Custom CSS - Modular -->
-    <link rel="stylesheet" href="css/variables.css">
-    <link rel="stylesheet" href="css/base.css">
-    <link rel="stylesheet" href="css/layout.css">
-    <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/canvas.css">
-    <link rel="stylesheet" href="css/modals.css">
-    <link rel="stylesheet" href="css/gallery.css">
-    <link rel="stylesheet" href="css/responsive.css">
-    <link rel="stylesheet" href="css/utilities.css">
-
-    <!-- External Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
-    <script src="https://unpkg.com/@popperjs/core@2"></script>
-    <script src="https://unpkg.com/tippy.js@6"></script>
 </head>
-<body>
+<body x-data x-init="$store.app.init()">
+
+    <!-- Loading Overlay -->
+    <div x-show="$store.app.isLoading"
+         class="loading-overlay"
+         x-transition>
+        <div class="spinner"></div>
+        <p>Loading...</p>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div x-show="$store.app.toast.visible"
+         x-transition
+         class="toast"
+         :class="`toast-${$store.app.toast.type}`">
+        <i class="fas"
+           :class="{
+               'fa-check-circle': $store.app.toast.type === 'success',
+               'fa-exclamation-circle': $store.app.toast.type === 'error',
+               'fa-info-circle': $store.app.toast.type === 'info'
+           }"></i>
+        <span x-text="$store.app.toast.message"></span>
+    </div>
+
     <div class="app-container">
+
         <!-- Header -->
         <header class="app-header">
             <div class="header-content">
-                <!-- Left Side: Logos -->
+
+                <!-- Left: Logo & Title -->
                 <div class="header-left">
-                    <a href="https://www.uach.cl" target="_blank" class="header-logo-link" title="Universidad Austral de Chile">
-                        <img src="https://www.uach.cl/uach/_imag/uach/logo-v2.png" alt="Universidad Austral de Chile" class="header-logo">
+                    <a href="https://www.uach.cl" target="_blank" class="header-logo-link">
+                        <img src="https://www.uach.cl/uach/_imag/uach/logo-v2.png"
+                             alt="Universidad Austral de Chile"
+                             class="header-logo">
                     </a>
-
                     <div class="header-divider-vertical"></div>
-
                     <h1 class="app-title">
                         <i class="fas fa-tag"></i>
-                        <span data-i18n="app.title">Annotix</span>
+                        <span>Annotix</span>
                     </h1>
                 </div>
 
-                <!-- Project Controls -->
+                <!-- Center: Project Controls -->
                 <div class="header-center">
-                    <select id="projectSelector" class="project-selector">
-                        <option value="" data-i18n="header.selectProject">Seleccionar proyecto...</option>
+
+                    <!-- Project Selector -->
+                    <select x-model="$store.app.currentProjectId"
+                            @change="$store.app.loadProject(parseInt($event.target.value))"
+                            class="project-selector">
+                        <option value="">Select project...</option>
+                        <template x-for="project in $store.app.projects" :key="project.id">
+                            <option :value="project.id" x-text="project.name"></option>
+                        </template>
                     </select>
 
-                    <button class="btn-header btn-icon-only" id="btnNewProject" data-tippy-content="" data-i18n-title="header.newProject">
+                    <!-- New Project -->
+                    <button class="btn-header btn-icon-only"
+                            @click="$dispatch('show-new-project-modal')"
+                            title="New Project">
                         <i class="fas fa-plus"></i>
                     </button>
 
-                    <button class="btn-header btn-icon-only" id="btnOpenProject" data-tippy-content="" data-i18n-title="header.openProject">
-                        <i class="fas fa-folder-open"></i>
-                    </button>
-
-                    <button class="btn-header btn-icon-only" id="btnManageProjects" data-tippy-content="" data-i18n-title="header.manageProjects">
+                    <!-- Manage Projects -->
+                    <button class="btn-header btn-icon-only"
+                            @click="$dispatch('show-manage-projects-modal')"
+                            title="Manage Projects">
                         <i class="fas fa-folder-tree"></i>
                     </button>
 
                     <div class="header-divider"></div>
 
-                    <button class="btn-header btn-icon-only" id="btnSave" data-tippy-content="" data-i18n-title="actions.save" disabled>
+                    <!-- Save -->
+                    <button class="btn-header btn-icon-only"
+                            @click="$store.app.saveCurrentImage()"
+                            :disabled="!$store.app.hasUnsavedChanges"
+                            title="Save (Ctrl+S)">
                         <i class="fas fa-save"></i>
+                        <span x-show="$store.app.hasUnsavedChanges"
+                              class="unsaved-indicator"></span>
                     </button>
 
-                    <button class="btn-header btn-icon-only" id="btnExport" data-tippy-content="" data-i18n-title="header.export">
+                    <!-- Export -->
+                    <button class="btn-header btn-icon-only"
+                            @click="$dispatch('show-export-modal')"
+                            :disabled="!$store.app.hasProject"
+                            title="Export Dataset">
                         <i class="fas fa-download"></i>
                     </button>
                 </div>
 
-                <!-- Right Side: Help, Language, GitHub -->
+                <!-- Right: Help & Language -->
                 <div class="header-right">
-                    <button class="btn-header btn-icon-ghost" id="btnHelp" data-tippy-content="" data-i18n-title="header.help">
+                    <button class="btn-header btn-icon-ghost"
+                            @click="$dispatch('show-help')"
+                            title="Help">
                         <i class="fas fa-question-circle"></i>
                     </button>
 
-                    <button class="btn-header btn-icon-ghost" id="btnShowShortcuts" data-tippy-content="" data-i18n-title="shortcuts.title">
+                    <button class="btn-header btn-icon-ghost"
+                            @click="$dispatch('show-shortcuts')"
+                            title="Keyboard Shortcuts">
                         <i class="fas fa-keyboard"></i>
                     </button>
 
                     <div class="header-divider"></div>
 
-                    <!-- Language Selector (will be injected here) -->
-                    <div id="languageSelectorContainer"></div>
+                    <!-- Language Selector -->
+                    <select x-data="{ lang: localStorage.getItem('language') || 'es' }"
+                            x-model="lang"
+                            @change="$dispatch('change-language', lang)"
+                            class="language-selector">
+                        <option value="en">🇬🇧 English</option>
+                        <option value="es">🇪🇸 Español</option>
+                        <option value="fr">🇫🇷 Français</option>
+                        <option value="de">🇩🇪 Deutsch</option>
+                        <option value="pt">🇵🇹 Português</option>
+                        <option value="it">🇮🇹 Italiano</option>
+                        <option value="zh">🇨🇳 中文</option>
+                        <option value="ja">🇯🇵 日本語</option>
+                        <option value="ru">🇷🇺 Русский</option>
+                        <option value="ko">🇰🇷 한국어</option>
+                    </select>
 
-                    <a href="https://github.com/debaq/Annotix" target="_blank" class="btn-header btn-icon-ghost" data-tippy-content="GitHub Repository">
+                    <a href="https://github.com/debaq/Annotix"
+                       target="_blank"
+                       class="btn-header btn-icon-ghost"
+                       title="GitHub">
                         <i class="fab fa-github"></i>
                     </a>
                 </div>
 
-                <!-- Hidden file input for importing projects -->
-                <input type="file" id="projectImportInput" accept=".yoloproject,.tix" style="display: none;">
             </div>
         </header>
 
-        <!-- Main Layout -->
-        <div class="main-layout">
-            <!-- Left Sidebar - Image Gallery Only -->
-            <aside class="sidebar">
-                <!-- Image Upload Button -->
-                <div class="panel-section" style="padding-bottom: 8px;">
-                    <input type="file" id="imageInput" accept="image/*" multiple style="display: none;">
-                    <button class="btn btn-primary btn-block" id="btnLoadImages">
-                        <i class="fas fa-folder-open"></i> <span data-i18n="images.load">Cargar Imágenes</span>
-                    </button>
-                    <button class="btn btn-outline btn-block" id="btnBatchAugmentation" style="margin-top: 8px;" disabled>
-                        <i class="fas fa-wand-magic-sparkles"></i> <span data-i18n="augmentation.batchButton">Data Augmentation</span>
-                    </button>
-                </div>
+        <!-- Main Content -->
+        <div class="main-content">
 
-                <!-- Gallery Filters -->
-                <div class="panel-section" style="padding-top: 0; padding-bottom: 8px;">
-                    <div class="gallery-filters">
-                        <button class="filter-btn active" data-filter="all" data-i18n="gallery.all">Todas</button>
-                        <button class="filter-btn" data-filter="annotated" data-i18n="gallery.annotated">Anotadas</button>
-                        <button class="filter-btn" data-filter="unannotated" data-i18n="gallery.unannotated">Sin anotar</button>
+            <!-- Sidebar -->
+            <aside class="sidebar" x-show="$store.app.hasProject">
+
+                <!-- Classes Section -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-tags"></i> Classes</h3>
+                        <button class="btn-icon-sm"
+                                @click="$dispatch('add-class')"
+                                title="Add Class">
+                            <i class="fas fa-plus"></i>
+                        </button>
                     </div>
-                </div>
 
-                <!-- Image Gallery (Expanded) -->
-                <div class="panel-section" style="flex: 1; display: flex; flex-direction: column; padding-top: 0;">
-                    <div class="gallery-container-full">
-                        <div class="gallery-grid" id="galleryGrid">
-                            <div class="empty-gallery" data-i18n="gallery.empty">No hay imágenes</div>
+                    <div class="classes-list">
+                        <template x-for="(cls, index) in $store.app.currentProject?.classes" :key="index">
+                            <div class="class-item"
+                                 :class="{ 'active': $store.app.selectedClass === index }"
+                                 @click="$store.app.selectedClass = index">
+                                <div class="class-color"
+                                     :style="`background: ${cls.color}`"></div>
+                                <span class="class-name" x-text="cls.name"></span>
+                                <span class="class-shortcut" x-text="index + 1"></span>
+                            </div>
+                        </template>
+
+                        <div x-show="!$store.app.currentProject?.classes?.length"
+                             class="empty-state">
+                            No classes defined
                         </div>
                     </div>
                 </div>
+
+                <!-- Tools Section -->
+                <div class="sidebar-section" x-show="$store.app.currentProject">
+                    <div class="section-header">
+                        <h3><i class="fas fa-tools"></i> Tools</h3>
+                    </div>
+
+                    <div class="tools-grid">
+                        <!-- Show tools based on project type -->
+                        <template x-if="$store.app.currentProject?.type === 'bbox'">
+                            <div class="tool-buttons">
+                                <button class="tool-btn"
+                                        :class="{ 'active': $store.app.selectedTool === 'bbox' }"
+                                        @click="$store.app.setTool('bbox')"
+                                        title="Bounding Box (B)">
+                                    <i class="fas fa-vector-square"></i>
+                                    <span>Box</span>
+                                </button>
+                                <button class="tool-btn"
+                                        :class="{ 'active': $store.app.selectedTool === 'select' }"
+                                        @click="$store.app.setTool('select')"
+                                        title="Select (V)">
+                                    <i class="fas fa-mouse-pointer"></i>
+                                    <span>Select</span>
+                                </button>
+                                <button class="tool-btn"
+                                        :class="{ 'active': $store.app.selectedTool === 'pan' }"
+                                        @click="$store.app.setTool('pan')"
+                                        title="Pan (H)">
+                                    <i class="fas fa-hand"></i>
+                                    <span>Pan</span>
+                                </button>
+                            </div>
+                        </template>
+
+                        <template x-if="$store.app.currentProject?.type === 'mask'">
+                            <div class="tool-buttons">
+                                <button class="tool-btn"
+                                        :class="{ 'active': $store.app.selectedTool === 'mask' }"
+                                        @click="$store.app.setTool('mask')"
+                                        title="Mask (M)">
+                                    <i class="fas fa-paintbrush"></i>
+                                    <span>Mask</span>
+                                </button>
+                                <button class="tool-btn"
+                                        :class="{ 'active': $store.app.selectedTool === 'erase' }"
+                                        @click="$store.app.setTool('erase')"
+                                        title="Erase">
+                                    <i class="fas fa-eraser"></i>
+                                    <span>Erase</span>
+                                </button>
+                                <button class="tool-btn"
+                                        :class="{ 'active': $store.app.selectedTool === 'pan' }"
+                                        @click="$store.app.setTool('pan')"
+                                        title="Pan (H)">
+                                    <i class="fas fa-hand"></i>
+                                    <span>Pan</span>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Image Info -->
+                <div class="sidebar-section" x-show="$store.app.hasImage">
+                    <div class="section-header">
+                        <h3><i class="fas fa-info-circle"></i> Image Info</h3>
+                    </div>
+                    <div class="image-info">
+                        <div class="info-row">
+                            <span class="label">Name:</span>
+                            <span class="value" x-text="$store.app.currentImage?.name"></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Size:</span>
+                            <span class="value"
+                                  x-text="`${$store.app.currentImage?.width} × ${$store.app.currentImage?.height}`"></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Annotations:</span>
+                            <span class="value"
+                                  x-text="$store.app.currentImage?.annotations?.length || 0"></span>
+                        </div>
+                    </div>
+                </div>
+
             </aside>
 
             <!-- Canvas Area -->
-            <main class="canvas-container">
-                <canvas id="canvas"></canvas>
+            <div class="canvas-area">
 
-                <!-- Image Info -->
-                <div class="image-info" id="imageInfo" style="display: none;">
-                    <div class="image-info-item">
-                        <i class="fas fa-image"></i>
-                        <span class="image-info-value" id="imageName" data-i18n="imageInfo.noName">-</span>
-                    </div>
-                    <div class="image-info-item">
-                        <i class="fas fa-ruler-combined"></i>
-                        <span class="image-info-value" id="imageDimensions">-</span>
-                    </div>
-                    <div class="image-info-item">
-                        <i class="fas fa-tags"></i>
-                        <span class="image-info-value" id="annotationCount">0</span>
-                    </div>
-                </div>
+                <!-- Canvas Toolbar -->
+                <div class="canvas-toolbar" x-show="$store.app.hasImage">
 
-                <!-- Rotation Controls -->
-                <div class="rotation-controls" id="rotationControls" style="display: none;">
-                    <i class="fas fa-rotate"></i>
-                    <input type="range" id="rotationSlider" min="0" max="360" value="0" step="1" class="rotation-slider">
-                    <span id="rotationValue">0°</span>
-                    <button class="control-btn-small" id="btnResetRotation" title="Reset">
-                        <i class="fas fa-undo"></i>
-                    </button>
-                </div>
-
-                <!-- Floating Tools Menu -->
-                <div class="floating-tools">
-                    <!-- Tools Section -->
-                    <div class="floating-section">
-                        <div class="tool-btn active" data-tool="bbox" data-i18n-title="tools.tooltips.bbox">
-                            <i class="fas fa-vector-square"></i>
-                        </div>
-                        <div class="tool-btn" data-tool="obb" data-i18n-title="tools.tooltips.obb" style="display: none;">
-                            <i class="fas fa-vector-square"></i>
-                        </div>
-                        <div class="tool-btn" data-tool="mask" data-i18n-title="tools.tooltips.mask" style="display: none;">
-                            <i class="fas fa-paint-brush"></i>
-                        </div>
-                        <div class="tool-btn" id="btnEraseMode" data-i18n-title="tools.eraseMode" title="Borrador" style="display: none;">
-                            <i class="fas fa-eraser"></i>
-                        </div>
-                        <div class="tool-btn" data-tool="select" data-i18n-title="tools.tooltips.select">
-                            <i class="fas fa-mouse-pointer"></i>
-                        </div>
-                        <div class="tool-btn" data-tool="pan" data-i18n-title="tools.tooltips.pan">
-                            <i class="fas fa-hand-paper"></i>
-                        </div>
-                    </div>
-
-                    <!-- Zoom Section -->
-                    <div class="floating-section">
-                        <div class="zoom-level" id="zoomLevel">100%</div>
-                        <button class="control-btn" id="btnZoomIn" data-i18n-title="canvas.zoomIn">
-                            <i class="fas fa-search-plus"></i>
-                        </button>
-                        <button class="control-btn" id="btnZoomOut" data-i18n-title="canvas.zoomOut">
+                    <!-- Zoom Controls -->
+                    <div class="toolbar-group">
+                        <button class="btn-toolbar"
+                                @click="$store.app.setZoom($store.app.zoom - 0.1)"
+                                title="Zoom Out">
                             <i class="fas fa-search-minus"></i>
                         </button>
-                        <button class="control-btn" id="btnZoomReset" data-i18n-title="canvas.resetZoom">
-                            <i class="fas fa-expand"></i>
+                        <span class="zoom-value"
+                              x-text="`${Math.round($store.app.zoom * 100)}%`"></span>
+                        <button class="btn-toolbar"
+                                @click="$store.app.setZoom($store.app.zoom + 0.1)"
+                                title="Zoom In">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                        <button class="btn-toolbar"
+                                @click="$store.app.setZoom(1)"
+                                title="Reset Zoom">
+                            <i class="fas fa-compress"></i>
                         </button>
                     </div>
 
-                    <!-- View Section -->
-                    <div class="floating-section">
-                        <button class="control-btn" id="btnToggleLabels" data-i18n-title="canvas.toggleLabels">
-                            <i class="fas fa-eye"></i>
+                    <div class="toolbar-divider"></div>
+
+                    <!-- Navigation -->
+                    <div class="toolbar-group">
+                        <button class="btn-toolbar"
+                                @click="$store.app.previousImage()"
+                                :disabled="!$store.app.canGoPrevious"
+                                title="Previous Image (←)">
+                            <i class="fas fa-chevron-left"></i>
                         </button>
-                        <button class="control-btn" id="btnToggleGrid" data-i18n-title="canvas.toggleGrid">
-                            <i class="fas fa-th"></i>
+                        <span class="image-counter"
+                              x-text="`${$store.app.currentImageIndex + 1} / ${$store.app.imageCount}`"></span>
+                        <button class="btn-toolbar"
+                                @click="$store.app.nextImage()"
+                                :disabled="!$store.app.canGoNext"
+                                title="Next Image (→)">
+                            <i class="fas fa-chevron-right"></i>
                         </button>
                     </div>
 
-                    <!-- Mask Controls (shown only when mask tool active) -->
-                    <div id="maskControls" class="floating-section" style="display: none;">
-                        <button class="control-btn" id="btnNewInstance" data-i18n-title="tools.newInstance" title="Nueva Instancia">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                        <div style="font-size: 0.7em; text-align: center; margin: 4px 0;">
-                            <span id="brushSizeValue">20px</span>
-                        </div>
-                        <input type="range" id="brushSizeSlider" min="5" max="100" value="20" class="vertical-slider">
-                    </div>
-                </div>
+                    <div class="toolbar-divider"></div>
 
-                <!-- Navigation Buttons -->
-                <div class="image-navigation">
-                    <button class="nav-btn" id="btnPrevImage" disabled data-i18n-title="canvas.prevImage">
-                        <i class="fas fa-chevron-left"></i>
+                    <!-- Add Images -->
+                    <button class="btn-toolbar"
+                            @click="$refs.imageInput.click()"
+                            title="Add Images">
+                        <i class="fas fa-images"></i>
+                        <span>Add Images</span>
                     </button>
-                    <button class="nav-btn" id="btnNextImage" disabled data-i18n-title="canvas.nextImage">
-                        <i class="fas fa-chevron-right"></i>
+
+                    <input type="file"
+                           x-ref="imageInput"
+                           multiple
+                           accept="image/*"
+                           @change="$store.app.addImages(Array.from($event.target.files))"
+                           style="display: none;">
+
+                </div>
+
+                <!-- Canvas Container -->
+                <div class="canvas-container"
+                     x-show="$store.app.hasImage">
+                    <canvas id="canvas"
+                            x-ref="canvas"
+                            @mousedown="handleCanvasMouseDown"
+                            @mousemove="handleCanvasMouseMove"
+                            @mouseup="handleCanvasMouseUp"
+                            @wheel.prevent="handleCanvasWheel"></canvas>
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state-canvas"
+                     x-show="!$store.app.hasImage && $store.app.hasProject">
+                    <i class="fas fa-images fa-4x"></i>
+                    <h2>No Images</h2>
+                    <p>Add images to start annotating</p>
+                    <button class="btn-primary"
+                            @click="$refs.imageInput.click()">
+                        <i class="fas fa-plus"></i>
+                        Add Images
                     </button>
                 </div>
 
-                <!-- Bottom Bar - Annotations List -->
-                <div class="annotations-bar collapsed" id="annotationsBar">
-                    <div class="annotations-bar-content">
-                        <button class="btn-collapse-vertical" id="btnCollapseAnnotations" title="Colapsar">
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div class="annotations-list" id="annotationsList">
-                            <div class="empty-annotations" data-i18n="annotations.empty">No hay anotaciones en esta imagen</div>
-                        </div>
-                    </div>
-                </div>
-            </main>
-
-            <!-- Right Panel -->
-            <aside class="right-panel">
-                <!-- Project Stats -->
-                <div class="panel-section">
-                    <h3><i class="fas fa-chart-bar"></i> <span data-i18n="stats.title">Estadísticas</span></h3>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-value" id="statTotalImages">0</div>
-                            <div class="stat-label" data-i18n="stats.images">Imágenes</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="statAnnotated">0</div>
-                            <div class="stat-label" data-i18n="stats.annotated">Anotadas</div>
-                        </div>
-                    </div>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-value" id="statLabels">0</div>
-                            <div class="stat-label" data-i18n="stats.labels">Etiquetas</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="statClasses">0</div>
-                            <div class="stat-label" data-i18n="stats.classes">Clases</div>
-                        </div>
-                    </div>
-
-                    <div class="progress-container">
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="progressBar" style="width: 0%"></div>
-                        </div>
-                        <div class="progress-text" id="progressText">
-                            <span id="progressCount">0/0</span> <span data-i18n="stats.progress">imágenes anotadas</span>
-                        </div>
-                    </div>
+                <!-- No Project State -->
+                <div class="empty-state-canvas"
+                     x-show="!$store.app.hasProject">
+                    <i class="fas fa-folder-open fa-4x"></i>
+                    <h2>No Project Selected</h2>
+                    <p>Create or select a project to begin</p>
+                    <button class="btn-primary"
+                            @click="$dispatch('show-new-project-modal')">
+                        <i class="fas fa-plus"></i>
+                        New Project
+                    </button>
                 </div>
 
-                <!-- Class Manager -->
-                <div class="panel-section">
-                    <h3><i class="fas fa-palette"></i> <span data-i18n="classes.manage">Gestionar Clases</span></h3>
-                    <div class="class-manager">
-                        <div class="class-input-group">
-                            <input type="text" id="newClassName" class="class-input" data-i18n="classes.placeholder" placeholder="Nombre de clase">
-                            <input type="color" id="newClassColor" class="color-input" value="#e74c3c">
+            </div>
+
+            <!-- Gallery Panel -->
+            <aside class="gallery-panel" x-show="$store.app.hasProject">
+                <div class="panel-header">
+                    <h3><i class="fas fa-th"></i> Gallery</h3>
+                    <span class="badge"
+                          x-text="`${$store.app.annotatedImageCount} / ${$store.app.imageCount}`"></span>
+                </div>
+
+                <div class="gallery-grid">
+                    <template x-for="image in $store.app.images" :key="image.id">
+                        <div class="gallery-item"
+                             :class="{ 'active': image.id === $store.app.currentImageId }"
+                             @click="$store.app.loadImage(image.id)">
+                            <div class="gallery-thumbnail">
+                                <!-- Thumbnail will be generated dynamically -->
+                                <span x-text="image.name"></span>
+                            </div>
+                            <div class="gallery-info">
+                                <span class="image-name"
+                                      x-text="image.name"
+                                      :title="image.name"></span>
+                                <span class="annotation-count"
+                                      x-show="image.annotations?.length">
+                                    <i class="fas fa-tag"></i>
+                                    <span x-text="image.annotations.length"></span>
+                                </span>
+                            </div>
                         </div>
-                        <button class="btn btn-primary btn-block" id="btnAddClass">
-                            <i class="fas fa-plus"></i> <span data-i18n="classes.add">Agregar Clase</span>
-                        </button>
-                    </div>
+                    </template>
                 </div>
-
-                <!-- Active Classes -->
-                <div class="panel-section">
-                    <h3><i class="fas fa-tags"></i> <span data-i18n="classes.active">Clases Activas</span></h3>
-                    <div class="class-list" id="classList">
-                        <div class="empty-message" data-i18n="classes.empty">No hay clases definidas</div>
-                    </div>
-                </div>
-
             </aside>
+
         </div>
 
-        <!-- Global Watermark (always on top) -->
-        <div class="global-watermark" data-i18n="app.branding.fablab">TecMedHub</div>
     </div>
 
-    <!-- Load i18n FIRST -->
-    <script src="js/i18n.js"></script>
+    <!-- Modals will be injected here -->
+    <div id="modal-root"></div>
 
-    <!-- Custom JavaScript -->
-    <script src="js/database-manager.js"></script>
-    <script src="js/ui-manager.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/shortcuts-manager.js"></script>
-    <script src="js/tool-manager.js"></script>
+    <!-- Main Script -->
+    <script type="module" src="/src/main.js"></script>
 
-    <!-- New Canvas Architecture -->
-    <script src="js/canvas/canvas-base.js"></script>
-    <script src="js/canvas/canvas-bbox.js"></script>
-    <script src="js/canvas/canvas-obb.js"></script>
-    <script src="js/canvas/canvas-mask.js"></script>
-    <script src="js/canvas/canvas-keypoints.js"></script>
-    <script src="js/canvas/canvas-factory.js"></script>
-
-    <script src="js/image-preprocessor.js"></script>
-    <script src="js/project-manager.js"></script>
-    <script src="js/export-manager.js"></script>
-    <script src="js/training-code-generator.js"></script>
-    <script src="js/canvas-manager.js"></script><!-- Deprecated - kept for backward compatibility -->
-    <script src="js/classification-manager.js"></script>
-    <script src="js/gallery-manager.js"></script>
-    <script src="js/app.js"></script>
-
-    <!-- Initialize Tour and additional features -->
-    <script>
-        // Wait for i18n to load
-        window.addEventListener('DOMContentLoaded', async () => {
-            // Wait a bit for i18n to initialize
-            await new Promise(resolve => setTimeout(resolve, 100));
-
-            // Inject language selector
-            const container = document.getElementById('languageSelectorContainer');
-            if (container && window.i18n) {
-                const selector = window.i18n.createLanguageSelector();
-                container.appendChild(selector);
-            }
-
-            // Tour configuration with i18n
-            window.startAppTour = function() {
-                if (!window.i18n || !window.i18n.translations) {
-                    console.error('i18n not loaded');
-                    return;
-                }
-
-                const intro = introJs();
-                intro.setOptions({
-                    steps: [
-                        {
-                            intro: window.i18n.t('tour.welcome')
-                        },
-                        {
-                            element: document.querySelector('#projectSelector'),
-                            intro: window.i18n.t('tour.project'),
-                            position: 'bottom'
-                        },
-                        {
-                            element: document.querySelector('.sidebar'),
-                            intro: window.i18n.t('tour.tools'),
-                            position: 'right'
-                        },
-                        {
-                            element: document.querySelector('#classList').parentElement,
-                            intro: window.i18n.t('tour.classes'),
-                            position: 'right'
-                        },
-                        {
-                            element: document.querySelector('.canvas-container'),
-                            intro: window.i18n.t('tour.workspace'),
-                            position: 'left'
-                        },
-                        {
-                            element: document.querySelector('.right-panel'),
-                            intro: window.i18n.t('tour.management'),
-                            position: 'left'
-                        }
-                    ],
-                    nextLabel: window.i18n.t('tour.next'),
-                    prevLabel: window.i18n.t('tour.prev'),
-                    doneLabel: window.i18n.t('tour.done'),
-                    skipLabel: window.i18n.t('tour.skip'),
-                    showProgress: true,
-                    showBullets: false,
-                    exitOnOverlayClick: false,
-                    disableInteraction: true
-                });
-
-                intro.start();
-            };
-
-            // Add tour to help button
-            const helpBtn = document.getElementById('btnHelp');
-            if (helpBtn) {
-                helpBtn.addEventListener('click', window.startAppTour);
-            }
-
-            // Listen for language changes to update tour
-            window.addEventListener('languageChanged', () => {
-                // Tour will use updated translations when started
-            });
-        });
-
-        // Update button states based on current state
-function updateUIState() {
-    if (window.app && window.app.canvasManager) {
-        const hasImage = window.app.canvasManager.image !== null;
-        const hasAnnotations = window.app.canvasManager.annotations.length > 0;
-        const hasProject = window.app.projectManager.currentProject !== null;
-
-        // Update button states - con verificación de existencia
-        const btnSave = document.getElementById('btnSave');
-        const btnUndo = document.getElementById('btnUndo');
-        const btnClear = document.getElementById('btnClear');
-        const btnDownloadZip = document.getElementById('btnDownloadZip');
-        const btnBatchAugmentation = document.getElementById('btnBatchAugmentation');
-
-        if (btnSave) {
-            btnSave.disabled = !hasImage || !hasAnnotations || !hasProject;
-
-            // Highlight save button if there are unsaved changes
-            if (window.app.canvasManager.hasUnsavedChanges) {
-                btnSave.classList.add('btn-pulse');
-                btnSave.style.background = '#f39c12';
-            } else {
-                btnSave.classList.remove('btn-pulse');
-                btnSave.style.background = '';
-            }
-        }
-        if (btnUndo) btnUndo.disabled = !hasAnnotations;
-        if (btnClear) btnClear.disabled = !hasAnnotations;
-        if (btnDownloadZip) btnDownloadZip.disabled = !hasProject;
-        if (btnBatchAugmentation) btnBatchAugmentation.disabled = !hasProject;
-
-        // Update image info
-        const imageInfo = document.getElementById('imageInfo');
-        if (imageInfo) {
-            if (hasImage) {
-                imageInfo.style.display = 'block';
-                const nameElement = document.getElementById('imageName');
-                const dimensionsElement = document.getElementById('imageDimensions');
-                const countElement = document.getElementById('annotationCount');
-
-                if (nameElement) {
-                    nameElement.textContent = window.app.canvasManager.imageName ||
-                        (window.i18n ? window.i18n.t('imageInfo.noName') : 'No name');
-                }
-                if (dimensionsElement) {
-                    dimensionsElement.textContent =
-                        `${window.app.canvasManager.image.width}x${window.app.canvasManager.image.height}`;
-                }
-                if (countElement) {
-                    countElement.textContent = hasAnnotations ?
-                        window.app.canvasManager.annotations.length : 0;
-                }
-            } else {
-                imageInfo.style.display = 'none';
-            }
-        }
-
-        // Update stat classes
-        if (hasProject && window.app.canvasManager.classes) {
-            const statClasses = document.getElementById('statClasses');
-            if (statClasses) {
-                statClasses.textContent = window.app.canvasManager.classes.length;
-            }
-        }
-
-        // Update progress text
-        const images = window.app.galleryManager.images;
-        const annotated = images.filter(img => img.annotations && img.annotations.length > 0).length;
-        const progressCount = document.getElementById('progressCount');
-        if (progressCount) {
-            progressCount.textContent = `${annotated}/${images.length}`;
-        }
-    }
-}
-
-        // Poll for UI updates
-        setInterval(updateUIState, 500);
-
-        // Download classes.txt
-        document.getElementById('btnDownloadClasses')?.addEventListener('click', () => {
-            if (window.app && window.app.canvasManager.classes.length > 0) {
-                const sortedClasses = [...window.app.canvasManager.classes].sort((a, b) => a.id - b.id);
-                const classesContent = sortedClasses.map(cls => cls.name).join('\n');
-
-                const blob = new Blob([classesContent], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'classes.txt';
-                a.click();
-                URL.revokeObjectURL(url);
-
-                window.app.ui.showToast(window.i18n.t('notifications.classesDownloaded'), 'success');
-            } else {
-                window.app.ui.showToast(window.i18n.t('notifications.noClasses'), 'warning');
-            }
-        });
-
-        // Undo button
-        document.getElementById('btnUndo')?.addEventListener('click', () => {
-            if (window.app) {
-                window.app.undo();
-            }
-        });
-
-        // Clear button
-        document.getElementById('btnClear')?.addEventListener('click', () => {
-            if (window.app && confirm(window.i18n.t('actions.clearConfirm'))) {
-                window.app.canvasManager.annotations = [];
-                window.app.canvasManager.redraw();
-            }
-        });
-    </script>
-    <script>
-// Mask Controls Event Listeners
-document.addEventListener('DOMContentLoaded', () => {
-    const brushSizeSlider = document.getElementById('brushSizeSlider');
-    const brushSizeValue = document.getElementById('brushSizeValue');
-    const btnEraseMode = document.getElementById('btnEraseMode');
-    const eraseModeText = document.getElementById('eraseModeText');
-    const btnClearMask = document.getElementById('btnClearMask');
-
-    // Brush size slider
-    if (brushSizeSlider && brushSizeValue) {
-        brushSizeSlider.addEventListener('input', (e) => {
-            const size = e.target.value;
-            brushSizeValue.textContent = size + 'px';
-
-            if (window.app && window.app.canvasManager) {
-                window.app.canvasManager.toolManager.setBrushSize(parseInt(size));
-            }
-        });
-    }
-
-    // Note: Erase mode toggle is now handled in app.js setupUI()
-
-    // Clear current mask
-    if (btnClearMask) {
-        btnClearMask.addEventListener('click', () => {
-            if (window.app && window.app.canvasManager) {
-                if (confirm('Clear the current mask being drawn?')) {
-                    window.app.canvasManager.toolManager.clearMask();
-                    window.app.canvasManager.redraw();
-                }
-            }
-        });
-    }
-
-    // Annotations bar collapse/expand
-    const btnCollapseAnnotations = document.getElementById('btnCollapseAnnotations');
-    const annotationsBar = document.getElementById('annotationsBar');
-    if (btnCollapseAnnotations && annotationsBar) {
-        btnCollapseAnnotations.addEventListener('click', () => {
-            annotationsBar.classList.toggle('collapsed');
-        });
-    }
-});
-</script>
 </body>
 </html>
