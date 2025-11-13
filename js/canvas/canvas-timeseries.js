@@ -697,9 +697,31 @@ class TimeSeriesCanvasManager {
         if (!this.chart) return;
 
         const xValue = this.getXValue(x);
-        if (xValue === null) return;
+        const yValue = this.getYValue(y);
+        if (xValue === null || yValue === null) return;
 
-        // Find range annotation that contains this x value
+        const xScale = this.chart.scales.x;
+        const yScale = this.chart.scales.y;
+
+        // First try to find point annotations (smaller click target)
+        const pointAnnotations = this.annotations.filter(ann => ann.type === 'point');
+        const clickRadius = 15; // Pixels
+
+        for (const ann of pointAnnotations) {
+            const pointPixelX = xScale.getPixelForValue(ann.data.x);
+            const pointPixelY = yScale.getPixelForValue(ann.data.y);
+
+            const distance = Math.sqrt(Math.pow(x - pointPixelX, 2) + Math.pow(y - pointPixelY, 2));
+
+            if (distance <= clickRadius) {
+                this.selectedAnnotation = ann;
+                this.updateAnnotations();
+                this.updateAnnotationsBar();
+                return;
+            }
+        }
+
+        // Then try range annotations
         const rangeAnnotations = this.annotations.filter(ann => ann.type === 'range');
 
         for (const ann of rangeAnnotations) {
@@ -723,40 +745,66 @@ class TimeSeriesCanvasManager {
      * Get handle at position (for editing)
      */
     getHandleAtPosition(x, y) {
-        if (!this.selectedAnnotation || this.selectedAnnotation.type !== 'range' || !this.chart) {
+        if (!this.selectedAnnotation || !this.chart) {
             return null;
         }
 
         const xScale = this.chart.scales.x;
+        const yScale = this.chart.scales.y;
         const chartArea = this.chart.chartArea;
+        const handleSize = 15;
 
-        const startPixel = xScale.getPixelForValue(this.selectedAnnotation.data.start);
-        const endPixel = xScale.getPixelForValue(this.selectedAnnotation.data.end);
+        if (this.selectedAnnotation.type === 'point') {
+            // Point annotation handles
+            const pointPixelX = xScale.getPixelForValue(this.selectedAnnotation.data.x);
+            const pointPixelY = yScale.getPixelForValue(this.selectedAnnotation.data.y);
 
-        const handleSize = 10;
+            // Delete button (above point)
+            const deleteY = pointPixelY - 25;
+            if (Math.abs(x - pointPixelX) < handleSize && Math.abs(y - deleteY) < handleSize) {
+                return { type: 'delete' };
+            }
 
-        // Check delete button (top center)
-        const centerX = (startPixel + endPixel) / 2;
-        const deleteY = chartArea.top + 20;
-        if (Math.abs(x - centerX) < handleSize && Math.abs(y - deleteY) < handleSize) {
-            return { type: 'delete' };
-        }
+            // Left arrow handle
+            const leftX = pointPixelX - 25;
+            if (Math.abs(x - leftX) < handleSize && Math.abs(y - pointPixelY) < handleSize) {
+                return { type: 'move' };
+            }
 
-        // Check start handle
-        if (Math.abs(x - startPixel) < handleSize && y >= chartArea.top && y <= chartArea.bottom) {
-            return { type: 'start' };
-        }
+            // Right arrow handle
+            const rightX = pointPixelX + 25;
+            if (Math.abs(x - rightX) < handleSize && Math.abs(y - pointPixelY) < handleSize) {
+                return { type: 'move' };
+            }
 
-        // Check end handle
-        if (Math.abs(x - endPixel) < handleSize && y >= chartArea.top && y <= chartArea.bottom) {
-            return { type: 'end' };
+        } else if (this.selectedAnnotation.type === 'range') {
+            // Range annotation handles
+            const startPixel = xScale.getPixelForValue(this.selectedAnnotation.data.start);
+            const endPixel = xScale.getPixelForValue(this.selectedAnnotation.data.end);
+
+            // Check delete button (top center)
+            const centerX = (startPixel + endPixel) / 2;
+            const deleteY = chartArea.top + 20;
+            if (Math.abs(x - centerX) < handleSize && Math.abs(y - deleteY) < handleSize) {
+                return { type: 'delete' };
+            }
+
+            // Check start handle
+            if (Math.abs(x - startPixel) < handleSize && y >= chartArea.top && y <= chartArea.bottom) {
+                return { type: 'start' };
+            }
+
+            // Check end handle
+            if (Math.abs(x - endPixel) < handleSize && y >= chartArea.top && y <= chartArea.bottom) {
+                return { type: 'end' };
+            }
         }
 
         return null;
     }
 
     /**
-     * Drag handle to resize annotation
+     * Drag handle to resize/move annotation
      */
     dragHandle(x) {
         if (!this.selectedAnnotation || !this.editingHandle || !this.chart) return;
@@ -771,17 +819,36 @@ class TimeSeriesCanvasManager {
         const clampedX = Math.max(chartArea.left, Math.min(chartArea.right, x));
         const clampedValue = xScale.getValueForPixel(clampedX);
 
-        if (this.editingHandle === 'start') {
-            // Don't allow start to go past end
-            if (clampedValue < this.selectedAnnotation.data.end) {
-                this.selectedAnnotation.data.start = clampedValue;
-                this.selectedAnnotation.data.startIndex = this.getClosestDataIndex(clampedValue);
+        if (this.selectedAnnotation.type === 'point' && this.editingHandle === 'move') {
+            // Move point
+            const dataIndex = this.getClosestDataIndex(clampedValue);
+
+            // Update Y value based on the new X position
+            if (this.chart.data.datasets[this.selectedAnnotation.data.datasetIndex]) {
+                const dataset = this.chart.data.datasets[this.selectedAnnotation.data.datasetIndex];
+                const newYValue = dataset.data[dataIndex];
+
+                if (newYValue !== null && newYValue !== undefined) {
+                    this.selectedAnnotation.data.x = clampedValue;
+                    this.selectedAnnotation.data.y = newYValue;
+                    this.selectedAnnotation.data.index = dataIndex;
+                }
             }
-        } else if (this.editingHandle === 'end') {
-            // Don't allow end to go before start
-            if (clampedValue > this.selectedAnnotation.data.start) {
-                this.selectedAnnotation.data.end = clampedValue;
-                this.selectedAnnotation.data.endIndex = this.getClosestDataIndex(clampedValue);
+
+        } else if (this.selectedAnnotation.type === 'range') {
+            // Resize range
+            if (this.editingHandle === 'start') {
+                // Don't allow start to go past end
+                if (clampedValue < this.selectedAnnotation.data.end) {
+                    this.selectedAnnotation.data.start = clampedValue;
+                    this.selectedAnnotation.data.startIndex = this.getClosestDataIndex(clampedValue);
+                }
+            } else if (this.editingHandle === 'end') {
+                // Don't allow end to go before start
+                if (clampedValue > this.selectedAnnotation.data.start) {
+                    this.selectedAnnotation.data.end = clampedValue;
+                    this.selectedAnnotation.data.endIndex = this.getClosestDataIndex(clampedValue);
+                }
             }
         }
 
@@ -795,7 +862,7 @@ class TimeSeriesCanvasManager {
      * Draw selection handles for editing
      */
     drawSelectionHandles() {
-        if (!this.selectedAnnotation || this.selectedAnnotation.type !== 'range' || !this.chart) {
+        if (!this.selectedAnnotation || !this.chart) {
             this.clearPreview();
             return;
         }
@@ -804,53 +871,131 @@ class TimeSeriesCanvasManager {
         this.clearPreview();
 
         const xScale = this.chart.scales.x;
+        const yScale = this.chart.scales.y;
         const chartArea = this.chart.chartArea;
-
-        const startPixel = xScale.getPixelForValue(this.selectedAnnotation.data.start);
-        const endPixel = xScale.getPixelForValue(this.selectedAnnotation.data.end);
         const color = this.getClassColor(this.selectedAnnotation.class);
 
-        const handleSize = 10;
-        const handleColor = color;
+        if (this.selectedAnnotation.type === 'point') {
+            // Draw handles for point annotation
+            const pointPixelX = xScale.getPixelForValue(this.selectedAnnotation.data.x);
+            const pointPixelY = yScale.getPixelForValue(this.selectedAnnotation.data.y);
 
-        // Draw start handle
-        this.overlayCtx.fillStyle = handleColor;
+            // Draw left arrow
+            this.drawArrow(pointPixelX - 25, pointPixelY, 'left', color);
+
+            // Draw right arrow
+            this.drawArrow(pointPixelX + 25, pointPixelY, 'right', color);
+
+            // Draw delete button (X) above point
+            const deleteY = pointPixelY - 25;
+            const deleteSize = 14;
+
+            // Background circle
+            this.overlayCtx.fillStyle = '#e74c3c';
+            this.overlayCtx.strokeStyle = '#ffffff';
+            this.overlayCtx.lineWidth = 2;
+            this.overlayCtx.beginPath();
+            this.overlayCtx.arc(pointPixelX, deleteY, deleteSize, 0, Math.PI * 2);
+            this.overlayCtx.fill();
+            this.overlayCtx.stroke();
+
+            // X mark
+            this.overlayCtx.strokeStyle = '#ffffff';
+            this.overlayCtx.lineWidth = 2.5;
+            this.overlayCtx.lineCap = 'round';
+            const offset = 5;
+            this.overlayCtx.beginPath();
+            this.overlayCtx.moveTo(pointPixelX - offset, deleteY - offset);
+            this.overlayCtx.lineTo(pointPixelX + offset, deleteY + offset);
+            this.overlayCtx.moveTo(pointPixelX + offset, deleteY - offset);
+            this.overlayCtx.lineTo(pointPixelX - offset, deleteY + offset);
+            this.overlayCtx.stroke();
+
+        } else if (this.selectedAnnotation.type === 'range') {
+            // Draw handles for range annotation
+            const startPixel = xScale.getPixelForValue(this.selectedAnnotation.data.start);
+            const endPixel = xScale.getPixelForValue(this.selectedAnnotation.data.end);
+
+            const handleSize = 10;
+
+            // Draw start handle
+            this.overlayCtx.fillStyle = color;
+            this.overlayCtx.strokeStyle = '#ffffff';
+            this.overlayCtx.lineWidth = 2;
+            this.overlayCtx.beginPath();
+            this.overlayCtx.arc(startPixel, (chartArea.top + chartArea.bottom) / 2, handleSize, 0, Math.PI * 2);
+            this.overlayCtx.fill();
+            this.overlayCtx.stroke();
+
+            // Draw end handle
+            this.overlayCtx.beginPath();
+            this.overlayCtx.arc(endPixel, (chartArea.top + chartArea.bottom) / 2, handleSize, 0, Math.PI * 2);
+            this.overlayCtx.fill();
+            this.overlayCtx.stroke();
+
+            // Draw delete button (X) at top center
+            const centerX = (startPixel + endPixel) / 2;
+            const deleteY = chartArea.top + 20;
+            const deleteSize = 16;
+
+            // Background circle
+            this.overlayCtx.fillStyle = '#e74c3c';
+            this.overlayCtx.beginPath();
+            this.overlayCtx.arc(centerX, deleteY, deleteSize, 0, Math.PI * 2);
+            this.overlayCtx.fill();
+            this.overlayCtx.stroke();
+
+            // X mark
+            this.overlayCtx.strokeStyle = '#ffffff';
+            this.overlayCtx.lineWidth = 3;
+            this.overlayCtx.lineCap = 'round';
+            const offset = 6;
+            this.overlayCtx.beginPath();
+            this.overlayCtx.moveTo(centerX - offset, deleteY - offset);
+            this.overlayCtx.lineTo(centerX + offset, deleteY + offset);
+            this.overlayCtx.moveTo(centerX + offset, deleteY - offset);
+            this.overlayCtx.lineTo(centerX - offset, deleteY + offset);
+            this.overlayCtx.stroke();
+        }
+    }
+
+    /**
+     * Draw arrow handle
+     */
+    drawArrow(x, y, direction, color) {
+        const arrowSize = 12;
+
+        // Background circle
+        this.overlayCtx.fillStyle = color;
         this.overlayCtx.strokeStyle = '#ffffff';
         this.overlayCtx.lineWidth = 2;
         this.overlayCtx.beginPath();
-        this.overlayCtx.arc(startPixel, (chartArea.top + chartArea.bottom) / 2, handleSize, 0, Math.PI * 2);
+        this.overlayCtx.arc(x, y, arrowSize, 0, Math.PI * 2);
         this.overlayCtx.fill();
         this.overlayCtx.stroke();
 
-        // Draw end handle
-        this.overlayCtx.beginPath();
-        this.overlayCtx.arc(endPixel, (chartArea.top + chartArea.bottom) / 2, handleSize, 0, Math.PI * 2);
-        this.overlayCtx.fill();
-        this.overlayCtx.stroke();
-
-        // Draw delete button (X) at top center
-        const centerX = (startPixel + endPixel) / 2;
-        const deleteY = chartArea.top + 20;
-        const deleteSize = 16;
-
-        // Background circle
-        this.overlayCtx.fillStyle = '#e74c3c';
-        this.overlayCtx.beginPath();
-        this.overlayCtx.arc(centerX, deleteY, deleteSize, 0, Math.PI * 2);
-        this.overlayCtx.fill();
-        this.overlayCtx.stroke();
-
-        // X mark
+        // Arrow
         this.overlayCtx.strokeStyle = '#ffffff';
-        this.overlayCtx.lineWidth = 3;
+        this.overlayCtx.lineWidth = 2.5;
         this.overlayCtx.lineCap = 'round';
-        const offset = 6;
-        this.overlayCtx.beginPath();
-        this.overlayCtx.moveTo(centerX - offset, deleteY - offset);
-        this.overlayCtx.lineTo(centerX + offset, deleteY + offset);
-        this.overlayCtx.moveTo(centerX + offset, deleteY - offset);
-        this.overlayCtx.lineTo(centerX - offset, deleteY + offset);
-        this.overlayCtx.stroke();
+        this.overlayCtx.lineJoin = 'round';
+
+        const arrowLen = 6;
+        if (direction === 'left') {
+            // Left arrow: <
+            this.overlayCtx.beginPath();
+            this.overlayCtx.moveTo(x + 3, y - arrowLen);
+            this.overlayCtx.lineTo(x - 3, y);
+            this.overlayCtx.lineTo(x + 3, y + arrowLen);
+            this.overlayCtx.stroke();
+        } else if (direction === 'right') {
+            // Right arrow: >
+            this.overlayCtx.beginPath();
+            this.overlayCtx.moveTo(x - 3, y - arrowLen);
+            this.overlayCtx.lineTo(x + 3, y);
+            this.overlayCtx.lineTo(x - 3, y + arrowLen);
+            this.overlayCtx.stroke();
+        }
     }
 
     /**
