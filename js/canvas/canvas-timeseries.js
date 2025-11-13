@@ -49,6 +49,10 @@ class TimeSeriesCanvasManager {
         this.startX = null;
         this.tempRangeStart = null;
 
+        // Preview state
+        this.previewX = null;
+        this.previewY = null;
+
         this.setupCanvas();
     }
 
@@ -67,6 +71,18 @@ class TimeSeriesCanvasManager {
         this.chartCanvas = document.createElement('canvas');
         this.chartCanvas.id = 'timeseriesChart';
         this.chartContainer.appendChild(this.chartCanvas);
+
+        // Create overlay canvas for previews
+        this.overlayCanvas = document.createElement('canvas');
+        this.overlayCanvas.id = 'timeseriesOverlay';
+        this.overlayCanvas.style.position = 'absolute';
+        this.overlayCanvas.style.top = '0';
+        this.overlayCanvas.style.left = '0';
+        this.overlayCanvas.style.pointerEvents = 'none';
+        this.overlayCanvas.style.width = '100%';
+        this.overlayCanvas.style.height = '100%';
+        this.chartContainer.appendChild(this.overlayCanvas);
+        this.overlayCtx = this.overlayCanvas.getContext('2d');
 
         // Insert after original canvas
         this.canvas.parentNode.insertBefore(this.chartContainer, this.canvas.nextSibling);
@@ -442,14 +458,25 @@ class TimeSeriesCanvasManager {
      * Mouse move handler
      */
     onMouseMove(e) {
-        if (!this.isDrawing) return;
-
         const rect = this.chartCanvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
 
-        if (this.currentTool === 'range') {
-            // Update temporary range visualization
-            this.updateTempRange(x);
+        // Update preview position
+        this.previewX = x;
+        this.previewY = y;
+
+        // Draw preview based on tool and state
+        if (this.currentTool === 'point' && !this.isDrawing) {
+            this.drawPointPreview(x, y);
+        } else if (this.currentTool === 'range') {
+            if (this.isDrawing) {
+                this.drawRangePreview(this.startX, x);
+            } else {
+                this.drawVerticalLinePreview(x);
+            }
+        } else {
+            this.clearPreview();
         }
     }
 
@@ -469,6 +496,7 @@ class TimeSeriesCanvasManager {
         this.isDrawing = false;
         this.startX = null;
         this.tempRangeStart = null;
+        this.clearPreview();
     }
 
     /**
@@ -480,6 +508,7 @@ class TimeSeriesCanvasManager {
             this.startX = null;
             this.tempRangeStart = null;
         }
+        this.clearPreview();
     }
 
     /**
@@ -599,6 +628,144 @@ class TimeSeriesCanvasManager {
     }
 
     /**
+     * Update overlay canvas size to match chart canvas
+     */
+    updateOverlaySize() {
+        if (!this.chartCanvas || !this.overlayCanvas) return;
+
+        const rect = this.chartCanvas.getBoundingClientRect();
+        this.overlayCanvas.width = rect.width;
+        this.overlayCanvas.height = rect.height;
+    }
+
+    /**
+     * Clear preview overlay
+     */
+    clearPreview() {
+        if (!this.overlayCtx || !this.overlayCanvas) return;
+        this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
+    }
+
+    /**
+     * Draw point preview (follows mouse on curves)
+     */
+    drawPointPreview(x, y) {
+        if (!this.chart || !this.overlayCtx) return;
+
+        this.updateOverlaySize();
+        this.clearPreview();
+
+        const xValue = this.getXValue(x);
+        if (xValue === null) return;
+
+        // Get chart area bounds
+        const chartArea = this.chart.chartArea;
+        if (x < chartArea.left || x > chartArea.right) return;
+
+        const classColor = this.getClassColor(this.currentClass);
+
+        // Draw vertical line at cursor position
+        this.overlayCtx.strokeStyle = classColor + '40';
+        this.overlayCtx.lineWidth = 1;
+        this.overlayCtx.setLineDash([5, 5]);
+        this.overlayCtx.beginPath();
+        this.overlayCtx.moveTo(x, chartArea.top);
+        this.overlayCtx.lineTo(x, chartArea.bottom);
+        this.overlayCtx.stroke();
+        this.overlayCtx.setLineDash([]);
+
+        // Draw points on each dataset at this x position
+        const dataIndex = this.getClosestDataIndex(xValue);
+        this.chart.data.datasets.forEach((dataset, i) => {
+            const value = dataset.data[dataIndex];
+            if (value === null || value === undefined) return;
+
+            const yScale = this.chart.scales.y;
+            const yPixel = yScale.getPixelForValue(value);
+
+            // Draw preview point
+            this.overlayCtx.fillStyle = classColor + '60';
+            this.overlayCtx.strokeStyle = classColor;
+            this.overlayCtx.lineWidth = 2;
+            this.overlayCtx.beginPath();
+            this.overlayCtx.arc(x, yPixel, 5, 0, Math.PI * 2);
+            this.overlayCtx.fill();
+            this.overlayCtx.stroke();
+        });
+    }
+
+    /**
+     * Draw vertical line preview
+     */
+    drawVerticalLinePreview(x) {
+        if (!this.chart || !this.overlayCtx) return;
+
+        this.updateOverlaySize();
+        this.clearPreview();
+
+        const chartArea = this.chart.chartArea;
+        if (x < chartArea.left || x > chartArea.right) return;
+
+        const classColor = this.getClassColor(this.currentClass);
+
+        // Draw vertical line
+        this.overlayCtx.strokeStyle = classColor + '60';
+        this.overlayCtx.lineWidth = 2;
+        this.overlayCtx.setLineDash([5, 5]);
+        this.overlayCtx.beginPath();
+        this.overlayCtx.moveTo(x, chartArea.top);
+        this.overlayCtx.lineTo(x, chartArea.bottom);
+        this.overlayCtx.stroke();
+        this.overlayCtx.setLineDash([]);
+    }
+
+    /**
+     * Draw range preview (area between start and current position)
+     */
+    drawRangePreview(startX, endX) {
+        if (!this.chart || !this.overlayCtx) return;
+
+        this.updateOverlaySize();
+        this.clearPreview();
+
+        const chartArea = this.chart.chartArea;
+
+        // Clamp to chart area
+        startX = Math.max(chartArea.left, Math.min(chartArea.right, startX));
+        endX = Math.max(chartArea.left, Math.min(chartArea.right, endX));
+
+        const classColor = this.getClassColor(this.currentClass);
+
+        // Draw filled area
+        this.overlayCtx.fillStyle = classColor + '20';
+        this.overlayCtx.fillRect(
+            Math.min(startX, endX),
+            chartArea.top,
+            Math.abs(endX - startX),
+            chartArea.bottom - chartArea.top
+        );
+
+        // Draw border lines
+        this.overlayCtx.strokeStyle = classColor + '80';
+        this.overlayCtx.lineWidth = 2;
+        this.overlayCtx.setLineDash([5, 5]);
+
+        // Start line
+        this.overlayCtx.beginPath();
+        this.overlayCtx.moveTo(startX, chartArea.top);
+        this.overlayCtx.lineTo(startX, chartArea.bottom);
+        this.overlayCtx.stroke();
+
+        // End line
+        this.overlayCtx.beginPath();
+        this.overlayCtx.moveTo(endX, chartArea.top);
+        this.overlayCtx.lineTo(endX, chartArea.bottom);
+        this.overlayCtx.stroke();
+
+        this.overlayCtx.setLineDash([]);
+    }
+
+    /**
      * Select annotation at coordinates
      */
     selectAnnotation(x, y) {
@@ -635,6 +802,7 @@ class TimeSeriesCanvasManager {
         this.isDrawing = false;
         this.startX = null;
         this.tempRangeStart = null;
+        this.clearPreview();
     }
 
     /**
@@ -856,6 +1024,10 @@ class TimeSeriesCanvasManager {
         if (this.chartContainer && this.chartContainer.parentNode) {
             this.chartContainer.parentNode.removeChild(this.chartContainer);
         }
+
+        // Clean up overlay
+        this.overlayCanvas = null;
+        this.overlayCtx = null;
 
         // Show original canvas again
         if (this.canvas) {
