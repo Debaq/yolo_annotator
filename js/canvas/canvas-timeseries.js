@@ -57,6 +57,7 @@ class TimeSeriesCanvasManager {
         // Edit state
         this.editingHandle = null;  // Which handle is being dragged ('start', 'end', 'delete')
         this.isDraggingHandle = false;
+        this.selectedPointGroup = null;  // Group of points at same X position
 
         this.setupCanvas();
     }
@@ -467,15 +468,27 @@ class TimeSeriesCanvasManager {
             const handle = this.getHandleAtPosition(x, y);
             if (handle) {
                 if (handle.type === 'delete') {
-                    // Delete the annotation
-                    const annIndex = this.annotations.indexOf(this.selectedAnnotation);
-                    if (annIndex > -1) {
-                        this.annotations.splice(annIndex, 1);
-                        this.selectedAnnotation = null;
-                        this.updateAnnotations();
-                        this.updateAnnotationsBar();
-                        this.onAnnotationsChanged();
+                    // Delete the annotation(s)
+                    if (this.selectedAnnotation.type === 'point' && this.selectedPointGroup && this.selectedPointGroup.length > 0) {
+                        // Delete all points in the group
+                        this.selectedPointGroup.forEach(point => {
+                            const annIndex = this.annotations.indexOf(point);
+                            if (annIndex > -1) {
+                                this.annotations.splice(annIndex, 1);
+                            }
+                        });
+                        this.selectedPointGroup = null;
+                    } else {
+                        // Delete single annotation
+                        const annIndex = this.annotations.indexOf(this.selectedAnnotation);
+                        if (annIndex > -1) {
+                            this.annotations.splice(annIndex, 1);
+                        }
                     }
+                    this.selectedAnnotation = null;
+                    this.updateAnnotations();
+                    this.updateAnnotationsBar();
+                    this.onAnnotationsChanged();
                 } else {
                     // Start dragging handle
                     this.editingHandle = handle.type;
@@ -715,6 +728,13 @@ class TimeSeriesCanvasManager {
 
             if (distance <= clickRadius) {
                 this.selectedAnnotation = ann;
+
+                // Find all points at the same X position (for multi-variable series)
+                this.selectedPointGroup = pointAnnotations.filter(p =>
+                    p.data.index === ann.data.index ||
+                    Math.abs(p.data.x - ann.data.x) < 0.0001
+                );
+
                 this.updateAnnotations();
                 this.updateAnnotationsBar();
                 return;
@@ -727,6 +747,7 @@ class TimeSeriesCanvasManager {
         for (const ann of rangeAnnotations) {
             if (xValue >= ann.data.start && xValue <= ann.data.end) {
                 this.selectedAnnotation = ann;
+                this.selectedPointGroup = null;  // Clear point group for ranges
                 this.updateAnnotations();
                 this.updateAnnotationsBar();
                 return;
@@ -736,6 +757,7 @@ class TimeSeriesCanvasManager {
         // If no annotation found, deselect
         if (this.selectedAnnotation) {
             this.selectedAnnotation = null;
+            this.selectedPointGroup = null;
             this.updateAnnotations();
             this.updateAnnotationsBar();
         }
@@ -820,18 +842,34 @@ class TimeSeriesCanvasManager {
         const clampedValue = xScale.getValueForPixel(clampedX);
 
         if (this.selectedAnnotation.type === 'point' && this.editingHandle === 'move') {
-            // Move point
+            // Move point(s) - if we have a group, move all points together
             const dataIndex = this.getClosestDataIndex(clampedValue);
 
-            // Update Y value based on the new X position
-            if (this.chart.data.datasets[this.selectedAnnotation.data.datasetIndex]) {
-                const dataset = this.chart.data.datasets[this.selectedAnnotation.data.datasetIndex];
-                const newYValue = dataset.data[dataIndex];
+            if (this.selectedPointGroup && this.selectedPointGroup.length > 0) {
+                // Move all points in the group
+                this.selectedPointGroup.forEach(point => {
+                    if (this.chart.data.datasets[point.data.datasetIndex]) {
+                        const dataset = this.chart.data.datasets[point.data.datasetIndex];
+                        const newYValue = dataset.data[dataIndex];
 
-                if (newYValue !== null && newYValue !== undefined) {
-                    this.selectedAnnotation.data.x = clampedValue;
-                    this.selectedAnnotation.data.y = newYValue;
-                    this.selectedAnnotation.data.index = dataIndex;
+                        if (newYValue !== null && newYValue !== undefined) {
+                            point.data.x = clampedValue;
+                            point.data.y = newYValue;
+                            point.data.index = dataIndex;
+                        }
+                    }
+                });
+            } else {
+                // Move single point (fallback)
+                if (this.chart.data.datasets[this.selectedAnnotation.data.datasetIndex]) {
+                    const dataset = this.chart.data.datasets[this.selectedAnnotation.data.datasetIndex];
+                    const newYValue = dataset.data[dataIndex];
+
+                    if (newYValue !== null && newYValue !== undefined) {
+                        this.selectedAnnotation.data.x = clampedValue;
+                        this.selectedAnnotation.data.y = newYValue;
+                        this.selectedAnnotation.data.index = dataIndex;
+                    }
                 }
             }
 
@@ -876,17 +914,27 @@ class TimeSeriesCanvasManager {
         const color = this.getClassColor(this.selectedAnnotation.class);
 
         if (this.selectedAnnotation.type === 'point') {
-            // Draw handles for point annotation
+            // Draw handles for point annotation(s)
+            // If we have a group, draw handles for all points in the group
+            const pointsToDraw = this.selectedPointGroup && this.selectedPointGroup.length > 0
+                ? this.selectedPointGroup
+                : [this.selectedAnnotation];
+
+            pointsToDraw.forEach(point => {
+                const pointPixelX = xScale.getPixelForValue(point.data.x);
+                const pointPixelY = yScale.getPixelForValue(point.data.y);
+                const pointColor = this.getClassColor(point.class);
+
+                // Draw left arrow
+                this.drawArrow(pointPixelX - 25, pointPixelY, 'left', pointColor);
+
+                // Draw right arrow
+                this.drawArrow(pointPixelX + 25, pointPixelY, 'right', pointColor);
+            });
+
+            // Draw delete button only once (above the selected point)
             const pointPixelX = xScale.getPixelForValue(this.selectedAnnotation.data.x);
             const pointPixelY = yScale.getPixelForValue(this.selectedAnnotation.data.y);
-
-            // Draw left arrow
-            this.drawArrow(pointPixelX - 25, pointPixelY, 'left', color);
-
-            // Draw right arrow
-            this.drawArrow(pointPixelX + 25, pointPixelY, 'right', color);
-
-            // Draw delete button (X) above point
             const deleteY = pointPixelY - 25;
             const deleteSize = 14;
 
@@ -1170,6 +1218,7 @@ class TimeSeriesCanvasManager {
         // Clear selection when switching away from select tool
         if (tool !== 'select' && this.selectedAnnotation) {
             this.selectedAnnotation = null;
+            this.selectedPointGroup = null;
             this.updateAnnotations();
             this.updateAnnotationsBar();
         }
@@ -1224,6 +1273,7 @@ class TimeSeriesCanvasManager {
         this.annotations = [];
         this.activeAnnotation = null;
         this.selectedAnnotation = null;
+        this.selectedPointGroup = null;
         this.updateAnnotations();
         this.updateAnnotationsBar();
         this.onAnnotationsChanged();
