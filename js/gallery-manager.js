@@ -118,7 +118,11 @@ class GalleryManager {
                 imageContent = `<img src="${url}" alt="${displayName}" title="${displayName}">`;
             }
 
-            const annotationCount = imageData.annotations ? imageData.annotations.length : 0;
+            // Use the app's countAnnotations method for correct counting
+            // (handles time series grouping correctly)
+            const annotationCount = this.app.countAnnotations
+                ? this.app.countAnnotations(imageData.annotations)
+                : (imageData.annotations ? imageData.annotations.length : 0);
 
             // For classification projects, show class badges instead of count
             let overlayContent = '';

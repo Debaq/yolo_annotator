@@ -3479,12 +3479,53 @@ class YOLOAnnotator {
         if (btnNext) btnNext.disabled = !this.galleryManager.canNavigateNext();
     }
 
+    // Helper method to count annotations correctly based on project type
+    countAnnotations(annotations) {
+        if (!annotations || annotations.length === 0) {
+            return 0;
+        }
+
+        // Check if this is a time series project
+        const modality = this.getProjectModality();
+        const isTimeSeries = modality === 'timeSeries';
+
+        if (!isTimeSeries) {
+            // For non-time series, simple count
+            return annotations.length;
+        }
+
+        // For time series, count differently:
+        // - Range annotations: each counts as 1
+        // - Point annotations: group by index/x position and count groups
+        const rangeCount = annotations.filter(ann => ann.type === 'range').length;
+        const pointAnnotations = annotations.filter(ann => ann.type === 'point');
+
+        if (pointAnnotations.length === 0) {
+            return rangeCount;
+        }
+
+        // Group point annotations by their temporal index
+        const pointGroups = new Map();
+        pointAnnotations.forEach(ann => {
+            const key = ann.data?.index ?? ann.data?.x;
+            if (key !== undefined && key !== null) {
+                if (!pointGroups.has(key)) {
+                    pointGroups.set(key, []);
+                }
+                pointGroups.get(key).push(ann);
+            }
+        });
+
+        // Count: ranges + unique point groups
+        return rangeCount + pointGroups.size;
+    }
+
     updateStats() {
         const images = this.galleryManager.images;
 
         // Count annotations from saved images
         let totalLabels = images.reduce((sum, img) =>
-            sum + (img.annotations ? img.annotations.length : 0), 0);
+            sum + this.countAnnotations(img.annotations), 0);
 
         // Add current unsaved annotations if there's an active image
         if (this.annotationMode === 'classification') {
@@ -3493,7 +3534,7 @@ class YOLOAnnotator {
                 const currentImg = images.find(img => img.id === this.classificationManager.imageId);
                 if (currentImg) {
                     // Subtract old count, add new count
-                    totalLabels -= (currentImg.annotations?.length || 0);
+                    totalLabels -= this.countAnnotations(currentImg.annotations);
                     totalLabels += this.classificationManager.labels.length;
                 }
             }
@@ -3502,8 +3543,8 @@ class YOLOAnnotator {
             const currentImg = images.find(img => img.id === this.canvasManager.imageId);
             if (currentImg) {
                 // Subtract old count, add new count
-                totalLabels -= (currentImg.annotations?.length || 0);
-                totalLabels += this.canvasManager.annotations.length;
+                totalLabels -= this.countAnnotations(currentImg.annotations);
+                totalLabels += this.countAnnotations(this.canvasManager.annotations);
             }
         }
 
@@ -3543,7 +3584,7 @@ class YOLOAnnotator {
 
         const images = this.galleryManager.images;
         const totalLabels = images.reduce((sum, img) =>
-            sum + (img.annotations ? img.annotations.length : 0), 0);
+            sum + this.countAnnotations(img.annotations), 0);
         const annotated = images.filter(img => img.annotations && img.annotations.length > 0).length;
 
         // Use requestAnimationFrame to batch DOM updates and prevent reflow
