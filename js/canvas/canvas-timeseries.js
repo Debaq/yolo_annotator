@@ -130,11 +130,13 @@ class TimeSeriesCanvasManager {
             timelineContainer.style.display = 'block';
         }
 
-        // Show scale controls, hide zoom controls
+        // Show scale controls, hide zoom and view controls
         const scaleControls = document.getElementById('scaleControls');
         const zoomControls = document.getElementById('zoomControls');
+        const viewControls = document.getElementById('viewControls');
         if (scaleControls) scaleControls.style.display = 'flex';
         if (zoomControls) zoomControls.style.display = 'none';
+        if (viewControls) viewControls.style.display = 'none';
     }
 
     setupEventListeners() {
@@ -274,10 +276,26 @@ class TimeSeriesCanvasManager {
             this.imageName = dataEntry.name;
             this.imageId = dataEntry.id;
             this.originalImageBlob = dataEntry.image;  // Store original CSV blob for saving
+
+            // Calculate number of numeric variables (excluding time column)
+            const headers = this.timeSeriesMetadata.headers;
+            const timeColumn = this.timeSeriesMetadata.timeColumn;
+            let numVariables = 0;
+            if (headers) {
+                for (const header of headers) {
+                    if (header === timeColumn) continue;
+                    const firstValue = parsed.data[0]?.[header];
+                    if (typeof firstValue === 'number' || !isNaN(firstValue)) {
+                        numVariables++;
+                    }
+                }
+            }
+
             // Create pseudo-image object for compatibility with UI code
+            // Dimensions: time points × variables
             this.image = {
                 width: parsed.data.length,  // Number of time points
-                height: parsed.headers ? parsed.headers.length - 1 : 1  // Number of series (excluding time column)
+                height: numVariables || 1  // Number of numeric variables/series
             };
 
             // Render chart
@@ -1885,11 +1903,13 @@ class TimeSeriesCanvasManager {
             timelineContainer.style.display = 'none';
         }
 
-        // Hide scale controls, show zoom controls
+        // Hide scale controls, show zoom and view controls
         const scaleControls = document.getElementById('scaleControls');
         const zoomControls = document.getElementById('zoomControls');
+        const viewControls = document.getElementById('viewControls');
         if (scaleControls) scaleControls.style.display = 'none';
         if (zoomControls) zoomControls.style.display = 'flex';
+        if (viewControls) viewControls.style.display = 'flex';
 
         // Clean up timeline references
         this.timelineCanvas = null;
