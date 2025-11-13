@@ -404,11 +404,8 @@ class YOLOAnnotator {
             return;
         }
 
-        console.log('Setting up EventBus listeners...');
-
         // Listen for annotation events
         window.eventBus.on('annotationCreated', () => {
-            console.log('EventBus listener: annotationCreated triggered');
             this.updateStats();
             this.updateClassUI(); // Update class counts
             this.galleryManager.render(); // Update thumbnail counts
@@ -446,8 +443,6 @@ class YOLOAnnotator {
             this.updateStats();
             this.galleryManager.render(); // Update thumbnail counts (annotations were deleted)
         });
-
-        console.log('EventBus listeners registered:', window.eventBus.listeners.size);
     }
 
     async loadProjects() {
