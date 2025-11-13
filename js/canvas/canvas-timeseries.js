@@ -129,14 +129,6 @@ class TimeSeriesCanvasManager {
         if (timelineContainer) {
             timelineContainer.style.display = 'block';
         }
-
-        // Show scale controls, hide zoom and view controls
-        const scaleControls = document.getElementById('scaleControls');
-        const zoomControls = document.getElementById('zoomControls');
-        const viewControls = document.getElementById('viewControls');
-        if (scaleControls) scaleControls.style.display = 'flex';
-        if (zoomControls) zoomControls.style.display = 'none';
-        if (viewControls) viewControls.style.display = 'none';
     }
 
     setupEventListeners() {
@@ -303,6 +295,9 @@ class TimeSeriesCanvasManager {
 
             // Update annotations bar
             this.updateAnnotationsBar();
+
+            // Update tool availability (hide/show appropriate controls)
+            this.updateToolAvailability();
 
             // Clear unsaved changes flag after loading
             this.hasUnsavedChanges = false;
@@ -1541,10 +1536,11 @@ class TimeSeriesCanvasManager {
      * Hides/shows tools in the UI
      */
     updateToolAvailability() {
-        // Hide image annotation tools (bbox, mask, obb)
+        // Hide image annotation tools (bbox, mask, obb, keypoints)
         const bboxBtn = document.querySelector('[data-tool="bbox"]');
         const obbBtn = document.querySelector('[data-tool="obb"]');
         const maskBtn = document.querySelector('[data-tool="mask"]');
+        const keypointsBtn = document.querySelector('[data-tool="keypoints"]');
         const eraseBtn = document.getElementById('btnEraseMode');
         const maskControls = document.getElementById('maskControls');
         const rotationControls = document.getElementById('rotationControls');
@@ -1552,6 +1548,7 @@ class TimeSeriesCanvasManager {
         if (bboxBtn) bboxBtn.style.display = 'none';
         if (obbBtn) obbBtn.style.display = 'none';
         if (maskBtn) maskBtn.style.display = 'none';
+        if (keypointsBtn) keypointsBtn.style.display = 'none';
         if (eraseBtn) eraseBtn.style.display = 'none';
         if (maskControls) maskControls.style.display = 'none';
         if (rotationControls) rotationControls.style.display = 'none';
@@ -1566,6 +1563,15 @@ class TimeSeriesCanvasManager {
         if (rangeBtn) {
             rangeBtn.style.display = this.projectConfig.allowRange ? 'flex' : 'none';
         }
+
+        // Show scale controls, hide zoom and view controls for time series
+        const scaleControls = document.getElementById('scaleControls');
+        const zoomControls = document.getElementById('zoomControls');
+        const viewControls = document.getElementById('viewControls');
+
+        if (scaleControls) scaleControls.style.display = 'flex';
+        if (zoomControls) zoomControls.style.display = 'none';
+        if (viewControls) viewControls.style.display = 'none';
     }
 
     /**
@@ -1902,14 +1908,6 @@ class TimeSeriesCanvasManager {
         if (timelineContainer) {
             timelineContainer.style.display = 'none';
         }
-
-        // Hide scale controls, show zoom and view controls
-        const scaleControls = document.getElementById('scaleControls');
-        const zoomControls = document.getElementById('zoomControls');
-        const viewControls = document.getElementById('viewControls');
-        if (scaleControls) scaleControls.style.display = 'none';
-        if (zoomControls) zoomControls.style.display = 'flex';
-        if (viewControls) viewControls.style.display = 'flex';
 
         // Clean up timeline references
         this.timelineCanvas = null;
