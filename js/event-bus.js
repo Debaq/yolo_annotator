@@ -2,15 +2,19 @@
  * EVENT BUS - Centralized event system
  * Handles application-wide events to keep UI synchronized
  *
- * Events:
- * - annotationCreated: When a new annotation is added
- * - annotationDeleted: When an annotation is removed
- * - annotationModified: When an annotation is edited
- * - imageDeleted: When an image is deleted
- * - classAdded: When a new class is created
- * - classModified: When a class is edited
- * - classDeleted: When a class is removed
- * - imageLoaded: When an image is loaded for annotation
+ * Events emitted:
+ * - annotationCreated: When a new annotation is added → updates stats, gallery
+ * - annotationDeleted: When an annotation is removed → updates stats, gallery
+ * - annotationModified: When an annotation is edited → updates stats, gallery
+ * - imageDeleted: When an image is deleted → updates stats
+ * - classAdded: When a new class is created → updates stats
+ * - classModified: When a class name/color is edited → updates stats, gallery
+ * - classDeleted: When a class is removed → updates stats, gallery
+ *
+ * UI components auto-updated:
+ * - Statistics panel (image count, annotation count, class distribution)
+ * - Gallery thumbnails (annotation counts, class badges)
+ * - Annotations bar (list of annotations for current image)
  */
 
 class EventBus {
