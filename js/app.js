@@ -3117,6 +3117,29 @@ class YOLOAnnotator {
                         ${window.i18n.t('pwa.modal.benefit6')}
                     </li>
                 </ul>
+
+                <hr style="margin: 24px 0; border: none; border-top: 1px solid #e0e0e0;">
+
+                <p style="font-size: 1.1em; margin-bottom: 16px;">
+                    <strong>${window.i18n.t('pwa.modal.platformCompatibility')}</strong>
+                </p>
+                <div style="font-size: 0.9em; line-height: 1.6;">
+                    <p style="margin: 12px 0;">
+                        ${window.i18n.t('pwa.modal.androidInfo')}
+                    </p>
+                    <p style="margin: 12px 0;">
+                        ${window.i18n.t('pwa.modal.iosInfo')}
+                    </p>
+                    <p style="margin: 12px 0;">
+                        ${window.i18n.t('pwa.modal.linuxInfo')}
+                    </p>
+                    <p style="margin: 12px 0;">
+                        ${window.i18n.t('pwa.modal.windowsInfo')}
+                    </p>
+                    <p style="margin: 16px 0; padding: 12px; background: #f5f5f5; border-radius: 8px;">
+                        ${window.i18n.t('pwa.modal.generalTip')}
+                    </p>
+                </div>
             </div>
         `;
 
