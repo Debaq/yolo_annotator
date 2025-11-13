@@ -479,65 +479,65 @@
       },
       "timeSeriesClassification": {
         "name": "Clasificación de Series Temporales",
-        "description": "Clasificar secuencias temporales",
-        "useCases": "Diagnóstico médico, reconocimiento de gestos",
-        "models": "ROCKET, InceptionTime, TSC-CNN",
+        "description": "Asignar una clase a cada serie temporal completa (modo clasificación global)",
+        "useCases": "Diagnóstico médico, reconocimiento de gestos, clasificación de ECG",
+        "models": "InceptionTime, ROCKET, ResNet",
         "difficulty": "Intermedio"
       },
       "timeSeriesForecasting": {
         "name": "Pronóstico de Series Temporales",
-        "description": "Predecir valores futuros",
-        "useCases": "Predicción de ventas, clima, energía",
-        "models": "LSTM, Transformer, N-BEATS, TFT",
+        "description": "Marcar ventanas históricas y horizonte de predicción usando rangos",
+        "useCases": "Predicción de ventas, clima, demanda energética",
+        "models": "LSTM, Transformer, N-BEATS, Prophet",
         "difficulty": "Avanzado"
       },
       "anomalyDetection": {
         "name": "Detección de Anomalías",
-        "description": "Identificar patrones inusuales",
-        "useCases": "Detección de fraudes, fallos en equipos",
-        "models": "Isolation Forest, LSTM-VAE, MOMENT",
+        "description": "Marcar puntos anómalos en la serie temporal",
+        "useCases": "Detección de fraudes, fallos en equipos, monitoreo de salud",
+        "models": "AutoEncoder, Isolation Forest, LSTM-AE",
         "difficulty": "Avanzado"
       },
       "timeSeriesSegmentation": {
         "name": "Segmentación de Series Temporales",
-        "description": "Dividir serie en segmentos significativos",
-        "useCases": "Análisis de comportamiento, cambio de régimen",
-        "models": "ClaSP, FLUSS, SegRNN",
+        "description": "Dividir serie en segmentos con clases usando rangos",
+        "useCases": "Análisis de comportamiento, cambio de régimen, estados de actividad",
+        "models": "ClaSP, FLUSS, Seasonal-Trend Decomposition",
         "difficulty": "Avanzado"
       },
       "patternRecognition": {
         "name": "Reconocimiento de Patrones",
-        "description": "Identificar patrones recurrentes",
-        "useCases": "Análisis bursátil, señales biomédicas",
-        "models": "Shapelets, Matrix Profile",
+        "description": "Marcar patrones/motifs repetitivos usando rangos",
+        "useCases": "Análisis bursátil, señales biomédicas, detección de ciclos",
+        "models": "Matrix Profile, STOMP, SAX",
         "difficulty": "Intermedio"
       },
       "eventDetection": {
         "name": "Detección de Eventos",
-        "description": "Identificar eventos específicos en series",
-        "useCases": "Monitoreo de sensores, alertas",
-        "models": "CNN-LSTM, Change Point Detection",
+        "description": "Marcar eventos discretos en el tiempo usando puntos",
+        "useCases": "Monitoreo de sensores, alertas, cambios de estado",
+        "models": "Change Point Detection, Event Detection CNN",
         "difficulty": "Intermedio"
       },
       "timeSeriesRegression": {
         "name": "Regresión de Series Temporales",
-        "description": "Predecir valores numéricos continuos",
-        "useCases": "Estimación de demanda, pricing dinámico",
-        "models": "XGBoost, LightGBM, DeepAR",
+        "description": "Marcar puntos con valores target numéricos",
+        "useCases": "Estimación de demanda, pricing dinámico, predicción de valores",
+        "models": "XGBoost, Random Forest, Neural Networks",
         "difficulty": "Intermedio"
       },
       "clustering": {
         "name": "Agrupamiento de Series",
-        "description": "Agrupar series temporales similares",
-        "useCases": "Segmentación de clientes, análisis de patrones",
-        "models": "K-Means DTW, HDBSCAN, K-Shape",
+        "description": "Asignar cluster a cada serie temporal completa (modo clasificación global)",
+        "useCases": "Segmentación de clientes, análisis de patrones, agrupación de comportamientos",
+        "models": "K-Shape, DTW-KMeans, K-Means",
         "difficulty": "Intermedio"
       },
       "imputation": {
         "name": "Imputación de Valores Faltantes",
-        "description": "Rellenar datos faltantes en series",
-        "useCases": "Limpieza de datos de sensores",
-        "models": "BRITS, SAITS, TimesNet",
+        "description": "Marcar secciones de datos faltantes a imputar usando rangos",
+        "useCases": "Limpieza de datos de sensores, relleno de gaps en mediciones",
+        "models": "MICE, KNN, Interpolation, BRITS",
         "difficulty": "Intermedio"
       },
       "object3DDetection": {

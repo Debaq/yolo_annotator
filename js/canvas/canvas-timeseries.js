@@ -11,6 +11,9 @@ class TimeSeriesCanvasManager {
         this.classes = classes;
         this.ui = ui;
 
+        // Project-specific configuration
+        this.projectConfig = this.getProjectTypeConfig();
+
         // Time series data
         this.currentData = null;
         this.timeSeriesMetadata = null;
@@ -25,8 +28,8 @@ class TimeSeriesCanvasManager {
         this.activeAnnotation = null;
         this.isDrawing = false;
 
-        // Current tool ('point', 'range', 'select', 'pan', 'zoom')
-        this.currentTool = 'point';
+        // Current tool - set default based on project type
+        this.currentTool = this.projectConfig.tools[0] || 'select';
         this.selectedClassId = 0;
 
         // Interaction state
@@ -64,6 +67,103 @@ class TimeSeriesCanvasManager {
         this.chartCanvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
         this.chartCanvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
         this.chartCanvas.addEventListener('mouseleave', (e) => this.onMouseLeave(e));
+    }
+
+    /**
+     * Get project-specific configuration
+     * Defines tools, modes, and behavior for each time series project type
+     */
+    getProjectTypeConfig() {
+        const configs = {
+            'timeSeriesClassification': {
+                mode: 'global',
+                tools: [],
+                requiresCanvas: false,
+                allowPoint: false,
+                allowRange: false,
+                description: 'Clasificar serie temporal completa',
+                models: 'InceptionTime, ROCKET, ResNet'
+            },
+            'timeSeriesForecasting': {
+                mode: 'canvas',
+                tools: ['range', 'select', 'pan', 'zoom'],
+                requiresCanvas: true,
+                allowPoint: false,
+                allowRange: true,
+                rangeType: 'forecast',
+                description: 'Marcar ventana histórica y horizonte de predicción',
+                models: 'LSTM, Transformer, N-BEATS, Prophet'
+            },
+            'anomalyDetection': {
+                mode: 'canvas',
+                tools: ['point', 'select', 'pan', 'zoom'],
+                requiresCanvas: true,
+                allowPoint: true,
+                allowRange: false,
+                description: 'Marcar puntos anómalos en la serie',
+                models: 'AutoEncoder, Isolation Forest, LSTM-AE'
+            },
+            'timeSeriesSegmentation': {
+                mode: 'canvas',
+                tools: ['range', 'select', 'pan', 'zoom'],
+                requiresCanvas: true,
+                allowPoint: false,
+                allowRange: true,
+                rangeType: 'segment',
+                description: 'Segmentar serie en regiones con clases',
+                models: 'ClaSP, FLUSS, Seasonal-Trend Decomposition'
+            },
+            'patternRecognition': {
+                mode: 'canvas',
+                tools: ['range', 'select', 'pan', 'zoom'],
+                requiresCanvas: true,
+                allowPoint: false,
+                allowRange: true,
+                rangeType: 'pattern',
+                description: 'Marcar patrones/motifs repetitivos',
+                models: 'Matrix Profile, STOMP, SAX'
+            },
+            'eventDetection': {
+                mode: 'canvas',
+                tools: ['point', 'select', 'pan', 'zoom'],
+                requiresCanvas: true,
+                allowPoint: true,
+                allowRange: false,
+                description: 'Marcar eventos discretos en el tiempo',
+                models: 'Change Point Detection, Event Detection CNN'
+            },
+            'timeSeriesRegression': {
+                mode: 'canvas',
+                tools: ['point', 'select', 'pan', 'zoom'],
+                requiresCanvas: true,
+                allowPoint: true,
+                allowRange: false,
+                pointType: 'regression',
+                description: 'Marcar puntos con valores target numéricos',
+                models: 'XGBoost, Random Forest, Neural Networks'
+            },
+            'clustering': {
+                mode: 'global',
+                tools: [],
+                requiresCanvas: false,
+                allowPoint: false,
+                allowRange: false,
+                description: 'Asignar cluster a serie completa',
+                models: 'K-Shape, DTW-KMeans, K-Means'
+            },
+            'imputation': {
+                mode: 'canvas',
+                tools: ['range', 'select', 'pan', 'zoom'],
+                requiresCanvas: true,
+                allowPoint: false,
+                allowRange: true,
+                rangeType: 'gap',
+                description: 'Marcar secciones de datos faltantes a imputar',
+                models: 'MICE, KNN, Interpolation, BRITS'
+            }
+        };
+
+        return configs[this.projectType] || configs['anomalyDetection']; // default fallback
     }
 
     /**
@@ -332,6 +432,12 @@ class TimeSeriesCanvasManager {
      * Add point annotation
      */
     addPointAnnotation(canvasX, canvasY) {
+        // Validate that point annotations are allowed for this project type
+        if (!this.projectConfig.allowPoint) {
+            this.ui.showToast('Este tipo de proyecto no permite anotaciones de puntos', 'warning');
+            return;
+        }
+
         const xValue = this.getXValue(canvasX);
         const yValue = this.getYValue(canvasY);
 
@@ -347,6 +453,11 @@ class TimeSeriesCanvasManager {
             }
         };
 
+        // For regression type, could add UI to input target value
+        if (this.projectConfig.pointType === 'regression') {
+            annotation.data.targetValue = yValue; // Store Y value as target
+        }
+
         this.annotations.push(annotation);
         this.renderChart();
         this.onAnnotationsChanged();
@@ -356,6 +467,12 @@ class TimeSeriesCanvasManager {
      * Add range annotation
      */
     addRangeAnnotation(endX) {
+        // Validate that range annotations are allowed for this project type
+        if (!this.projectConfig.allowRange) {
+            this.ui.showToast('Este tipo de proyecto no permite anotaciones de rango', 'warning');
+            return;
+        }
+
         const endValue = this.getXValue(endX);
 
         if (this.tempRangeStart === null || endValue === null) return;
@@ -370,7 +487,8 @@ class TimeSeriesCanvasManager {
                 start: start,
                 end: end,
                 startIndex: this.getClosestDataIndex(start),
-                endIndex: this.getClosestDataIndex(end)
+                endIndex: this.getClosestDataIndex(end),
+                rangeType: this.projectConfig.rangeType || 'generic'
             }
         };
 
@@ -491,8 +609,7 @@ class TimeSeriesCanvasManager {
      * Check if tool is valid for this canvas type
      */
     isToolValid(tool) {
-        const validTools = ['point', 'range', 'select', 'pan', 'zoom'];
-        return validTools.includes(tool);
+        return this.projectConfig.tools.includes(tool);
     }
 
     /**

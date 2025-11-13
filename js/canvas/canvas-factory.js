@@ -37,14 +37,14 @@ class CanvasFactory {
             'multiLabel': null,      // Handled by ClassificationManager
 
             // Time Series
-            'timeSeriesClassification': TimeSeriesCanvasManager,
+            'timeSeriesClassification': null,  // Global classification, no canvas
             'timeSeriesForecasting': TimeSeriesCanvasManager,
             'anomalyDetection': TimeSeriesCanvasManager,
             'timeSeriesSegmentation': TimeSeriesCanvasManager,
             'patternRecognition': TimeSeriesCanvasManager,
             'eventDetection': TimeSeriesCanvasManager,
             'timeSeriesRegression': TimeSeriesCanvasManager,
-            'clustering': TimeSeriesCanvasManager,
+            'clustering': null,  // Global clustering, no canvas
             'imputation': TimeSeriesCanvasManager
         };
 
@@ -112,7 +112,7 @@ class CanvasFactory {
      * @returns {boolean} True if canvas is required
      */
     static requiresCanvas(projectType) {
-        return !['classification', 'multiLabel'].includes(projectType);
+        return !['classification', 'multiLabel', 'timeSeriesClassification', 'clustering'].includes(projectType);
     }
 
     /**
@@ -132,16 +132,16 @@ class CanvasFactory {
             'classification': [],
             'multiLabel': [],
 
-            // Time Series tools
-            'timeSeriesClassification': ['point', 'range', 'select', 'pan', 'zoom'],
-            'timeSeriesForecasting': ['point', 'range', 'select', 'pan', 'zoom'],
-            'anomalyDetection': ['point', 'range', 'select', 'pan', 'zoom'],
+            // Time Series tools - specialized per type
+            'timeSeriesClassification': [], // Global classification, no canvas tools
+            'timeSeriesForecasting': ['range', 'select', 'pan', 'zoom'],
+            'anomalyDetection': ['point', 'select', 'pan', 'zoom'],
             'timeSeriesSegmentation': ['range', 'select', 'pan', 'zoom'],
-            'patternRecognition': ['point', 'range', 'select', 'pan', 'zoom'],
+            'patternRecognition': ['range', 'select', 'pan', 'zoom'],
             'eventDetection': ['point', 'select', 'pan', 'zoom'],
-            'timeSeriesRegression': ['point', 'range', 'select', 'pan', 'zoom'],
-            'clustering': ['select', 'pan', 'zoom'],
-            'imputation': ['point', 'range', 'select', 'pan', 'zoom']
+            'timeSeriesRegression': ['point', 'select', 'pan', 'zoom'],
+            'clustering': [], // Global clustering, no canvas tools
+            'imputation': ['range', 'select', 'pan', 'zoom']
         };
 
         return toolMapping[projectType] || [];

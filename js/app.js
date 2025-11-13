@@ -516,7 +516,7 @@ class YOLOAnnotator {
             const project = await this.projectManager.loadProject(projectId);
 
             // Determine annotation mode based on project type
-            const classificationType = ['classification', 'multiLabel'].includes(project.type);
+            const classificationType = ['classification', 'multiLabel', 'timeSeriesClassification', 'clustering'].includes(project.type);
 
             if (classificationType) {
                 // Switch to classification mode
