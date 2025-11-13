@@ -1,156 +1,155 @@
-// Annotix Service Worker
+// Annotix Service Worker - Powered by Workbox
 // Provides offline functionality and caching for PWA
 
-const CACHE_NAME = 'annotix-v1';
-const STATIC_CACHE = 'annotix-static-v1';
-const DYNAMIC_CACHE = 'annotix-dynamic-v1';
+// Import Workbox from CDN
+importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js');
 
-// Files to cache immediately on install
-const STATIC_ASSETS = [
-  './',
-  './index.html',
-  './css/variables.css',
-  './css/base.css',
-  './css/layout.css',
-  './css/components.css',
-  './css/canvas.css',
-  './css/modals.css',
-  './css/gallery.css',
-  './css/responsive.css',
-  './css/utilities.css',
-  './js/app.js',
-  './js/database-manager.js',
-  './js/project-manager.js',
-  './js/canvas-manager.js',
-  './js/tool-manager.js',
-  './js/gallery-manager.js',
-  './js/ui-manager.js',
-  './js/i18n.js',
-  './manifest.json'
-];
+if (workbox) {
+  console.log('[SW] Workbox loaded successfully');
 
-// CDN resources (cache with network-first strategy)
-const CDN_RESOURCES = [
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/introjs.min.css'
-];
+  // Configure Workbox
+  workbox.setConfig({
+    debug: false
+  });
 
-// Install event - cache static assets
-self.addEventListener('install', (event) => {
-  console.log('[SW] Installing service worker...');
+  // Skip waiting and claim clients immediately
+  workbox.core.skipWaiting();
+  workbox.core.clientsClaim();
 
-  event.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then((cache) => {
-        console.log('[SW] Caching static assets');
-        return cache.addAll(STATIC_ASSETS);
-      })
-      .then(() => {
-        console.log('[SW] Static assets cached successfully');
-        return self.skipWaiting(); // Activate immediately
-      })
-      .catch((error) => {
-        console.error('[SW] Error caching static assets:', error);
-      })
-  );
-});
+  // Precache static assets
+  workbox.precaching.precacheAndRoute([
+    { url: 'index.html', revision: '1' },
+    { url: 'manifest.json', revision: '1' },
 
-// Activate event - cleanup old caches
-self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating service worker...');
+    // CSS files
+    { url: 'css/variables.css', revision: '1' },
+    { url: 'css/base.css', revision: '1' },
+    { url: 'css/layout.css', revision: '1' },
+    { url: 'css/components.css', revision: '1' },
+    { url: 'css/canvas.css', revision: '1' },
+    { url: 'css/modals.css', revision: '1' },
+    { url: 'css/gallery.css', revision: '1' },
+    { url: 'css/responsive.css', revision: '1' },
+    { url: 'css/utilities.css', revision: '1' },
 
-  event.waitUntil(
-    caches.keys()
-      .then((cacheNames) => {
-        return Promise.all(
-          cacheNames
-            .filter((name) => {
-              // Delete old caches that don't match current version
-              return name !== STATIC_CACHE && name !== DYNAMIC_CACHE;
-            })
-            .map((name) => {
-              console.log('[SW] Deleting old cache:', name);
-              return caches.delete(name);
-            })
-        );
-      })
-      .then(() => {
-        console.log('[SW] Service worker activated');
-        return self.clients.claim(); // Take control immediately
-      })
-  );
-});
+    // Core JS files
+    { url: 'js/app.js', revision: '1' },
+    { url: 'js/database-manager.js', revision: '1' },
+    { url: 'js/project-manager.js', revision: '1' },
+    { url: 'js/canvas-manager.js', revision: '1' },
+    { url: 'js/tool-manager.js', revision: '1' },
+    { url: 'js/gallery-manager.js', revision: '1' },
+    { url: 'js/ui-manager.js', revision: '1' },
+    { url: 'js/i18n.js', revision: '1' },
+    { url: 'js/utils.js', revision: '1' },
+    { url: 'js/shortcuts-manager.js', revision: '1' },
+    { url: 'js/export-manager.js', revision: '1' },
+    { url: 'js/training-code-generator.js', revision: '1' },
+    { url: 'js/image-preprocessor.js', revision: '1' },
+    { url: 'js/classification-manager.js', revision: '1' },
+    { url: 'js/event-bus.js', revision: '1' },
 
-// Fetch event - serve from cache, fallback to network
-self.addEventListener('fetch', (event) => {
-  const { request } = event;
-  const url = new URL(request.url);
+    // Canvas architecture
+    { url: 'js/canvas/canvas-base.js', revision: '1' },
+    { url: 'js/canvas/canvas-bbox.js', revision: '1' },
+    { url: 'js/canvas/canvas-obb.js', revision: '1' },
+    { url: 'js/canvas/canvas-mask.js', revision: '1' },
+    { url: 'js/canvas/canvas-keypoints.js', revision: '1' },
+    { url: 'js/canvas/canvas-factory.js', revision: '1' },
 
-  // Skip non-GET requests
-  if (request.method !== 'GET') {
-    return;
-  }
+    // Locales (all languages)
+    { url: 'locales/en.json', revision: '1' },
+    { url: 'locales/es.json', revision: '1' },
+    { url: 'locales/fr.json', revision: '1' },
+    { url: 'locales/de.json', revision: '1' },
+    { url: 'locales/pt.json', revision: '1' },
+    { url: 'locales/it.json', revision: '1' },
+    { url: 'locales/zh.json', revision: '1' },
+    { url: 'locales/ja.json', revision: '1' },
+    { url: 'locales/ko.json', revision: '1' },
+    { url: 'locales/ru.json', revision: '1' }
+  ]);
 
-  // Skip chrome-extension and other non-http(s) requests
-  if (!url.protocol.startsWith('http')) {
-    return;
-  }
-
-  // CDN resources: Network-first strategy (always try network for latest)
-  if (CDN_RESOURCES.some(cdn => request.url.startsWith(cdn.split('?')[0]))) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          // Clone and cache the response
-          const responseClone = response.clone();
-          caches.open(DYNAMIC_CACHE).then((cache) => {
-            cache.put(request, responseClone);
-          });
-          return response;
+  // Cache strategy for CSS and JS files - Cache First
+  workbox.routing.registerRoute(
+    ({ request }) => request.destination === 'style' || request.destination === 'script',
+    new workbox.strategies.CacheFirst({
+      cacheName: 'annotix-assets',
+      plugins: [
+        new workbox.expiration.ExpirationPlugin({
+          maxEntries: 60,
+          maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
         })
-        .catch(() => {
-          // Fallback to cache if network fails
-          return caches.match(request);
-        })
-    );
-    return;
-  }
-
-  // Static assets: Cache-first strategy
-  event.respondWith(
-    caches.match(request)
-      .then((cachedResponse) => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-
-        // Not in cache, fetch from network
-        return fetch(request)
-          .then((response) => {
-            // Don't cache non-successful responses
-            if (!response || response.status !== 200 || response.type === 'error') {
-              return response;
-            }
-
-            // Clone and cache the response for future use
-            const responseClone = response.clone();
-            caches.open(DYNAMIC_CACHE).then((cache) => {
-              cache.put(request, responseClone);
-            });
-
-            return response;
-          })
-          .catch((error) => {
-            console.error('[SW] Fetch failed:', error);
-
-            // Return offline page if available
-            return caches.match('./index.html');
-          });
-      })
+      ]
+    })
   );
-});
+
+  // Cache strategy for CDN resources (Font Awesome, JSZip, Intro.js) - Stale While Revalidate
+  workbox.routing.registerRoute(
+    ({ url }) => url.origin === 'https://cdnjs.cloudflare.com' ||
+                 url.origin === 'https://unpkg.com' ||
+                 url.origin === 'https://storage.googleapis.com',
+    new workbox.strategies.StaleWhileRevalidate({
+      cacheName: 'annotix-cdn',
+      plugins: [
+        new workbox.cacheableResponse.CacheableResponsePlugin({
+          statuses: [0, 200]
+        }),
+        new workbox.expiration.ExpirationPlugin({
+          maxEntries: 30,
+          maxAgeSeconds: 7 * 24 * 60 * 60 // 7 days
+        })
+      ]
+    })
+  );
+
+  // Cache strategy for images - Cache First with expiration
+  workbox.routing.registerRoute(
+    ({ request }) => request.destination === 'image',
+    new workbox.strategies.CacheFirst({
+      cacheName: 'annotix-images',
+      plugins: [
+        new workbox.cacheableResponse.CacheableResponsePlugin({
+          statuses: [0, 200]
+        }),
+        new workbox.expiration.ExpirationPlugin({
+          maxEntries: 60,
+          maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
+        })
+      ]
+    })
+  );
+
+  // Cache strategy for fonts - Cache First
+  workbox.routing.registerRoute(
+    ({ request }) => request.destination === 'font',
+    new workbox.strategies.CacheFirst({
+      cacheName: 'annotix-fonts',
+      plugins: [
+        new workbox.cacheableResponse.CacheableResponsePlugin({
+          statuses: [0, 200]
+        }),
+        new workbox.expiration.ExpirationPlugin({
+          maxEntries: 30,
+          maxAgeSeconds: 365 * 24 * 60 * 60 // 1 year
+        })
+      ]
+    })
+  );
+
+  // Offline fallback - return index.html for navigation requests when offline
+  workbox.routing.setCatchHandler(async ({ event }) => {
+    if (event.request.destination === 'document') {
+      return caches.match('index.html');
+    }
+    return Response.error();
+  });
+
+  console.log('[SW] Workbox configured and routes registered');
+
+} else {
+  console.error('[SW] Workbox failed to load');
+}
 
 // Handle messages from the app
 self.addEventListener('message', (event) => {
