@@ -37,6 +37,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
     <script src="https://unpkg.com/@popperjs/core@2"></script>
     <script src="https://unpkg.com/tippy.js@6"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
     <!-- Loading Screen -->
@@ -218,6 +219,13 @@
                         <div class="tool-btn" id="btnEraseMode" data-i18n-title="tools.eraseMode" title="Borrador" style="display: none;">
                             <i class="fas fa-eraser"></i>
                         </div>
+                        <!-- Time Series Tools -->
+                        <div class="tool-btn" data-tool="point" data-i18n-title="tools.tooltips.point" title="Punto" style="display: none;">
+                            <i class="fas fa-circle"></i>
+                        </div>
+                        <div class="tool-btn" data-tool="range" data-i18n-title="tools.tooltips.range" title="Rango" style="display: none;">
+                            <i class="fas fa-arrows-alt-h"></i>
+                        </div>
                         <div class="tool-btn" data-tool="select" data-i18n-title="tools.tooltips.select">
                             <i class="fas fa-mouse-pointer"></i>
                         </div>
@@ -388,10 +396,14 @@
     <script src="js/canvas/canvas-keypoints.js"></script>
     <script src="js/canvas/canvas-polygon.js"></script>
     <script src="js/canvas/canvas-landmarks.js"></script>
+    <script src="js/canvas/canvas-timeseries.js"></script>
     <script src="js/canvas/canvas-factory.js"></script>
 
     <script src="js/image-preprocessor.js"></script>
+    <script src="js/project-types-config.js"></script>
     <script src="js/project-manager.js"></script>
+    <script src="js/csv-parser.js"></script>
+    <script src="js/timeseries-wizard-manager.js"></script>
     <script src="js/export-manager.js"></script>
     <script src="js/training-code-generator.js"></script>
     <script src="js/canvas-manager.js"></script><!-- Deprecated - kept for backward compatibility -->
@@ -520,8 +532,8 @@
         // Update button states based on current state
 function updateUIState() {
     if (window.app && window.app.canvasManager) {
-        const hasImage = window.app.canvasManager.image !== null;
-        const hasAnnotations = window.app.canvasManager.annotations.length > 0;
+        const hasImage = window.app.canvasManager.image !== null && window.app.canvasManager.image !== undefined;
+        const hasAnnotations = window.app.canvasManager.annotations && window.app.canvasManager.annotations.length > 0;
         const hasProject = window.app.projectManager.currentProject !== null;
 
         // Update button states - con verificación de existencia
@@ -561,7 +573,7 @@ function updateUIState() {
                     nameElement.textContent = window.app.canvasManager.imageName ||
                         (window.i18n ? window.i18n.t('imageInfo.noName') : 'No name');
                 }
-                if (dimensionsElement) {
+                if (dimensionsElement && window.app.canvasManager.image) {
                     dimensionsElement.textContent =
                         `${window.app.canvasManager.image.width}x${window.app.canvasManager.image.height}`;
                 }
