@@ -603,6 +603,22 @@ class YOLOAnnotator {
         }
     }
 
+    // Helper method to check if current project is image-based
+    isImageBasedProject() {
+        if (!this.projectManager || !this.projectManager.currentProject) {
+            return false;
+        }
+
+        const projectType = this.projectManager.currentProject.type;
+
+        // Check if the project type exists in the images modality
+        if (typeof PROJECT_TYPES_CONFIG !== 'undefined' && PROJECT_TYPES_CONFIG.images) {
+            return PROJECT_TYPES_CONFIG.images.types.some(type => type.id === projectType);
+        }
+
+        return false;
+    }
+
     // Update UI elements visibility based on annotation mode
     updateUIForMode() {
         const floatingTools = document.querySelector('.floating-tools');
@@ -667,6 +683,21 @@ class YOLOAnnotator {
             // Show annotations bar
             if (annotationsBar) annotationsBar.style.display = 'block';
         }
+
+        // Show/hide data augmentation buttons based on project modality
+        const isImageProject = this.isImageBasedProject();
+
+        // Hide batch augmentation button if not an image project
+        const btnBatchAugmentation = document.getElementById('btnBatchAugmentation');
+        if (btnBatchAugmentation) {
+            btnBatchAugmentation.style.display = isImageProject ? '' : 'none';
+        }
+
+        // Hide gallery item augmentation buttons if not an image project
+        const galleryAugmentButtons = document.querySelectorAll('.gallery-item-augment');
+        galleryAugmentButtons.forEach(btn => {
+            btn.style.display = isImageProject ? '' : 'none';
+        });
     }
 
     openProjectFile() {
