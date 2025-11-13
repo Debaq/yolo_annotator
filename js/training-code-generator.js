@@ -254,6 +254,7 @@ class TrainingCodeGenerator {
 
     _generateImageCode(framework, projectName, projectType, model, device, epochs, batch, imgsz, optimizer, lr, patience, valSplit, augMosaic, augMixup, augHsv, augFlip, augRotate, augScale, savePlots, saveConfMatrix, savePredictions, saveMetricsCsv, exportOnnx, exportTorchscript, exportTflite, exportOpenvino, exportCoreml, exportTensorrt, numClasses) {
         let code = '';
+        const t = (key) => this.t(key);
 
         if (framework === 'yolov8' || framework === 'yolov11' ||
             framework === 'yolov8-seg' || framework === 'yolov11-seg' ||
@@ -267,19 +268,19 @@ class TrainingCodeGenerator {
 
             code = `"""
 ${projectName} - Training Script
-Generado automáticamente por Annotix
+${t('export.code.template.generatedBy')}
 Framework: ${isV11 ? 'YOLOv11' : 'YOLOv8'} (Ultralytics)
-Tipo de proyecto: ${this.getProjectTypeLabel(projectType)}
+${t('export.code.template.projectType')}: ${this.getProjectTypeLabel(projectType)}
 
-IMPORTANTE: Instalar dependencias antes de ejecutar
+${t('export.code.template.important')}: ${t('export.code.template.installDeps')}
 """
 
 # ============================================
-# 1. INSTALACIÓN DE DEPENDENCIAS
+# 1. ${t('export.code.template.installation')}
 # ============================================
-# Ejecutar estos comandos en tu terminal:
+# ${t('export.code.template.executeCmds')}:
 # pip install ultralytics
-# pip install torch torchvision${savePlots || saveConfMatrix ? '\n# pip install matplotlib seaborn  # Para visualizaciones' : ''}${saveMetricsCsv ? '\n# pip install pandas  # Para exportar métricas' : ''}
+# pip install torch torchvision${savePlots || saveConfMatrix ? '\n# pip install matplotlib seaborn  # ' + t('export.code.template.forVisualization') : ''}${saveMetricsCsv ? '\n# pip install pandas  # ' + t('export.code.template.forExportMetrics') : ''}
 # pip install opencv-python pillow numpy
 
 from ultralytics import YOLO
@@ -291,21 +292,21 @@ print(f"CUDA available: {torch.cuda.is_available()}")
 ${device.includes('cuda') ? `print(f"CUDA device: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'N/A'}")` : ''}
 
 # ============================================
-# 2. CONFIGURACIÓN DEL ENTRENAMIENTO
+# 2. ${t('export.code.template.configuration')}
 # ============================================
 
-# Modelo y dispositivo
+# ${t('export.code.template.modelAndDevice')}
 MODEL_NAME = '${modelName}'
 DEVICE = '${device}'
 
-# Hiperparámetros básicos
+# ${t('export.code.template.basicHyperparams')}
 EPOCHS = ${epochs}
 BATCH_SIZE = ${batch}
 IMG_SIZE = ${imgsz}
 LEARNING_RATE = ${lr}
 PATIENCE = ${patience}  # Early stopping
 
-# Data Augmentation
+# ${t('export.code.template.dataAugmentation')}
 MOSAIC = ${augMosaic ? '1.0' : '0.0'}  # Combina 4 imágenes en una
 MIXUP = ${augMixup ? '0.1' : '0.0'}   # Mezcla transparencias
 HSV_H = ${augHsv ? '0.015' : '0.0'}   # Color jitter: Hue
@@ -317,28 +318,28 @@ DEGREES = ${augRotate ? '10.0' : '0.0'}  # Rotación (grados)
 SCALE = ${augScale ? '0.5' : '0.0'}   # Escala aleatoria
 
 # ============================================
-# 3. CARGAR MODELO PREENTRENADO
+# 3. ${t('export.code.template.loadPretrainedModel')}
 # ============================================
 
 model = YOLO(MODEL_NAME)
-print(f"✅ Modelo cargado: {MODEL_NAME}")
-print(f"📦 Parámetros: {sum(p.numel() for p in model.model.parameters()):,}")
+print(f"✅ ${t('export.code.template.modelLoaded')}: {MODEL_NAME}")
+print(f"📦 ${t('export.code.template.parameters')}: {sum(p.numel() for p in model.model.parameters()):,}")
 
 # ============================================
-# 4. ENTRENAR EL MODELO
+# 4. ${t('export.code.template.trainModel')}
 # ============================================
 
 results = model.train(
-    # Dataset
+    # ${t('export.code.template.dataset')}
     data='data.yaml',           # Archivo YAML con rutas del dataset
 
-    # Básicos
+    # ${t('export.code.template.basics')}
     epochs=EPOCHS,
     batch=BATCH_SIZE,
     imgsz=IMG_SIZE,
     device=DEVICE,
 
-    # Optimización
+    # ${t('export.code.template.optimization')}
     optimizer='${optimizer}',    # Adam, AdamW, SGD, RMSprop
     lr0=LEARNING_RATE,          # Learning rate inicial
     lrf=0.01,                   # Learning rate final (como fracción de lr0)
