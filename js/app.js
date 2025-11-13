@@ -410,16 +410,19 @@ class YOLOAnnotator {
         window.eventBus.on('annotationCreated', () => {
             console.log('EventBus listener: annotationCreated triggered');
             this.updateStats();
+            this.updateClassUI(); // Update class counts
             this.galleryManager.render(); // Update thumbnail counts
         });
 
         window.eventBus.on('annotationDeleted', () => {
             this.updateStats();
+            this.updateClassUI(); // Update class counts
             this.galleryManager.render(); // Update thumbnail counts
         });
 
         window.eventBus.on('annotationModified', () => {
             this.updateStats();
+            this.updateClassUI(); // Update class counts
             this.galleryManager.render(); // Update thumbnail counts
         });
 
@@ -2428,8 +2431,24 @@ class YOLOAnnotator {
             // Show number only if index is 0-8 (keys 1-9)
             const classNumber = index < 9 ? `[${index + 1}] ` : '';
 
-            // Count annotations using this class
-            const annotationCount = this.canvasManager.annotations.filter(a => a.class === cls.id).length;
+            // Count annotations in current image
+            const currentImageCount = this.canvasManager.annotations.filter(a => a.class === cls.id).length;
+
+            // Count annotations across all images in project
+            const totalCount = this.galleryManager.images.reduce((sum, img) => {
+                const imgAnnotations = img.annotations || [];
+                // If this is the current image with unsaved changes, use memory count
+                if (this.canvasManager.imageId === img.id && this.canvasManager.hasUnsavedChanges) {
+                    return sum + currentImageCount;
+                }
+                // Otherwise use saved count
+                return sum + imgAnnotations.filter(a => a.class === cls.id).length;
+            }, 0);
+
+            // Show as "current/total"
+            const annotationCount = currentImageCount > 0 || totalCount > 0
+                ? `${currentImageCount}/${totalCount}`
+                : '0';
 
             item.innerHTML = `
                 <div class="class-color" style="background: ${cls.color}"></div>
@@ -2795,9 +2814,46 @@ class YOLOAnnotator {
 
     updateStats() {
         const images = this.galleryManager.images;
-        const totalLabels = images.reduce((sum, img) =>
+
+        // Count annotations from saved images
+        let totalLabels = images.reduce((sum, img) =>
             sum + (img.annotations ? img.annotations.length : 0), 0);
-        const annotated = images.filter(img => img.annotations && img.annotations.length > 0).length;
+
+        // Add current unsaved annotations if there's an active image
+        if (this.annotationMode === 'classification') {
+            if (this.classificationManager.imageId && this.classificationManager.hasUnsavedChanges) {
+                // Find current image in array
+                const currentImg = images.find(img => img.id === this.classificationManager.imageId);
+                if (currentImg) {
+                    // Subtract old count, add new count
+                    totalLabels -= (currentImg.annotations?.length || 0);
+                    totalLabels += this.classificationManager.labels.length;
+                }
+            }
+        } else if (this.canvasManager && this.canvasManager.imageId && this.canvasManager.hasUnsavedChanges) {
+            // Find current image in array
+            const currentImg = images.find(img => img.id === this.canvasManager.imageId);
+            if (currentImg) {
+                // Subtract old count, add new count
+                totalLabels -= (currentImg.annotations?.length || 0);
+                totalLabels += this.canvasManager.annotations.length;
+            }
+        }
+
+        const annotated = images.filter(img => {
+            // Check if this is the current image with unsaved changes
+            if (this.annotationMode === 'classification' &&
+                this.classificationManager.imageId === img.id &&
+                this.classificationManager.hasUnsavedChanges) {
+                return this.classificationManager.labels.length > 0;
+            } else if (this.canvasManager &&
+                       this.canvasManager.imageId === img.id &&
+                       this.canvasManager.hasUnsavedChanges) {
+                return this.canvasManager.annotations.length > 0;
+            }
+            // Otherwise use saved data
+            return img.annotations && img.annotations.length > 0;
+        }).length;
 
         document.getElementById('statTotalImages').textContent = images.length;
         document.getElementById('statAnnotated').textContent = annotated;
