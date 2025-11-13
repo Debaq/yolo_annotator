@@ -261,6 +261,7 @@ class TimeSeriesCanvasManager {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: false,  // Disable animations
                 interaction: {
                     mode: 'index',
                     intersect: false,
@@ -275,6 +276,9 @@ class TimeSeriesCanvasManager {
                     },
                     // Custom plugin for annotations
                     annotation: {
+                        animations: {
+                            numbers: { duration: 0 }
+                        },
                         annotations: this.getChartAnnotations()
                     }
                 },
@@ -403,6 +407,19 @@ class TimeSeriesCanvasManager {
     }
 
     /**
+     * Update only annotations without recreating chart
+     */
+    updateAnnotations() {
+        if (!this.chart) return;
+
+        // Update annotation plugin options
+        this.chart.options.plugins.annotation.annotations = this.getChartAnnotations();
+
+        // Update chart without animation
+        this.chart.update('none');
+    }
+
+    /**
      * Mouse down handler
      */
     onMouseDown(e) {
@@ -496,7 +513,7 @@ class TimeSeriesCanvasManager {
         }
 
         this.annotations.push(annotation);
-        this.renderChart();
+        this.updateAnnotations();
         this.onAnnotationsChanged();
     }
 
@@ -530,7 +547,7 @@ class TimeSeriesCanvasManager {
         };
 
         this.annotations.push(annotation);
-        this.renderChart();
+        this.updateAnnotations();
         this.onAnnotationsChanged();
     }
 
@@ -597,7 +614,7 @@ class TimeSeriesCanvasManager {
         if (this.activeAnnotation !== null) {
             this.annotations.splice(this.activeAnnotation, 1);
             this.activeAnnotation = null;
-            this.renderChart();
+            this.updateAnnotations();
             this.onAnnotationsChanged();
         }
     }
@@ -666,7 +683,7 @@ class TimeSeriesCanvasManager {
     clearAnnotations() {
         this.annotations = [];
         this.activeAnnotation = null;
-        this.renderChart();
+        this.updateAnnotations();
         this.onAnnotationsChanged();
     }
 
