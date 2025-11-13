@@ -41,7 +41,7 @@ class TimeSeriesCanvasManager {
         // View state
         this.showLabels = true;
         this.showGrid = true;
-        this.showXAxisLabels = true;
+        this.showXAxisLabels = false;  // Hidden by default
         this.scaleY = 1.0;
         this.scaleX = 1.0;
 
@@ -522,28 +522,39 @@ class TimeSeriesCanvasManager {
         }
 
         const xValue = this.getXValue(canvasX);
-        const yValue = this.getYValue(canvasY);
+        if (xValue === null) return;
 
-        if (xValue === null || yValue === null) return;
+        const dataIndex = this.getClosestDataIndex(xValue);
 
-        const annotation = {
-            type: 'point',
-            class: this.currentClass,
-            data: {
-                x: xValue,
-                y: yValue,
-                index: this.getClosestDataIndex(xValue)
-            }
-        };
+        // Create a point for each dataset (variable/line)
+        if (this.chart && this.chart.data.datasets) {
+            this.chart.data.datasets.forEach((dataset, i) => {
+                const value = dataset.data[dataIndex];
+                if (value === null || value === undefined) return;
 
-        // For regression type, could add UI to input target value
-        if (this.projectConfig.pointType === 'regression') {
-            annotation.data.targetValue = yValue; // Store Y value as target
+                const annotation = {
+                    type: 'point',
+                    class: this.currentClass,
+                    data: {
+                        x: xValue,
+                        y: value,
+                        index: dataIndex,
+                        datasetIndex: i,  // Store which dataset this point belongs to
+                        datasetLabel: dataset.label  // Store dataset label for reference
+                    }
+                };
+
+                // For regression type, could add UI to input target value
+                if (this.projectConfig.pointType === 'regression') {
+                    annotation.data.targetValue = value; // Store Y value as target
+                }
+
+                this.annotations.push(annotation);
+            });
+
+            this.updateAnnotations();
+            this.onAnnotationsChanged();
         }
-
-        this.annotations.push(annotation);
-        this.updateAnnotations();
-        this.onAnnotationsChanged();
     }
 
     /**
