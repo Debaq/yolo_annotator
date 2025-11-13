@@ -365,7 +365,7 @@ class TrainingCodeGenerator {
             code = this._generateTimeSeriesCode(framework, projectName, projectType, device, numClasses, batch, epochs, lr, optimizer, saveMetricsCsv, savePlots, seqLength, forecastHorizon, hiddenSize);
         } else if (modality === 'images') {
             // Existing image-based frameworks
-            code = this._generateImageCode(framework, projectName, projectType, model, device, epochs, batch, imgsz, optimizer, lr, patience, valSplit, augMosaic, augMixup, augHsv, augFlip, augRotate, augScale, savePlots, saveConfMatrix, savePredictions, saveMetricsCsv, exportOnnx, exportTorchscript, exportTflite, exportOpenvino, exportCoreml, exportTensorrt, numClasses);
+            code = this._generateImageCode(framework, projectName, projectType, model, device, epochs, batch, imgsz, optimizer, lr, patience, valSplit, augMosaic, augMixup, augHsv, augFlip, augRotate, augScale, savePlots, saveConfMatrix, savePrCurves, savePredictions, saveMetricsCsv, exportOnnx, exportTorchscript, exportTflite, exportOpenvino, exportCoreml, exportTensorrt, numClasses);
         } else {
             code = `# ${this.t('export.code.template.important')}: ${modality} ${this.t('export.code.template.important').toLowerCase()}\n# Coming soon...`;
         }
@@ -376,7 +376,7 @@ class TrainingCodeGenerator {
         }
     }
 
-    _generateImageCode(framework, projectName, projectType, model, device, epochs, batch, imgsz, optimizer, lr, patience, valSplit, augMosaic, augMixup, augHsv, augFlip, augRotate, augScale, savePlots, saveConfMatrix, savePredictions, saveMetricsCsv, exportOnnx, exportTorchscript, exportTflite, exportOpenvino, exportCoreml, exportTensorrt, numClasses) {
+    _generateImageCode(framework, projectName, projectType, model, device, epochs, batch, imgsz, optimizer, lr, patience, valSplit, augMosaic, augMixup, augHsv, augFlip, augRotate, augScale, savePlots, saveConfMatrix, savePrCurves, savePredictions, saveMetricsCsv, exportOnnx, exportTorchscript, exportTflite, exportOpenvino, exportCoreml, exportTensorrt, numClasses) {
         let code = '';
         const t = (key) => this.t(key);
 
