@@ -237,6 +237,20 @@
         "models": "OpenPose, HRNet, MediaPipe",
         "difficulty": "Intermedio"
       },
+      "polygon": {
+        "name": "Segmentación con Polígonos",
+        "description": "Dibujar polígonos punto por punto para segmentación precisa",
+        "useCases": "Contornos precisos, formas geométricas, más liviano que máscaras",
+        "models": "YOLOv8-seg, Mask R-CNN, SOLO",
+        "difficulty": "Intermedio"
+      },
+      "landmarks": {
+        "name": "Puntos de Referencia",
+        "description": "Colocar puntos independientes sin conexiones",
+        "useCases": "Centros de objetos, puntos de referencia, conteo, ubicaciones",
+        "models": "Modelos de detección, detectores de puntos personalizados",
+        "difficulty": "Principiante"
+      },
       "obb": {
         "name": "Cajas Rotadas (OBB)",
         "description": "Bounding boxes con rotación libre",

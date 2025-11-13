@@ -196,6 +196,20 @@
         "models": "OpenPose, HRNet, MediaPipe",
         "difficulty": "Intermediate"
       },
+      "polygon": {
+        "name": "Polygon Segmentation",
+        "description": "Draw polygons point-by-point for precise segmentation",
+        "useCases": "Precise object boundaries, geometric shapes, lighter than masks",
+        "models": "YOLOv8-seg, Mask R-CNN, SOLO",
+        "difficulty": "Intermediate"
+      },
+      "landmarks": {
+        "name": "Landmark Points",
+        "description": "Place independent points without connections",
+        "useCases": "Object centers, reference points, counting, locations",
+        "models": "Detection models, custom point detectors",
+        "difficulty": "Beginner"
+      },
       "obb": {
         "name": "Oriented Boxes (OBB)",
         "description": "Bounding boxes with free rotation",
