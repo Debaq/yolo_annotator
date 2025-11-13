@@ -919,7 +919,6 @@ names: [${classNames.map(n => `'${n}'`).join(', ')}]
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     }
-}
 
     // =============================================
     // POLYGON EXPORT (YOLO Segmentation Format)
@@ -1397,3 +1396,4 @@ names: [${classNames.map(n => `'${n}'`).join(', ')}]
 
         this.ui.showToast(`✓ COCO JSON exported with ${cocoData.annotations.length} keypoint instances`, 'success');
     }
+}
