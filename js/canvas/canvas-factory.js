@@ -8,6 +8,8 @@
  * - segmentation: Semantic Segmentation (Masks) -> CanvasMask
  * - instanceSeg: Instance Segmentation (Masks) -> CanvasMask
  * - keypoints: Pose/Skeleton Estimation -> CanvasKeypoints
+ * - polygon: Polygon Segmentation -> CanvasPolygon
+ * - landmarks: Independent Points -> CanvasLandmarks
  * - classification: Image Classification -> null (handled by ClassificationManager)
  * - multiLabel: Multi-Label Classification -> null (handled by ClassificationManager)
  */
@@ -28,6 +30,8 @@ class CanvasFactory {
             'segmentation': CanvasMask,
             'instanceSeg': CanvasMask,
             'keypoints': CanvasKeypoints,
+            'polygon': CanvasPolygon,
+            'landmarks': CanvasLandmarks,
             'classification': null,  // Handled by ClassificationManager
             'multiLabel': null       // Handled by ClassificationManager
         };
@@ -76,6 +80,8 @@ class CanvasFactory {
             'segmentation',
             'instanceSeg',
             'keypoints',
+            'polygon',
+            'landmarks',
             'classification',
             'multiLabel'
         ];
@@ -102,6 +108,8 @@ class CanvasFactory {
             'segmentation': ['mask', 'select', 'pan'],
             'instanceSeg': ['mask', 'select', 'pan'],
             'keypoints': ['keypoint', 'select', 'pan'],
+            'polygon': ['polygon', 'select', 'pan'],
+            'landmarks': ['landmark', 'select', 'pan'],
             'classification': [],
             'multiLabel': []
         };
@@ -121,6 +129,8 @@ class CanvasFactory {
             'segmentation': 'Semantic Segmentation',
             'instanceSeg': 'Instance Segmentation',
             'keypoints': 'Pose/Skeleton Estimation',
+            'polygon': 'Polygon Segmentation',
+            'landmarks': 'Landmark Points',
             'classification': 'Image Classification',
             'multiLabel': 'Multi-Label Classification'
         };
@@ -140,6 +150,8 @@ class CanvasFactory {
             'segmentation': 'Paint pixel-perfect masks for semantic segmentation',
             'instanceSeg': 'Paint individual masks for each object instance',
             'keypoints': 'Mark key points and skeleton connections',
+            'polygon': 'Draw polygons point-by-point for precise segmentation',
+            'landmarks': 'Place independent points for marking locations',
             'classification': 'Assign single label to entire image',
             'multiLabel': 'Assign multiple labels to entire image'
         };

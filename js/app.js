@@ -692,6 +692,8 @@ class YOLOAnnotator {
             { id: 'segmentation', key: 'segmentation', icon: 'fa-fill-drip', color: '#f59e0b' },
             { id: 'instanceSeg', key: 'instanceSeg', icon: 'fa-object-group', color: '#ef4444' },
             { id: 'keypoints', key: 'keypoints', icon: 'fa-braille', color: '#06b6d4' },
+            { id: 'polygon', key: 'polygon', icon: 'fa-draw-polygon', color: '#8b5cf6' },
+            { id: 'landmarks', key: 'landmarks', icon: 'fa-location-dot', color: '#ec4899' },
             { id: 'obb', key: 'obb', icon: 'fa-rotate', color: '#6366f1' }
         ];
 

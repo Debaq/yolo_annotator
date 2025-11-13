@@ -58,6 +58,8 @@ if (workbox) {
     { url: 'js/canvas/canvas-obb.js', revision: '1' },
     { url: 'js/canvas/canvas-mask.js', revision: '1' },
     { url: 'js/canvas/canvas-keypoints.js', revision: '1' },
+    { url: 'js/canvas/canvas-polygon.js', revision: '1' },
+    { url: 'js/canvas/canvas-landmarks.js', revision: '1' },
     { url: 'js/canvas/canvas-factory.js', revision: '1' },
 
     // Locales (all languages)
