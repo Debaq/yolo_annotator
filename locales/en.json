@@ -214,6 +214,7 @@
     "resizeStrategy": "Strategy",
     "enterName": "Enter a name for the project",
     "created": "Project \"{name}\" created",
+    "updated": "Updated",
     "loaded": "Project \"{name}\" loaded",
     "deleted": "Project deleted",
     "duplicated": "Project \"{name}\" duplicated",

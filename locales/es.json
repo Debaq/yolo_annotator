@@ -258,6 +258,7 @@
     "resizeStrategy": "Estrategia",
     "enterName": "Ingresa un nombre para el proyecto",
     "created": "Proyecto \"{name}\" creado",
+    "updated": "Actualizado",
     "loaded": "Proyecto \"{name}\" cargado",
     "deleted": "Proyecto eliminado",
     "duplicated": "Proyecto \"{name}\" duplicado",

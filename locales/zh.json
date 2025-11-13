@@ -111,6 +111,7 @@
     "classesHelp": "用逗号分隔。之后可以添加更多。",
     "enterName": "请输入项目名称",
     "created": "项目 \"{name}\" 已创建",
+    "updated": "Updated",
     "loaded": "项目 \"{name}\" 已加载",
     "deleted": "项目已删除",
     "exported": "项目已导出",

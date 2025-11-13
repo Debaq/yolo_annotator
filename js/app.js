@@ -1209,8 +1209,13 @@ class YOLOAnnotator {
                                         // If deleted project was current, clear it
                                         if (this.projectManager.currentProject?.id === projectId) {
                                             this.projectManager.currentProject = null;
-                                            this.canvasManager.clearCanvas();
-                                            this.galleryManager.clearGallery();
+                                            if (this.canvasManager) {
+                                                this.canvasManager.clearCanvas();
+                                            }
+                                            // Clear gallery
+                                            this.galleryManager.images = [];
+                                            this.galleryManager.cleanupBlobUrls();
+                                            this.galleryManager.render();
                                         }
 
                                         await this.loadProjects();
