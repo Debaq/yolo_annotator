@@ -1635,3 +1635,139 @@ color: white;
     margin-left: 8px;
     font-size: 0.9em;
 }
+
+/* ============================================
+   KEYPOINTS PROGRESS PANEL
+   ============================================ */
+
+.keypoint-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.keypoint-progress-header h3 {
+    margin: 0;
+    flex: 1;
+}
+
+.keypoint-progress-header .btn-sm {
+    padding: 6px 12px;
+    font-size: 0.85em;
+}
+
+#keypointProgressContent {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.keypoint-instance-info {
+    background: var(--gray-light);
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.keypoint-instance-label {
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.keypoint-instance-class {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: white;
+    font-weight: 500;
+}
+
+.keypoint-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.keypoint-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    border-radius: 6px;
+    transition: background 0.2s ease;
+    cursor: pointer;
+}
+
+.keypoint-item:hover {
+    background: var(--gray-light);
+}
+
+.keypoint-item.current {
+    background: var(--primary-light);
+    border-left: 3px solid var(--primary);
+    font-weight: 600;
+}
+
+.keypoint-item.completed {
+    background: var(--success-light);
+}
+
+.keypoint-checkbox {
+    margin-right: 10px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.keypoint-name {
+    flex: 1;
+    font-size: 0.9em;
+}
+
+.keypoint-visibility {
+    font-size: 0.75em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--gray);
+    color: white;
+}
+
+.keypoint-visibility.visible {
+    background: var(--success);
+}
+
+.keypoint-visibility.occluded {
+    background: var(--warning);
+}
+
+.keypoint-visibility.not-labeled {
+    background: var(--gray);
+}
+
+.keypoint-progress-stats {
+    margin-top: 12px;
+    padding: 10px;
+    background: var(--info-light);
+    border-radius: 6px;
+    font-size: 0.9em;
+    color: var(--dark);
+    text-align: center;
+}
+
+.keypoint-progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--gray-light);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 6px;
+}
+
+.keypoint-progress-fill {
+    height: 100%;
+    background: var(--success);
+    transition: width 0.3s ease;
+}

@@ -129,7 +129,14 @@ class YOLOAnnotator {
         
         // Class management
         document.getElementById('btnAddClass')?.addEventListener('click', () => this.addClass());
-        
+
+        // Keypoints controls
+        document.getElementById('btnNewKeypointInstance')?.addEventListener('click', () => {
+            if (this.canvasManager && this.canvasManager.newKeypointInstance) {
+                this.canvasManager.newKeypointInstance();
+            }
+        });
+
         // Canvas controls
         document.getElementById('btnZoomIn')?.addEventListener('click', () => this.zoomIn());
         document.getElementById('btnZoomOut')?.addEventListener('click', () => this.zoomOut());
@@ -2368,6 +2375,12 @@ class YOLOAnnotator {
     }
 
     addClass() {
+        // Check if this is a keypoints project and show special modal
+        if (this.projectManager.currentProject?.type === 'keypoints') {
+            this.showAddKeypointClassModal();
+            return;
+        }
+
         const nameInput = document.getElementById('newClassName');
         const colorInput = document.getElementById('newClassColor');
 
@@ -2419,6 +2432,212 @@ class YOLOAnnotator {
         if (window.eventBus) {
             window.eventBus.emit('classAdded', { class: newClass });
         }
+    }
+
+    showAddKeypointClassModal() {
+        let currentStep = 1;
+        let className = '';
+        let classColor = Utils.randomColor();
+        let selectedPreset = 'coco-17';
+        let customKeypoints = [];
+        let customConnections = [];
+
+        const showStep1 = () => {
+            this.ui.showModal(
+                'Add Keypoint Class - Step 1/2: Basic Info',
+                `
+                    <div class="modal-steps">
+                        <div class="step active">1. Basic</div>
+                        <div class="step">2. Skeleton</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Class Name:</label>
+                        <input type="text" id="keypointClassName" class="form-control" value="${className}" placeholder="e.g., Person, Hand, Face">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Color:</label>
+                        <input type="color" id="keypointClassColor" class="color-input" value="${classColor}">
+                    </div>
+                `,
+                [
+                    {
+                        text: 'Cancel',
+                        type: 'secondary',
+                        action: 'cancel',
+                        handler: (modal, close) => close()
+                    },
+                    {
+                        text: 'Next →',
+                        type: 'primary',
+                        icon: 'fas fa-arrow-right',
+                        action: 'next',
+                        handler: (modal, close) => {
+                            const nameInput = modal.querySelector('#keypointClassName');
+                            const colorInput = modal.querySelector('#keypointClassColor');
+
+                            const name = nameInput.value.trim();
+                            if (!name) {
+                                this.ui.showToast('Please enter a class name', 'warning');
+                                return;
+                            }
+
+                            className = name;
+                            classColor = colorInput.value;
+                            close();
+                            showStep2();
+                        }
+                    }
+                ]
+            );
+
+            // Focus on name input
+            setTimeout(() => {
+                const input = document.getElementById('keypointClassName');
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
+            }, 100);
+        };
+
+        const showStep2 = () => {
+            const presets = SkeletonPresets.getAllPresets();
+            const categories = SkeletonPresets.getCategories();
+
+            // Group presets by category
+            let presetsHTML = '';
+            categories.forEach(category => {
+                const categoryPresets = SkeletonPresets.getPresetsByCategory(category);
+                if (categoryPresets.length > 0) {
+                    presetsHTML += `
+                        <div class="preset-category">
+                            <h4>${SkeletonPresets.getCategoryName(category)}</h4>
+                            <div class="preset-list">
+                    `;
+                    categoryPresets.forEach(preset => {
+                        const isSelected = preset.id === selectedPreset ? 'selected' : '';
+                        presetsHTML += `
+                            <div class="preset-card ${isSelected}" data-preset="${preset.id}">
+                                <div class="preset-header">
+                                    <strong>${preset.name}</strong>
+                                    <span class="preset-count">${preset.keypoints.length} pts</span>
+                                </div>
+                                <div class="preset-description">${preset.description}</div>
+                            </div>
+                        `;
+                    });
+                    presetsHTML += `
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            this.ui.showModal(
+                'Add Keypoint Class - Step 2/2: Skeleton Configuration',
+                `
+                    <div class="modal-steps">
+                        <div class="step completed">1. Basic</div>
+                        <div class="step active">2. Skeleton</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Select Skeleton Preset:</label>
+                        <div id="presetContainer" class="preset-container">
+                            ${presetsHTML}
+                        </div>
+                    </div>
+                    <div class="selected-preset-info" id="selectedPresetInfo">
+                        <strong>Selected:</strong> <span id="selectedPresetName">COCO 17 Keypoints</span>
+                    </div>
+                `,
+                [
+                    {
+                        text: '← Back',
+                        type: 'secondary',
+                        icon: 'fas fa-arrow-left',
+                        action: 'back',
+                        handler: (modal, close) => {
+                            close();
+                            showStep1();
+                        }
+                    },
+                    {
+                        text: 'Create Class',
+                        type: 'primary',
+                        icon: 'fas fa-check',
+                        action: 'create',
+                        handler: (modal, close) => {
+                            // Get selected preset
+                            const preset = SkeletonPresets.getPreset(selectedPreset);
+                            if (!preset) {
+                                this.ui.showToast('Please select a skeleton preset', 'warning');
+                                return;
+                            }
+
+                            // Create skeleton structure
+                            const skeleton = SkeletonPresets.createFromPreset(selectedPreset);
+
+                            // Create new class with skeleton
+                            const classes = this.canvasManager.classes;
+                            const newId = classes.length > 0 ?
+                                Math.max(...classes.map(c => c.id)) + 1 : 0;
+
+                            const newClass = {
+                                id: newId,
+                                name: className,
+                                color: classColor,
+                                skeleton: skeleton
+                            };
+
+                            this.canvasManager.classes.push(newClass);
+                            this.updateClassUI();
+
+                            if (this.projectManager.currentProject) {
+                                this.projectManager.updateProject({ classes: this.canvasManager.classes });
+                            }
+
+                            // Emit event for UI updates
+                            if (window.eventBus) {
+                                window.eventBus.emit('classAdded', { class: newClass });
+                            }
+
+                            // Update canvas keypoints definition if this is the first class
+                            if (this.canvasManager.classes.length === 1 && this.canvasManager.setSkeletonDefinition) {
+                                this.canvasManager.setSkeletonDefinition(skeleton.keypoints, skeleton.connections);
+                            }
+
+                            this.ui.showToast(`Class "${className}" created with ${preset.keypoints.length} keypoints`, 'success');
+                            close();
+                        }
+                    }
+                ]
+            );
+
+            // Add click handlers for preset cards
+            setTimeout(() => {
+                const presetCards = modal.querySelectorAll('.preset-card');
+                const presetNameDisplay = modal.querySelector('#selectedPresetName');
+
+                presetCards.forEach(card => {
+                    card.addEventListener('click', () => {
+                        // Remove selected class from all cards
+                        presetCards.forEach(c => c.classList.remove('selected'));
+                        // Add selected class to clicked card
+                        card.classList.add('selected');
+
+                        // Update selected preset
+                        selectedPreset = card.dataset.preset;
+                        const preset = SkeletonPresets.getPreset(selectedPreset);
+                        if (preset && presetNameDisplay) {
+                            presetNameDisplay.textContent = preset.name;
+                        }
+                    });
+                });
+            }, 100);
+        };
+
+        // Start with step 1
+        showStep1();
     }
 
     updateClassUI() {

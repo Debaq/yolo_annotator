@@ -479,3 +479,151 @@
     flex-shrink: 0;
     margin-top: 2px;
 }
+
+/* ============================================
+   KEYPOINT CLASS MODAL - 2-STEP WIZARD
+   ============================================ */
+
+.modal-steps {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--border);
+}
+
+.modal-steps .step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95em;
+    font-weight: 500;
+    color: var(--gray);
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: var(--gray-light);
+    transition: all 0.3s ease;
+}
+
+.modal-steps .step.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.modal-steps .step.completed {
+    background: var(--success-light);
+    color: var(--success);
+}
+
+.modal-steps .step.completed::before {
+    content: "✓ ";
+    font-weight: bold;
+}
+
+/* Preset Selection */
+.preset-container {
+    max-height: 50vh;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.preset-category {
+    margin-bottom: 24px;
+}
+
+.preset-category:last-child {
+    margin-bottom: 0;
+}
+
+.preset-category h4 {
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--dark);
+    margin: 0 0 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border);
+}
+
+.preset-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.preset-card {
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: var(--white);
+}
+
+.preset-card:hover {
+    border-color: var(--primary-light);
+    box-shadow: 0 2px 8px var(--shadow-light);
+    transform: translateY(-2px);
+}
+
+.preset-card.selected {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.preset-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.preset-header strong {
+    font-size: 0.95em;
+    color: var(--dark);
+}
+
+.preset-count {
+    font-size: 0.8em;
+    padding: 2px 8px;
+    background: var(--gray-light);
+    border-radius: 12px;
+    color: var(--gray-dark);
+    font-weight: 500;
+}
+
+.preset-card.selected .preset-count {
+    background: var(--primary);
+    color: white;
+}
+
+.preset-description {
+    font-size: 0.85em;
+    color: var(--gray-dark);
+    line-height: 1.4;
+}
+
+.preset-card.selected .preset-description {
+    color: var(--dark);
+    font-weight: 500;
+}
+
+.selected-preset-info {
+    margin-top: 16px;
+    padding: 12px;
+    background: var(--success-light);
+    border-radius: 8px;
+    border-left: 4px solid var(--success);
+}
+
+.selected-preset-info strong {
+    color: var(--success);
+    margin-right: 8px;
+}
+
+#selectedPresetName {
+    color: var(--dark);
+    font-weight: 600;
+}

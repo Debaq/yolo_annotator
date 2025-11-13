@@ -49,6 +49,9 @@ if (workbox) {
     { url: 'js/classification-manager.js', revision: '1' },
     { url: 'js/event-bus.js', revision: '1' },
 
+    // Skeleton presets for keypoints
+    { url: 'js/skeleton-presets.js', revision: '1' },
+
     // Canvas architecture
     { url: 'js/canvas/canvas-base.js', revision: '1' },
     { url: 'js/canvas/canvas-bbox.js', revision: '1' },

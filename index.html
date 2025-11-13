@@ -343,6 +343,20 @@
                     </div>
                 </div>
 
+                <!-- Keypoints Progress Panel (shown only for keypoints projects) -->
+                <div class="panel-section" id="keypointProgressPanel" style="display: none;">
+                    <div class="keypoint-progress-header">
+                        <h3><i class="fas fa-braille"></i> <span>Keypoints Progress</span></h3>
+                        <button class="btn btn-sm btn-primary" id="btnNewKeypointInstance" title="New Instance (N)">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+
+                    <div id="keypointProgressContent">
+                        <div class="empty-message">No instance selected</div>
+                    </div>
+                </div>
+
             </aside>
         </div>
 
@@ -362,6 +376,9 @@
     <script src="js/utils.js"></script>
     <script src="js/shortcuts-manager.js"></script>
     <script src="js/tool-manager.js"></script>
+
+    <!-- Skeleton Presets for Keypoints -->
+    <script src="js/skeleton-presets.js"></script>
 
     <!-- New Canvas Architecture -->
     <script src="js/canvas/canvas-base.js"></script>
