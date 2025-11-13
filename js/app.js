@@ -139,10 +139,19 @@ class YOLOAnnotator {
             }
         });
 
-        // Canvas controls
+        // Canvas controls - Zoom (for images)
         document.getElementById('btnZoomIn')?.addEventListener('click', () => this.zoomIn());
         document.getElementById('btnZoomOut')?.addEventListener('click', () => this.zoomOut());
         document.getElementById('btnZoomReset')?.addEventListener('click', () => this.resetZoom());
+
+        // Canvas controls - Scale (for time series)
+        document.getElementById('btnScaleXIn')?.addEventListener('click', () => this.scaleXIn());
+        document.getElementById('btnScaleXOut')?.addEventListener('click', () => this.scaleXOut());
+        document.getElementById('btnScaleYIn')?.addEventListener('click', () => this.scaleYIn());
+        document.getElementById('btnScaleYOut')?.addEventListener('click', () => this.scaleYOut());
+        document.getElementById('btnScaleReset')?.addEventListener('click', () => this.resetScale());
+
+        // View controls
         document.getElementById('btnToggleLabels')?.addEventListener('click', () => this.toggleLabels());
         document.getElementById('btnToggleGrid')?.addEventListener('click', () => this.toggleGrid());
 
@@ -3209,6 +3218,32 @@ class YOLOAnnotator {
         if (display) {
             display.textContent = `${Math.round(this.canvasManager.zoom * 100)}%`;
         }
+    }
+
+    // Time series scale controls
+    scaleXIn() {
+        if (!this.canvasManager || !this.canvasManager.scaleXIn) return;
+        this.canvasManager.scaleXIn();
+    }
+
+    scaleXOut() {
+        if (!this.canvasManager || !this.canvasManager.scaleXOut) return;
+        this.canvasManager.scaleXOut();
+    }
+
+    scaleYIn() {
+        if (!this.canvasManager || !this.canvasManager.scaleYIn) return;
+        this.canvasManager.scaleYIn();
+    }
+
+    scaleYOut() {
+        if (!this.canvasManager || !this.canvasManager.scaleYOut) return;
+        this.canvasManager.scaleYOut();
+    }
+
+    resetScale() {
+        if (!this.canvasManager || !this.canvasManager.resetScale) return;
+        this.canvasManager.resetScale();
     }
 
     toggleLabels() {

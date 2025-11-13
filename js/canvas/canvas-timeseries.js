@@ -46,6 +46,10 @@ class TimeSeriesCanvasManager {
         this.scaleY = 1.0;
         this.scaleX = 1.0;
 
+        // Viewport state (for X-axis panning with scale)
+        this.viewportStartIndex = 0;
+        this.viewportEndIndex = null;  // null = show all data
+
         // Interaction state
         this.startX = null;
         this.tempRangeStart = null;
@@ -58,6 +62,14 @@ class TimeSeriesCanvasManager {
         this.editingHandle = null;  // Which handle is being dragged ('start', 'end', 'delete')
         this.isDraggingHandle = false;
         this.selectedPointGroup = null;  // Group of points at same X position
+
+        // Timeline
+        this.timelineCanvas = null;
+        this.timelineCtx = null;
+        this.timelineViewport = null;
+        this.isDraggingTimeline = false;
+        this.timelineDragStartX = null;
+        this.timelineDragStartViewport = null;
 
         this.setupCanvas();
     }
@@ -93,15 +105,51 @@ class TimeSeriesCanvasManager {
         // Insert after original canvas
         this.canvas.parentNode.insertBefore(this.chartContainer, this.canvas.nextSibling);
 
+        // Setup timeline
+        this.setupTimeline();
+
         // Setup mouse/touch events
         this.setupEventListeners();
     }
 
+    setupTimeline() {
+        // Get timeline elements
+        const timelineContainer = document.getElementById('timelineContainer');
+        this.timelineCanvas = document.getElementById('timelineCanvas');
+        this.timelineViewport = document.getElementById('timelineViewport');
+
+        if (!this.timelineCanvas || !this.timelineViewport) {
+            console.warn('Timeline elements not found');
+            return;
+        }
+
+        this.timelineCtx = this.timelineCanvas.getContext('2d');
+
+        // Show timeline container
+        if (timelineContainer) {
+            timelineContainer.style.display = 'block';
+        }
+
+        // Show scale controls, hide zoom controls
+        const scaleControls = document.getElementById('scaleControls');
+        const zoomControls = document.getElementById('zoomControls');
+        if (scaleControls) scaleControls.style.display = 'flex';
+        if (zoomControls) zoomControls.style.display = 'none';
+    }
+
     setupEventListeners() {
+        // Main chart events
         this.chartCanvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
         this.chartCanvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
         this.chartCanvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
         this.chartCanvas.addEventListener('mouseleave', (e) => this.onMouseLeave(e));
+
+        // Timeline viewport drag events
+        if (this.timelineViewport) {
+            this.timelineViewport.addEventListener('mousedown', (e) => this.onTimelineMouseDown(e));
+            document.addEventListener('mousemove', (e) => this.onTimelineMouseMove(e));
+            document.addEventListener('mouseup', (e) => this.onTimelineMouseUp(e));
+        }
     }
 
     /**
@@ -339,6 +387,9 @@ class TimeSeriesCanvasManager {
 
         // Render annotations overlay
         this.renderAnnotations();
+
+        // Render timeline
+        this.renderTimeline();
     }
 
     /**
@@ -1541,37 +1592,89 @@ class TimeSeriesCanvasManager {
     }
 
     /**
-     * Zoom in (increase Y scale)
+     * Increase X scale (zoom in on time axis)
      */
-    zoomIn() {
+    scaleXIn() {
+        this.scaleX *= 1.3;
+        this.applyScale();
+        this.renderTimeline();
+    }
+
+    /**
+     * Decrease X scale (zoom out on time axis)
+     */
+    scaleXOut() {
+        this.scaleX = Math.max(1.0, this.scaleX / 1.3);
+        this.applyScale();
+        this.renderTimeline();
+    }
+
+    /**
+     * Increase Y scale (zoom in on value axis)
+     */
+    scaleYIn() {
         this.scaleY *= 1.2;
         this.applyScale();
     }
 
     /**
-     * Zoom out (decrease Y scale)
+     * Decrease Y scale (zoom out on value axis)
      */
-    zoomOut() {
+    scaleYOut() {
         this.scaleY /= 1.2;
         this.applyScale();
     }
 
     /**
-     * Reset zoom to default
+     * Reset both scales to default
      */
-    resetZoom() {
+    resetScale() {
         this.scaleY = 1.0;
         this.scaleX = 1.0;
+        this.viewportStartIndex = 0;
+        this.viewportEndIndex = null;
         this.applyScale();
+        this.renderTimeline();
     }
 
     /**
-     * Apply current scale to chart
+     * Apply current scales and viewport to chart
      */
     applyScale() {
         if (!this.chart || !this.parsedData || this.parsedData.length === 0) return;
 
-        // Get original Y data range
+        const totalPoints = this.parsedData.length;
+
+        // Calculate viewport range based on X scale
+        const viewportWidth = Math.ceil(totalPoints / this.scaleX);
+
+        // Ensure viewport stays within bounds
+        if (this.viewportEndIndex === null || this.scaleX === 1.0) {
+            this.viewportStartIndex = 0;
+            this.viewportEndIndex = totalPoints - 1;
+        } else {
+            // Clamp viewport
+            this.viewportStartIndex = Math.max(0, this.viewportStartIndex);
+            this.viewportEndIndex = Math.min(totalPoints - 1, this.viewportStartIndex + viewportWidth);
+
+            // Adjust if we're at the end
+            if (this.viewportEndIndex >= totalPoints - 1) {
+                this.viewportEndIndex = totalPoints - 1;
+                this.viewportStartIndex = Math.max(0, this.viewportEndIndex - viewportWidth);
+            }
+        }
+
+        // Update chart data to show only viewport range
+        const originalLabels = this.prepareChartData().labels;
+        const originalDatasets = this.prepareChartData().datasets;
+
+        this.chart.data.labels = originalLabels.slice(this.viewportStartIndex, this.viewportEndIndex + 1);
+        this.chart.data.datasets = originalDatasets.map(dataset => ({
+            ...dataset,
+            data: dataset.data.slice(this.viewportStartIndex, this.viewportEndIndex + 1)
+        }));
+
+        // Apply Y scale
         let minY = Infinity;
         let maxY = -Infinity;
 
@@ -1584,22 +1687,179 @@ class TimeSeriesCanvasManager {
             });
         });
 
-        // Apply scale
-        const center = (minY + maxY) / 2;
-        const range = (maxY - minY) / this.scaleY;
+        const centerY = (minY + maxY) / 2;
+        const rangeY = (maxY - minY) / this.scaleY;
 
-        this.chart.options.scales.y.min = center - range / 2;
-        this.chart.options.scales.y.max = center + range / 2;
+        this.chart.options.scales.y.min = centerY - rangeY / 2;
+        this.chart.options.scales.y.max = centerY + rangeY / 2;
 
-        this.chart.update();
+        this.chart.update('none');
+        this.updateTimelineViewport();
     }
 
     /**
-     * Set zoom level (compatibility method)
+     * Legacy zoom methods (for compatibility)
      */
+    zoomIn() {
+        this.scaleYIn();
+    }
+
+    zoomOut() {
+        this.scaleYOut();
+    }
+
+    resetZoom() {
+        this.resetScale();
+    }
+
     setZoom(level) {
         this.scaleY = level;
         this.applyScale();
+    }
+
+    /**
+     * Render timeline minimap
+     */
+    renderTimeline() {
+        if (!this.timelineCanvas || !this.timelineCtx || !this.parsedData || this.parsedData.length === 0) {
+            return;
+        }
+
+        const canvas = this.timelineCanvas;
+        const ctx = this.timelineCtx;
+
+        // Set canvas size
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+
+        const width = canvas.width;
+        const height = canvas.height;
+        const padding = 4;
+
+        // Clear
+        ctx.clearRect(0, 0, width, height);
+
+        // Draw background
+        ctx.fillStyle = '#f8f9fa';
+        ctx.fillRect(0, 0, width, height);
+
+        // Get full data range for minimap
+        const fullData = this.prepareChartData();
+        if (!fullData || !fullData.datasets || fullData.datasets.length === 0) return;
+
+        // Find min/max for scaling
+        let minY = Infinity;
+        let maxY = -Infinity;
+        fullData.datasets.forEach(dataset => {
+            dataset.data.forEach(val => {
+                if (typeof val === 'number') {
+                    minY = Math.min(minY, val);
+                    maxY = Math.max(maxY, val);
+                }
+            });
+        });
+
+        const range = maxY - minY || 1;
+        const chartHeight = height - padding * 2;
+        const chartWidth = width - padding * 2;
+        const totalPoints = fullData.labels.length;
+        const stepX = chartWidth / (totalPoints - 1 || 1);
+
+        // Draw each dataset
+        fullData.datasets.forEach((dataset, dsIndex) => {
+            ctx.strokeStyle = dataset.borderColor || '#667eea';
+            ctx.lineWidth = 1.5;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+
+            let started = false;
+            dataset.data.forEach((val, idx) => {
+                if (typeof val !== 'number') return;
+
+                const x = padding + idx * stepX;
+                const y = padding + chartHeight - ((val - minY) / range) * chartHeight;
+
+                if (!started) {
+                    ctx.moveTo(x, y);
+                    started = true;
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+
+            ctx.stroke();
+        });
+
+        // Update viewport indicator
+        this.updateTimelineViewport();
+    }
+
+    /**
+     * Update timeline viewport indicator position
+     */
+    updateTimelineViewport() {
+        if (!this.timelineViewport || !this.parsedData || this.parsedData.length === 0) {
+            return;
+        }
+
+        const totalPoints = this.parsedData.length;
+        const startPercent = (this.viewportStartIndex / totalPoints) * 100;
+        const endPercent = ((this.viewportEndIndex + 1) / totalPoints) * 100;
+        const widthPercent = endPercent - startPercent;
+
+        this.timelineViewport.style.left = `${startPercent}%`;
+        this.timelineViewport.style.width = `${widthPercent}%`;
+    }
+
+    /**
+     * Timeline mouse down - start dragging viewport
+     */
+    onTimelineMouseDown(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        this.isDraggingTimeline = true;
+        this.timelineDragStartX = e.clientX;
+        this.timelineDragStartViewport = this.viewportStartIndex;
+    }
+
+    /**
+     * Timeline mouse move - drag viewport
+     */
+    onTimelineMouseMove(e) {
+        if (!this.isDraggingTimeline || !this.timelineCanvas) return;
+
+        const rect = this.timelineCanvas.getBoundingClientRect();
+        const deltaX = e.clientX - this.timelineDragStartX;
+        const deltaPercent = deltaX / rect.width;
+
+        const totalPoints = this.parsedData.length;
+        const deltaPoints = Math.round(deltaPercent * totalPoints);
+
+        const viewportWidth = this.viewportEndIndex - this.viewportStartIndex;
+        let newStart = this.timelineDragStartViewport + deltaPoints;
+
+        // Clamp to bounds
+        newStart = Math.max(0, Math.min(totalPoints - viewportWidth - 1, newStart));
+
+        this.viewportStartIndex = newStart;
+        this.viewportEndIndex = newStart + viewportWidth;
+
+        // Update chart with new viewport
+        this.applyScale();
+    }
+
+    /**
+     * Timeline mouse up - stop dragging
+     */
+    onTimelineMouseUp(e) {
+        if (this.isDraggingTimeline) {
+            this.isDraggingTimeline = false;
+            this.timelineDragStartX = null;
+            this.timelineDragStartViewport = null;
+        }
     }
 
     /**
@@ -1618,6 +1878,23 @@ class TimeSeriesCanvasManager {
         // Clean up overlay
         this.overlayCanvas = null;
         this.overlayCtx = null;
+
+        // Hide timeline
+        const timelineContainer = document.getElementById('timelineContainer');
+        if (timelineContainer) {
+            timelineContainer.style.display = 'none';
+        }
+
+        // Hide scale controls, show zoom controls
+        const scaleControls = document.getElementById('scaleControls');
+        const zoomControls = document.getElementById('zoomControls');
+        if (scaleControls) scaleControls.style.display = 'none';
+        if (zoomControls) zoomControls.style.display = 'flex';
+
+        // Clean up timeline references
+        this.timelineCanvas = null;
+        this.timelineCtx = null;
+        this.timelineViewport = null;
 
         // Show original canvas again
         if (this.canvas) {
