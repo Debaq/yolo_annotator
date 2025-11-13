@@ -262,7 +262,7 @@ class TrainingCodeGenerator {
 
         const projectType = this.projectManager.currentProject?.type || 'detection';
         const projectName = this.projectManager.currentProject?.name || 'mi_proyecto';
-        const numClasses = this.canvasManager.classes.length;
+        const numClasses = this.canvasManager?.classes?.length || this.projectManager.currentProject?.classes?.length || 2;
         const modality = this.getProjectModality(projectType);
 
         let code = '';
