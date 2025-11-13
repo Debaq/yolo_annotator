@@ -3923,7 +3923,7 @@ class YOLOAnnotator {
                                     <div class="config-item">
                                         <label class="form-label">
                                             Framework
-                                            <span class="help-icon" data-tippy-content="Librería de deep learning a usar. Se adapta según tu tipo de proyecto.">
+                                            <span class="help-icon" data-i18n-title="export.code.tooltips.framework">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
                                         </label>
@@ -3934,7 +3934,7 @@ class YOLOAnnotator {
                                     <div class="config-item">
                                         <label class="form-label">
                                             Modelo
-                                            <span class="help-icon" data-tippy-content="Tamaño del modelo: Nano es rápido pero menos preciso, XLarge es lento pero más preciso.">
+                                            <span class="help-icon" data-i18n-title="export.code.tooltips.model">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
                                         </label>
@@ -3951,7 +3951,7 @@ class YOLOAnnotator {
                                     <div class="config-item">
                                         <label class="form-label">
                                             Dispositivo
-                                            <span class="help-icon" data-tippy-content="Dónde entrenar: CPU es lento pero funciona siempre, GPU (CUDA) es muy rápido si tienes NVIDIA.">
+                                            <span class="help-icon" data-i18n-title="export.code.tooltips.device">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
                                         </label>
@@ -3964,7 +3964,7 @@ class YOLOAnnotator {
                                     <div class="config-item">
                                         <label class="form-label">
                                             Epochs
-                                            <span class="help-icon" data-tippy-content="Cuántas veces el modelo ve todo el dataset. Más epochs = más aprendizaje pero más tiempo.">
+                                            <span class="help-icon" data-i18n-title="export.code.tooltips.epochs">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
                                         </label>
@@ -3975,7 +3975,7 @@ class YOLOAnnotator {
                                     <div class="config-item">
                                         <label class="form-label">
                                             Batch Size
-                                            <span class="help-icon" data-tippy-content="Cuántas imágenes procesar al mismo tiempo. Valores altos usan más memoria pero entrenan más rápido.">
+                                            <span class="help-icon" data-i18n-title="export.code.tooltips.batch">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
                                         </label>
@@ -3984,7 +3984,7 @@ class YOLOAnnotator {
                                     <div class="config-item modality-images">
                                         <label class="form-label">
                                             Tamaño Imagen
-                                            <span class="help-icon" data-tippy-content="Resolución de las imágenes durante entrenamiento. Más grande = más detalle pero más lento.">
+                                            <span class="help-icon" data-i18n-title="export.code.tooltips.imgsz">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
                                         </label>
@@ -3997,7 +3997,7 @@ class YOLOAnnotator {
                                     <div class="config-item modality-timeSeries" style="display: none;">
                                         <label class="form-label">
                                             Sequence Length
-                                            <span class="help-icon" data-tippy-content="Cantidad de pasos de tiempo a usar como entrada. Ej: usar 50 valores pasados para predecir el futuro.">
+                                            <span class="help-icon" data-i18n-title="export.code.tooltips.seqLength">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
                                         </label>
@@ -4008,7 +4008,7 @@ class YOLOAnnotator {
                                     <div class="config-item">
                                         <label class="form-label">
                                             Forecast Horizon
-                                            <span class="help-icon" data-tippy-content="Cuántos pasos futuros predecir (solo para forecasting). Ej: predecir los próximos 10 valores.">
+                                            <span class="help-icon" data-i18n-title="export.code.tooltips.forecastHorizon">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
                                         </label>
@@ -4017,7 +4017,7 @@ class YOLOAnnotator {
                                     <div class="config-item">
                                         <label class="form-label">
                                             Hidden Size
-                                            <span class="help-icon" data-tippy-content="Tamaño de la capa oculta de la red neuronal (LSTM). Más grande = más capacidad pero más lento.">
+                                            <span class="help-icon" data-i18n-title="export.code.tooltips.hiddenSize">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
                                         </label>
@@ -4041,7 +4041,7 @@ class YOLOAnnotator {
                                                 <div class="config-item">
                                                     <label class="form-label">
                                                         Optimizer
-                                                        <span class="help-icon" data-tippy-content="Algoritmo que ajusta los pesos del modelo durante entrenamiento. Adam: equilibrado y popular. AdamW: Adam con weight decay mejorado. SGD: clásico, más lento pero a veces mejor resultado final. RMSprop: bueno para RNNs.">
+                                                        <span class="help-icon" data-i18n-title="export.code.tooltips.optimizer">
                                                             <i class="fas fa-question-circle"></i>
                                                         </span>
                                                     </label>
@@ -4055,7 +4055,7 @@ class YOLOAnnotator {
                                                 <div class="config-item">
                                                     <label class="form-label">
                                                         Learning Rate
-                                                        <span class="help-icon" data-tippy-content="Qué tan rápido aprende el modelo. Valores altos = aprende rápido pero puede ser inestable. 0.001 es un buen punto de partida.">
+                                                        <span class="help-icon" data-i18n-title="export.code.tooltips.lr">
                                                             <i class="fas fa-question-circle"></i>
                                                         </span>
                                                     </label>
@@ -4066,7 +4066,7 @@ class YOLOAnnotator {
                                                 <div class="config-item">
                                                     <label class="form-label">
                                                         Patience (Early Stop)
-                                                        <span class="help-icon" data-tippy-content="Cuántos epochs esperar sin mejora antes de detener. Si el modelo no mejora en 50 epochs, para automáticamente.">
+                                                        <span class="help-icon" data-i18n-title="export.code.tooltips.patience">
                                                             <i class="fas fa-question-circle"></i>
                                                         </span>
                                                     </label>
@@ -4075,7 +4075,7 @@ class YOLOAnnotator {
                                                 <div class="config-item">
                                                     <label class="form-label">
                                                         Validation Split (%)
-                                                        <span class="help-icon" data-tippy-content="Qué porcentaje de tus imágenes usar para validar el modelo. 20% es estándar: 80% entrena, 20% valida.">
+                                                        <span class="help-icon" data-i18n-title="export.code.tooltips.valSplit">
                                                             <i class="fas fa-question-circle"></i>
                                                         </span>
                                                     </label>
@@ -4088,32 +4088,32 @@ class YOLOAnnotator {
                                         <div class="config-section modality-images">
                                             <h5 class="config-section-title">
                                                 <i class="fas fa-magic"></i> Data Augmentation
-                                                <span class="help-icon" data-tippy-content="Técnicas para crear variaciones de tus imágenes y evitar que el modelo memorice. Ayuda a generalizar mejor.">
+                                                <span class="help-icon" data-i18n-title="export.code.tooltips.augmentationTitle">
                                                     <i class="fas fa-question-circle"></i>
                                                 </span>
                                             </h5>
                                             <div class="config-checkboxes">
-                                                <label class="checkbox-label" data-tippy-content="Combina 4 imágenes aleatorias en una sola. Muy efectivo para mejorar detección de objetos pequeños.">
+                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.augMosaic">
                                                     <input type="checkbox" id="augMosaic" checked>
                                                     <span>Mosaic (combina 4 imágenes)</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tippy-content="Mezcla dos imágenes con transparencia. Ayuda al modelo a ser más robusto ante oclusiones.">
+                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.augMixup">
                                                     <input type="checkbox" id="augMixup">
                                                     <span>Mixup (mezcla transparencias)</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tippy-content="Cambia los colores de la imagen (tono, saturación, brillo). Útil para diferentes condiciones de iluminación.">
+                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.augHsv">
                                                     <input type="checkbox" id="augHsv" checked>
                                                     <span>HSV (color jitter)</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tippy-content="Voltea las imágenes horizontal o verticalmente. Duplica tus datos sin esfuerzo.">
+                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.augFlip">
                                                     <input type="checkbox" id="augFlip" checked>
                                                     <span>Flips (horizontal/vertical)</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tippy-content="Rota las imágenes levemente. Útil si tus objetos pueden aparecer en diferentes ángulos.">
+                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.augRotate">
                                                     <input type="checkbox" id="augRotate">
                                                     <span>Rotación</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tippy-content="Hace zoom in/out y recorta aleatoriamente. Simula objetos a diferentes distancias.">
+                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.augScale">
                                                     <input type="checkbox" id="augScale" checked>
                                                     <span>Scale/Crop</span>
                                                 </label>
@@ -4124,28 +4124,28 @@ class YOLOAnnotator {
                                         <div class="config-section">
                                             <h5 class="config-section-title">
                                                 <i class="fas fa-chart-line"></i> Métricas y Gráficos
-                                                <span class="help-icon" data-tippy-content="Qué información guardar durante el entrenamiento para analizar el rendimiento del modelo.">
+                                                <span class="help-icon" data-i18n-title="export.code.tooltips.metricsTitle">
                                                     <i class="fas fa-question-circle"></i>
                                                 </span>
                                             </h5>
                                             <div class="config-checkboxes">
-                                                <label class="checkbox-label" data-tippy-content="Guarda gráficos de pérdida y precisión durante entrenamiento. Muy útil para ver si el modelo está aprendiendo.">
+                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.savePlots">
                                                     <input type="checkbox" id="savePlots" checked>
                                                     <span>Guardar gráficos de entrenamiento</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tippy-content="Tabla que muestra qué clases se confunden entre sí. Ideal para entender errores del modelo.">
+                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.saveConfMatrix">
                                                     <input type="checkbox" id="saveConfMatrix" checked>
                                                     <span>Matriz de confusión</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tippy-content="Gráficos que muestran el balance entre precisión y recall. Importantes para evaluar calidad de detecciones.">
+                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.savePrCurves">
                                                     <input type="checkbox" id="savePrCurves" checked>
                                                     <span>Curvas Precision-Recall</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tippy-content="Guarda imágenes con las predicciones del modelo dibujadas encima. Perfecto para ver qué tan bien funciona visualmente.">
+                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.savePredictions">
                                                     <input type="checkbox" id="savePredictions">
                                                     <span>Visualizar predicciones</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tippy-content="Exporta todas las métricas a un archivo CSV para analizarlas en Excel o hacer tus propios gráficos.">
+                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.saveMetricsCsv">
                                                     <input type="checkbox" id="saveMetricsCsv" checked>
                                                     <span>Exportar métricas a CSV</span>
                                                 </label>
@@ -4156,32 +4156,32 @@ class YOLOAnnotator {
                                         <div class="config-section">
                                             <h5 class="config-section-title">
                                                 <i class="fas fa-file-export"></i> Exportación del Modelo
-                                                <span class="help-icon" data-tippy-content="Formatos para deployar tu modelo entrenado en producción.">
+                                                <span class="help-icon" data-i18n-title="export.code.tooltips.exportTitle">
                                                     <i class="fas fa-question-circle"></i>
                                                 </span>
                                             </h5>
                                             <div class="config-checkboxes">
-                                                <label class="checkbox-label" data-tippy-content="ONNX: formato universal, funciona con TensorFlow, PyTorch, y casi cualquier librería. Ideal para producción.">
+                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.exportOnnx">
                                                     <input type="checkbox" id="exportOnnx" checked>
                                                     <span>ONNX (recomendado)</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tippy-content="TorchScript: formato nativo de PyTorch, muy rápido pero solo funciona con PyTorch.">
+                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.exportTorchscript">
                                                     <input type="checkbox" id="exportTorchscript">
                                                     <span>TorchScript</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tippy-content="TensorFlow Lite: para móviles y dispositivos embebidos (Android, iOS, Raspberry Pi).">
+                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.exportTflite">
                                                     <input type="checkbox" id="exportTflite">
                                                     <span>TensorFlow Lite</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tippy-content="OpenVINO: optimizado para CPUs Intel. Muy rápido en hardware Intel.">
+                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.exportOpenvino">
                                                     <input type="checkbox" id="exportOpenvino">
                                                     <span>OpenVINO</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tippy-content="CoreML: para apps nativas de iOS/macOS. Aprovecha los chips Apple.">
+                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.exportCoreml">
                                                     <input type="checkbox" id="exportCoreml">
                                                     <span>CoreML</span>
                                                 </label>
-                                                <label class="checkbox-label" data-tippy-content="TensorRT: máxima aceleración en GPUs NVIDIA. Para producción de alto rendimiento.">
+                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.exportTensorrt">
                                                     <input type="checkbox" id="exportTensorrt">
                                                     <span>TensorRT</span>
                                                 </label>
