@@ -20,6 +20,8 @@ class TrainingCodeGenerator {
         // Map project types to modalities
         const typeToModality = {
             // Images
+            'bbox': 'images',  // Original YOLO Annotator bbox type
+            'mask': 'images',  // Original YOLO Annotator mask type
             'classification': 'images',
             'multiLabel': 'images',
             'detection': 'images',
@@ -133,7 +135,7 @@ class TrainingCodeGenerator {
 
         // Define frameworks based on modality and project type
         if (modality === 'images') {
-            if (projectType === 'detection') {
+            if (projectType === 'detection' || projectType === 'bbox') {
                 frameworks = [
                     { value: 'yolov8', label: 'YOLOv8 (Ultralytics)' },
                     { value: 'yolov5', label: 'YOLOv5' },
@@ -141,7 +143,7 @@ class TrainingCodeGenerator {
                     { value: 'yolo-nas', label: 'YOLO-NAS' },
                     { value: 'detectron2', label: 'Detectron2 (Faster R-CNN)' }
                 ];
-            } else if (projectType === 'segmentation' || projectType === 'instanceSeg' || projectType === 'polygon' || projectType === 'semanticSeg') {
+            } else if (projectType === 'segmentation' || projectType === 'instanceSeg' || projectType === 'polygon' || projectType === 'semanticSeg' || projectType === 'mask') {
                 frameworks = [
                     { value: 'yolov8-seg', label: 'YOLOv8 Segmentation' },
                     { value: 'yolov11-seg', label: 'YOLOv11 Segmentation' },
@@ -433,11 +435,11 @@ metrics = model_best.val()
 # ${t('export.code.template.printMetrics')}
 print("\\n📊 ${t('export.code.template.finalMetrics').toUpperCase()}:")
 print("-" * 40)
-${projectType === 'detection' || projectType === 'obb' ? `print(f"mAP50:     {metrics.box.map50:.4f}")
+${projectType === 'detection' || projectType === 'obb' || projectType === 'bbox' ? `print(f"mAP50:     {metrics.box.map50:.4f}")
 print(f"mAP50-95:  {metrics.box.map:.4f}")
 print(f"Precision: {metrics.box.mp:.4f}")
 print(f"Recall:    {metrics.box.mr:.4f}")` :
-projectType === 'segmentation' || projectType === 'instanceSeg' ? `print(f"mAP50 (box):  {metrics.box.map50:.4f}")
+projectType === 'segmentation' || projectType === 'instanceSeg' || projectType === 'mask' ? `print(f"mAP50 (box):  {metrics.box.map50:.4f}")
 print(f"mAP50 (mask): {metrics.seg.map50:.4f}")
 print(f"mAP50-95 (box):  {metrics.box.map:.4f}")
 print(f"mAP50-95 (mask): {metrics.seg.map:.4f}")` :
@@ -1120,14 +1122,16 @@ print(f"🏆 ${t('export.code.template.bestIoU')}: {best_iou:.4f}")
 
     getYOLOTask(projectType) {
         if (projectType === 'classification' || projectType === 'multiLabel') return '-cls';
-        if (projectType === 'segmentation' || projectType === 'instanceSeg') return '-seg';
+        if (projectType === 'segmentation' || projectType === 'instanceSeg' || projectType === 'mask') return '-seg';
         if (projectType === 'keypoints') return '-pose';
         if (projectType === 'obb') return '-obb';
-        return '';  // detection
+        return '';  // detection (includes 'bbox')
     }
 
     getProjectTypeLabel(projectType) {
         const labels = {
+            'bbox': 'Object Detection (Bounding Boxes)',
+            'mask': 'Instance Segmentation (Masks)',
             'classification': this.t('projectTypes.classification'),
             'multiLabel': this.t('projectTypes.multiLabel'),
             'detection': this.t('projectTypes.detection'),
