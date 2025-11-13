@@ -26,6 +26,7 @@ class TimeSeriesCanvasManager {
         // Annotations
         this.annotations = [];
         this.activeAnnotation = null;
+        this.selectedAnnotation = null;  // For annotation bar selection
         this.isDrawing = false;
         this.hasUnsavedChanges = false;
 
@@ -229,6 +230,9 @@ class TimeSeriesCanvasManager {
             // Render chart
             this.renderChart();
 
+            // Update annotations bar
+            this.updateAnnotationsBar();
+
             // Clear unsaved changes flag after loading
             this.hasUnsavedChanges = false;
 
@@ -400,13 +404,18 @@ class TimeSeriesCanvasManager {
                     radius: 6
                 };
             } else if (ann.type === 'range') {
+                // Check if this is the selected annotation
+                const isSelected = this.selectedAnnotation === ann;
+                const color = this.getClassColor(ann.class);
+
                 chartAnnotations[`range_${index}`] = {
                     type: 'box',
                     xMin: ann.data.start,
                     xMax: ann.data.end,
-                    backgroundColor: this.getClassColor(ann.class) + '33',
-                    borderColor: this.getClassColor(ann.class),
-                    borderWidth: 2
+                    backgroundColor: color + (isSelected ? '55' : '33'),  // More opaque if selected
+                    borderColor: color,
+                    borderWidth: isSelected ? 3 : 2,  // Thicker border if selected
+                    borderDash: isSelected ? [] : undefined  // Solid line if selected
                 };
             }
         });
@@ -588,6 +597,7 @@ class TimeSeriesCanvasManager {
 
         this.annotations.push(annotation);
         this.updateAnnotations();
+        this.updateAnnotationsBar();
         this.onAnnotationsChanged();
     }
 
@@ -862,7 +872,9 @@ class TimeSeriesCanvasManager {
     clearAnnotations() {
         this.annotations = [];
         this.activeAnnotation = null;
+        this.selectedAnnotation = null;
         this.updateAnnotations();
+        this.updateAnnotationsBar();
         this.onAnnotationsChanged();
     }
 
@@ -881,11 +893,175 @@ class TimeSeriesCanvasManager {
     }
 
     /**
-     * Dummy updateAnnotationsBar for compatibility
+     * Update annotations bar with segment previews
      */
     updateAnnotationsBar() {
-        // Time series doesn't use the annotations bar yet
-        // This is for compatibility with the existing interface
+        const annotationsList = document.getElementById('annotationsList');
+        if (!annotationsList) return;
+
+        // Clear previous annotations
+        annotationsList.innerHTML = '';
+
+        // Filter only range annotations (segments)
+        const rangeAnnotations = this.annotations.filter(ann => ann.type === 'range');
+
+        if (rangeAnnotations.length === 0) {
+            annotationsList.innerHTML = '<div class="empty-annotations">No hay segmentos marcados</div>';
+            return;
+        }
+
+        // Create card for each range annotation
+        rangeAnnotations.forEach((ann, index) => {
+            const cls = this.classes.find(c => c.id === ann.class);
+            const color = cls ? cls.color : '#667eea';
+            const className = cls ? cls.name : 'Unknown';
+
+            const card = document.createElement('div');
+            card.className = 'annotation-item';
+            if (this.selectedAnnotation === ann) {
+                card.classList.add('selected');
+            }
+
+            const rangeLabel = ann.data.rangeType || 'segment';
+            const startLabel = typeof ann.data.start === 'number' ? ann.data.start.toFixed(2) : ann.data.start;
+            const endLabel = typeof ann.data.end === 'number' ? ann.data.end.toFixed(2) : ann.data.end;
+
+            card.innerHTML = `
+                <div class="annotation-thumbnail">
+                    <canvas width="100" height="75"></canvas>
+                    <div class="annotation-overlay">
+                        <div class="annotation-class-label" style="background: ${color}">
+                            ${className}
+                        </div>
+                        <div class="annotation-type-badge">${rangeLabel}</div>
+                        <button class="annotation-delete-btn" data-action="delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="annotation-range-label">${startLabel} - ${endLabel}</div>
+                </div>
+            `;
+
+            // Render segment preview
+            const thumbnailCanvas = card.querySelector('canvas');
+            this.renderSegmentThumbnail(thumbnailCanvas, ann, color);
+
+            // Click to select
+            card.addEventListener('click', (e) => {
+                if (!e.target.closest('.annotation-delete-btn')) {
+                    this.selectedAnnotation = ann;
+                    this.updateAnnotations();
+                    this.updateAnnotationsBar();
+                }
+            });
+
+            // Delete button
+            const deleteBtn = card.querySelector('.annotation-delete-btn');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const annIndex = this.annotations.indexOf(ann);
+                    if (annIndex > -1) {
+                        this.annotations.splice(annIndex, 1);
+                        if (this.selectedAnnotation === ann) {
+                            this.selectedAnnotation = null;
+                        }
+                        this.updateAnnotations();
+                        this.updateAnnotationsBar();
+                        this.onAnnotationsChanged();
+                    }
+                });
+            }
+
+            annotationsList.appendChild(card);
+        });
+    }
+
+    /**
+     * Render segment thumbnail preview
+     */
+    renderSegmentThumbnail(canvas, annotation, color) {
+        if (!this.chart || !canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+
+        // Clear canvas
+        ctx.clearRect(0, 0, width, height);
+
+        // Draw background
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(0, 0, width, height);
+
+        // Get data within the range
+        const startIndex = annotation.data.startIndex;
+        const endIndex = annotation.data.endIndex;
+
+        if (!this.parsedData || startIndex >= this.parsedData.length) return;
+
+        // Extract data for this segment from all datasets
+        const segmentData = [];
+        this.chart.data.datasets.forEach((dataset, i) => {
+            const values = [];
+            for (let idx = startIndex; idx <= endIndex && idx < dataset.data.length; idx++) {
+                values.push(dataset.data[idx]);
+            }
+            if (values.length > 0) {
+                segmentData.push({
+                    values: values,
+                    color: dataset.borderColor
+                });
+            }
+        });
+
+        if (segmentData.length === 0) return;
+
+        // Find min/max for scaling
+        let minY = Infinity;
+        let maxY = -Infinity;
+        segmentData.forEach(series => {
+            series.values.forEach(val => {
+                if (typeof val === 'number') {
+                    minY = Math.min(minY, val);
+                    maxY = Math.max(maxY, val);
+                }
+            });
+        });
+
+        const padding = 5;
+        const chartHeight = height - padding * 2;
+        const chartWidth = width - padding * 2;
+        const range = maxY - minY || 1;
+
+        // Draw each dataset
+        segmentData.forEach(series => {
+            ctx.strokeStyle = series.color || color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            const stepX = chartWidth / (series.values.length - 1 || 1);
+
+            series.values.forEach((val, idx) => {
+                if (typeof val !== 'number') return;
+
+                const x = padding + idx * stepX;
+                const y = padding + chartHeight - ((val - minY) / range) * chartHeight;
+
+                if (idx === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+
+            ctx.stroke();
+        });
+
+        // Draw border
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(0, 0, width, height);
     }
 
     /**
