@@ -524,6 +524,9 @@ class YOLOAnnotator {
                 if (!this.canvasManager) {
                     try {
                         this.canvasManager = CanvasFactory.create(project.type, this.canvas, this.ui);
+
+                        // Clear annotation-list when creating new canvas for new project
+                        this.canvasManager.updateAnnotationsBar();
                     } catch (canvasError) {
                         console.error('Failed to create canvas:', canvasError);
                         this.ui.showToast(`Error creating canvas: ${canvasError.message}`, 'error');
