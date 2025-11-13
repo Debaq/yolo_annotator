@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Annotix - TecMedHub</title>
 
+    <!-- PWA Manifest and Meta Tags -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Annotix">
+    <meta name="description" content="Professional image annotation tool for machine learning training datasets">
+    <link rel="apple-touch-icon" href="./icons/icon-192.png">
+
     <!-- External Libraries -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/introjs.min.css">
@@ -109,6 +119,11 @@
                     </button>
 
                     <div class="header-divider"></div>
+
+                    <!-- PWA Install Button (shown only if installable) -->
+                    <button class="btn-header btn-icon-ghost" id="btnInstallPWA" style="display: none;" data-tippy-content="" data-i18n-title="pwa.installButton">
+                        <i class="fas fa-hand-spock"></i>
+                    </button>
 
                     <!-- Language Selector (will be injected here) -->
                     <div id="languageSelectorContainer"></div>

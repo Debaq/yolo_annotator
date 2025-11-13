@@ -157,5 +157,29 @@
   "imageInfo": {
     "noName": "이름 없음",
     "dimensions": "크기"
+  },
+  "pwa": {
+    "installButton": "앱 설치",
+    "modal": {
+      "title": "🚀 Annotix를 앱으로 설치",
+      "benefits": "설치의 이점:",
+      "benefit1": "✅ 바탕화면에서 직접 액세스",
+      "benefit2": "✅ 오프라인에서 작동",
+      "benefit3": "✅ 더 빠르고 부드럽게",
+      "benefit4": "✅ 브라우저 바 없음",
+      "benefit5": "✅ 데이터는 항상 비공개",
+      "benefit6": "✅ 자동 업데이트",
+      "cancelButton": "나중에",
+      "installButtonModal": "📥 앱 설치"
+    },
+    "notifications": {
+      "installed": "Annotix가 성공적으로 설치되었습니다!",
+      "installFailed": "앱 설치 오류",
+      "updateAvailable": "업데이트 사용 가능. 업데이트하려면 새로고침하세요.",
+      "offline": "오프라인 모드 활성화. 앱이 연결 없이 작동합니다."
+    }
+  },
+  "storage": {
+    "used": "IndexedDB에서 사용된 저장공간"
   }
 }

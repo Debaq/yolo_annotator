@@ -414,5 +414,35 @@
     "batchSuccess": "{count} imágenes aumentadas creadas correctamente",
     "batchRandomSuccess": "{count} variaciones aleatorias creadas correctamente",
     "batchError": "Error al aplicar augmentation por lotes"
+  },
+  "pwa": {
+    "installButton": "Instalar App",
+    "modal": {
+      "title": "🚀 Instalar Annotix como aplicación",
+      "benefits": "Beneficios de instalar:",
+      "benefit1": "✅ Acceso directo desde escritorio",
+      "benefit2": "✅ Funciona sin conexión",
+      "benefit3": "✅ Más rápido y fluido",
+      "benefit4": "✅ Sin barra del navegador",
+      "benefit5": "✅ Tus datos siempre privados",
+      "benefit6": "✅ Actualizaciones automáticas",
+      "platformCompatibility": "Compatibilidad por plataforma:",
+      "androidInfo": "<strong>Android:</strong> Funciona excelente. Instalación nativa completa, se comporta como una app del Play Store.",
+      "iosInfo": "<strong>iOS/iPadOS:</strong> Funciona bien, pero Safari puede limpiar el cache periódicamente. <strong>Importante:</strong> Guarda tus avances frecuentemente exportando tus proyectos.",
+      "linuxInfo": "<strong>Linux:</strong> Funciona perfectamente. Soporte completo en Chrome, Firefox y Edge.",
+      "windowsInfo": "<strong>Windows:</strong> Debería funcionar sin problemas en Chrome y Edge, aunque no hemos podido probarlo extensivamente.",
+      "generalTip": "💡 <strong>Recomendación:</strong> Exporta tus proyectos regularmente como backup, independiente de tu sistema operativo.",
+      "cancelButton": "Ahora no",
+      "installButtonModal": "🖖 Instalar App"
+    },
+    "notifications": {
+      "installed": "¡Annotix instalada correctamente!",
+      "installFailed": "Error al instalar la aplicación",
+      "updateAvailable": "Actualización disponible. Recarga para actualizar.",
+      "offline": "Modo offline activado. La app funciona sin conexión."
+    }
+  },
+  "storage": {
+    "used": "Almacenamiento usado en IndexedDB"
   }
 }
