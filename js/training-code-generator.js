@@ -377,12 +377,12 @@ results = model.train(
 
     # ${t('export.code.template.optimization')}
     optimizer='${optimizer}',    # Adam, AdamW, SGD, RMSprop
-    lr0=LEARNING_RATE,          # Learning rate inicial
-    lrf=0.01,                   # Learning rate final (como fracción de lr0)
-    momentum=0.937,             # Momentum para SGD
-    weight_decay=0.0005,        # Weight decay (L2 regularization)
+    lr0=LEARNING_RATE,          # ${t('export.code.template.initialLearningRate')}
+    lrf=0.01,                   # ${t('export.code.template.finalLearningRate')}
+    momentum=0.937,             # ${t('export.code.template.momentumSGD')}
+    weight_decay=0.0005,        # ${t('export.code.template.weightDecay')}
 
-    # Data Augmentation
+    # ${t('export.code.template.dataAugmentation')}
     mosaic=MOSAIC,
     mixup=MIXUP,
     hsv_h=HSV_H,
@@ -394,44 +394,44 @@ results = model.train(
     fliplr=FLIPLR,
     flipud=FLIPUD,
 
-    # Callbacks y guardado
-    patience=PATIENCE,          # Early stopping patience
-    save=True,                  # Guardar checkpoints
-    save_period=${Math.ceil(parseInt(epochs) / 10)},               # Guardar cada N epochs
+    # ${t('export.code.template.callbacks')}
+    patience=PATIENCE,          # ${t('export.code.template.earlyStoppingPatience')}
+    save=True,                  # ${t('export.code.template.saveCheckpoints')}
+    save_period=${Math.ceil(parseInt(epochs) / 10)},               # ${t('export.code.template.savePeriod')}
 
-    # Visualización y métricas
-    plots=${savePlots},                 # Generar gráficas de entrenamiento${saveConfMatrix ? '\n    conf=0.001,                 # Confianza mínima para confusion matrix' : ''}
+    # ${t('export.code.template.visualization')}
+    plots=${savePlots},                 # ${t('export.code.template.generatePlots')}${saveConfMatrix ? '\n    conf=0.001,                 # ' + t('export.code.template.minConfidence') : ''}
 
-    # Performance
-    cache=False,                # Cachear imágenes (usa más RAM)
-    workers=8,                  # Número de workers para DataLoader
-    project='runs/${projectType}',   # Carpeta de resultados
-    name='${projectName}',      # Nombre del experimento
-    exist_ok=True,              # Sobrescribir experimentos existentes
+    # ${t('export.code.template.performance')}
+    cache=False,                # ${t('export.code.template.cacheImages')}
+    workers=8,                  # ${t('export.code.template.numWorkers')}
+    project='runs/${projectType}',   # ${t('export.code.template.resultsFolder')}
+    name='${projectName}',      # ${t('export.code.template.experimentName')}
+    exist_ok=True,              # ${t('export.code.template.overwriteExperiments')}
 
-    # Validación
-    val=True,                   # Validar durante entrenamiento
-    split_val=${parseFloat(valSplit) / 100.0},            # Porcentaje de validación si no existe val split
-    verbose=True                # Modo verbose
+    # ${t('export.code.template.validation')}
+    val=True,                   # ${t('export.code.template.validateDuringTraining')}
+    split_val=${parseFloat(valSplit) / 100.0},            # ${t('export.code.template.valPercentage')}
+    verbose=True                # ${t('export.code.template.verboseMode')}
 )
 
 print("\\n" + "="*50)
-print("✅ ENTRENAMIENTO COMPLETADO")
+print("✅ ${t('export.code.template.trainingCompleted').toUpperCase()}")
 print("="*50)
 
 # ============================================
-# 5. EVALUAR EL MODELO
+# 5. ${t('export.code.template.evaluateModel').toUpperCase()}
 # ============================================
 
-# Validar con el mejor modelo
+# ${t('export.code.template.validateBestModel')}
 best_model_path = results.save_dir / 'weights' / 'best.pt'
 model_best = YOLO(best_model_path)
 
-print("\\n🔍 Evaluando modelo...")
+print("\\n🔍 ${t('export.code.template.evaluatingModel')}...")
 metrics = model_best.val()
 
-# Imprimir métricas clave
-print("\\n📊 MÉTRICAS FINALES:")
+# ${t('export.code.template.printMetrics')}
+print("\\n📊 ${t('export.code.template.finalMetrics').toUpperCase()}:")
 print("-" * 40)
 ${projectType === 'detection' || projectType === 'obb' ? `print(f"mAP50:     {metrics.box.map50:.4f}")
 print(f"mAP50-95:  {metrics.box.map:.4f}")
@@ -449,7 +449,7 @@ print(f"mAP50 (pose): {metrics.pose.map50:.4f}")` :
 print("-" * 40)
 
 ${saveMetricsCsv ? `# ============================================
-# 6. EXPORTAR MÉTRICAS A CSV
+# 6. ${t('export.code.template.exportMetrics').toUpperCase()}
 # ============================================
 
 metrics_dict = {
@@ -461,34 +461,34 @@ metrics_dict = {
 metrics_df = pd.DataFrame(metrics_dict)
 metrics_path = results.save_dir / 'metrics.csv'
 metrics_df.to_csv(metrics_path, index=False)
-print(f"\\n💾 Métricas guardadas en: {metrics_path}")
+print(f"\\n💾 ${t('export.code.template.metricsSaved')}: {metrics_path}")
 
 ` : ''}${savePredictions ? `# ============================================
-# 7. VISUALIZAR PREDICCIONES
+# 7. ${t('export.code.template.visualizePredictions').toUpperCase()}
 # ============================================
 
-# Predecir en imágenes de validación
+# ${t('export.code.template.predictValidation')}
 val_results = model_best.predict(
-    source='path/to/val/images',  # Cambiar a tu carpeta de validación
-    save=True,                     # Guardar imágenes con predicciones
-    conf=0.25,                     # Confianza mínima
-    save_txt=False,                # No guardar labels
-    save_crop=False,               # No recortar detecciones
+    source='path/to/val/images',  # ${t('export.code.template.changeToValFolder')}
+    save=True,                     # ${t('export.code.template.saveImagesWithPredictions')}
+    conf=0.25,                     # ${t('export.code.template.minConfidence')}
+    save_txt=False,                # ${t('export.code.template.dontSaveLabels')}
+    save_crop=False,               # ${t('export.code.template.dontCropDetections')}
     project=results.save_dir,
     name='predictions'
 )
-print(f"\\n🎨 Predicciones guardadas en: {results.save_dir / 'predictions'}")
+print(f"\\n🎨 ${t('export.code.template.predictionsSaved')}: {results.save_dir / 'predictions'}")
 
 ` : ''}${exportOnnx || exportTorchscript || exportTflite || exportOpenvino || exportCoreml || exportTensorrt ? `# ============================================
-# 8. EXPORTAR MODELO PARA PRODUCCIÓN
+# 8. ${t('export.code.template.exportProduction').toUpperCase()}
 # ============================================
 
-print("\\n📦 Exportando modelo a formatos de producción...")
-${exportOnnx ? "\nmodel_best.export(format='onnx')  # ONNX - Universal\nprint('✅ ONNX exportado')" : ''}${exportTorchscript ? "\nmodel_best.export(format='torchscript')  # TorchScript - PyTorch nativo\nprint('✅ TorchScript exportado')" : ''}${exportTflite ? "\nmodel_best.export(format='tflite')  # TensorFlow Lite - Móviles\nprint('✅ TFLite exportado')" : ''}${exportOpenvino ? "\nmodel_best.export(format='openvino')  # OpenVINO - Intel CPUs\nprint('✅ OpenVINO exportado')" : ''}${exportCoreml ? "\nmodel_best.export(format='coreml')  # CoreML - iOS/macOS\nprint('✅ CoreML exportado')" : ''}${exportTensorrt ? "\nmodel_best.export(format='engine')  # TensorRT - NVIDIA GPUs\nprint('✅ TensorRT exportado')" : ''}
+print("\\n📦 ${t('export.code.template.exportingProduction')}...")
+${exportOnnx ? "\nmodel_best.export(format='onnx')  # ONNX - Universal\nprint('✅ ${t('export.code.template.onnxExported')}')" : ''}${exportTorchscript ? "\nmodel_best.export(format='torchscript')  # TorchScript - PyTorch nativo\nprint('✅ ${t('export.code.template.torchscriptExported')}')" : ''}${exportTflite ? "\nmodel_best.export(format='tflite')  # TensorFlow Lite - Móviles\nprint('✅ ${t('export.code.template.tfliteExported')}')" : ''}${exportOpenvino ? "\nmodel_best.export(format='openvino')  # OpenVINO - Intel CPUs\nprint('✅ ${t('export.code.template.openvinoExported')}')" : ''}${exportCoreml ? "\nmodel_best.export(format='coreml')  # CoreML - iOS/macOS\nprint('✅ ${t('export.code.template.coremlExported')}')" : ''}${exportTensorrt ? "\nmodel_best.export(format='engine')  # TensorRT - NVIDIA GPUs\nprint('✅ ${t('export.code.template.tensorrtExported')}')" : ''}
 
-` : ''}print("\\n🎉 Todo listo!")
-print(f"📁 Resultados en: {results.save_dir}")
-print(f"🏆 Mejor modelo: {best_model_path}")
+` : ''}print("\\n🎉 ${t('export.code.template.allDone')}!")
+print(f"📁 ${t('export.code.template.resultsIn')}: {results.save_dir}")
+print(f"🏆 ${t('export.code.template.bestModel')}: {best_model_path}")
 `;
         } else if (framework === 'yolov5') {
             code = this._generateYOLOv5Code(projectName, projectType, epochs, batch, imgsz, device, model, optimizer, patience, augMosaic, augMixup, augHsv, augFlip, augRotate, augScale, saveConfMatrix);
@@ -509,25 +509,26 @@ print(f"🏆 Mejor modelo: {best_model_path}")
     }
 
     _generateYOLOv5Code(projectName, projectType, epochs, batch, imgsz, device, model, optimizer, patience, augMosaic, augMixup, augHsv, augFlip, augRotate, augScale, saveConfMatrix) {
+        const t = (key) => this.t(key);
         return `"""
-${projectName} - Training Script (YOLOv5)
-Generado automáticamente por Annotix
+${projectName} - ${t('export.code.template.trainingScript')} (YOLOv5)
+${t('export.code.template.generatedBy')}
 Framework: YOLOv5
-Tipo de proyecto: ${this.getProjectTypeLabel(projectType)}
+${t('export.code.template.projectType')}: ${this.getProjectTypeLabel(projectType)}
 
-IMPORTANTE: YOLOv5 usa CLI, no API de Python
+${t('export.code.template.importantCLI')}
 """
 
 # ============================================
-# 1. INSTALACIÓN
+# 1. ${t('export.code.template.installation').toUpperCase()}
 # ============================================
-# Clonar repositorio YOLOv5 (solo primera vez):
+# ${t('export.code.template.cloneYOLOv5')}:
 # !git clone https://github.com/ultralytics/yolov5
 # %cd yolov5
 # !pip install -r requirements.txt
 
 # ============================================
-# 2. ENTRENAR CON CLI
+# 2. ${t('export.code.template.trainCLI').toUpperCase()}
 # ============================================
 
 !python train.py \\
@@ -545,7 +546,7 @@ IMPORTANTE: YOLOv5 usa CLI, no API de Python
     --save-period ${Math.ceil(parseInt(epochs) / 10)}
 
 # ============================================
-# 3. VALIDAR
+# 3. ${t('export.code.template.validate').toUpperCase()}
 # ============================================
 
 !python val.py \\
@@ -554,15 +555,16 @@ IMPORTANTE: YOLOv5 usa CLI, no API de Python
     --img ${imgsz} \\
     --task val${saveConfMatrix ? ' \\\n    --save-json --save-conf' : ''}
 
-print("✅ Entrenamiento YOLOv5 completado!")
-print("📁 Resultados en: runs/train/${projectName}")
+print("✅ ${t('export.code.template.yolov5Completed')}!")
+print("📁 ${t('export.code.template.resultsIn')}: runs/train/${projectName}")
 `;
     }
 
     _generateYOLONASCode(projectName, batch, epochs, numClasses) {
+        const t = (key) => this.t(key);
         return `"""
-${projectName} - Training Script (YOLO-NAS)
-Generado automáticamente por Annotix
+${projectName} - ${t('export.code.template.trainingScript')} (YOLO-NAS)
+${t('export.code.template.generatedBy')}
 """
 
 from super_gradients.training import Trainer
@@ -571,10 +573,10 @@ from super_gradients.training import models
 from super_gradients.training.losses import PPYoloELoss
 from super_gradients.training.metrics import DetectionMetrics_050
 
-# 1. Preparar trainer
+# 1. ${t('export.code.template.prepareTrainer')}
 trainer = Trainer(experiment_name='${projectName}', ckpt_root_dir='checkpoints')
 
-# 2. Configurar dataset
+# 2. ${t('export.code.template.configureDataset')}
 train_data = dataloaders.coco_detection_yolo_format_train(
     dataset_params={
         'data_dir': 'dataset/',
@@ -601,10 +603,10 @@ val_data = dataloaders.coco_detection_yolo_format_val(
     }
 )
 
-# 3. Cargar modelo
+# 3. ${t('export.code.template.loadModel')}
 model = models.get('yolo_nas_m', num_classes=${numClasses}, pretrained_weights="coco")
 
-# 4. Entrenar
+# 4. ${t('export.code.template.trainModel')}
 trainer.train(
     model=model,
     training_params={
@@ -621,26 +623,27 @@ trainer.train(
     valid_loader=val_data
 )
 
-print("✅ Entrenamiento YOLO-NAS completado!")
+print("✅ ${t('export.code.template.yolonasCompleted')}!")
 `;
     }
 
     _generateDetectron2Code(framework, projectName, projectType, batch, lr, epochs, imgsz, numClasses, augFlip, savePlots) {
+        const t = (key) => this.t(key);
         const isSegmentation = framework === 'detectron2-mask';
         const isRotated = framework === 'detectron2-rotated';
         const modelType = isSegmentation ? 'mask_rcnn' : isRotated ? 'FCOS' : 'faster_rcnn';
 
         return `"""
-${projectName} - Training Script (Detectron2)
-Generado automáticamente por Annotix
+${projectName} - ${t('export.code.template.trainingScript')} (Detectron2)
+${t('export.code.template.generatedBy')}
 Framework: Detectron2 (${isSegmentation ? 'Mask R-CNN' : isRotated ? 'Rotated Detection' : 'Faster R-CNN'})
-Tipo de proyecto: ${this.getProjectTypeLabel(projectType)}
+${t('export.code.template.projectType')}: ${this.getProjectTypeLabel(projectType)}
 
-IMPORTANTE: Detectron2 es más avanzado pero complejo
+${t('export.code.template.importantDetectron2')}
 """
 
 # ============================================
-# 1. INSTALACIÓN DE DEPENDENCIAS
+# 1. ${t('export.code.template.installation').toUpperCase()}
 # ============================================
 # pip install torch torchvision
 # pip install 'git+https://github.com/facebookresearch/detectron2.git'
@@ -660,10 +663,10 @@ print(f"PyTorch version: {torch.__version__}")
 print(f"Detectron2 version: {torch.ops.detectron2._get_torch_version()}")
 
 # ============================================
-# 2. REGISTRAR DATASET
+# 2. ${t('export.code.template.registerDataset').toUpperCase()}
 # ============================================
 
-# Registrar tu dataset en formato COCO
+# ${t('export.code.template.registerCOCO')}
 register_coco_instances(
     "${projectName}_train",
     {},
@@ -679,7 +682,7 @@ register_coco_instances(
 )
 
 # ============================================
-# 3. CONFIGURACIÓN DEL MODELO
+# 3. ${t('export.code.template.modelConfiguration').toUpperCase()}
 # ============================================
 
 cfg = get_cfg()
@@ -692,23 +695,23 @@ cfg.DATASETS.TRAIN = ("${projectName}_train",)
 cfg.DATASETS.TEST = ("${projectName}_val",)
 cfg.DATALOADER.NUM_WORKERS = 4
 
-# Modelo preentrenado
+# ${t('export.code.template.pretrainedModel')}
 cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(
     "COCO-${isSegmentation ? 'InstanceSegmentation' : 'Detection'}/${modelType}_R_50_FPN_3x.yaml"
 )
 
-# Hiperparámetros
+# ${t('export.code.template.hyperparameters')}
 cfg.SOLVER.IMS_PER_BATCH = ${batch}
 cfg.SOLVER.BASE_LR = ${lr}
-cfg.SOLVER.MAX_ITER = ${Math.ceil(parseInt(epochs) * 1000)}  # Aprox epochs
+cfg.SOLVER.MAX_ITER = ${Math.ceil(parseInt(epochs) * 1000)}  # ${t('export.code.template.approxEpochs')}
 cfg.SOLVER.STEPS = []  # Learning rate schedule
 cfg.SOLVER.CHECKPOINT_PERIOD = ${Math.ceil(parseInt(epochs) * 100)}
 
-# Número de clases
+# ${t('export.code.template.numClasses')}
 cfg.MODEL.ROI_HEADS.NUM_CLASSES = ${numClasses}
 ${isSegmentation ? `cfg.MODEL.MASK_ON = True` : ''}
 
-# Data Augmentation
+# ${t('export.code.template.dataAugmentation')}
 cfg.INPUT.MIN_SIZE_TRAIN = (${Math.floor(parseInt(imgsz) * 0.8)}, ${imgsz})
 cfg.INPUT.MAX_SIZE_TRAIN = ${Math.ceil(parseInt(imgsz) * 1.2)}
 cfg.INPUT.MIN_SIZE_TEST = ${imgsz}
@@ -719,18 +722,18 @@ cfg.OUTPUT_DIR = "./output/${projectName}"
 os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
 
 # ============================================
-# 4. ENTRENAR
+# 4. ${t('export.code.template.trainModel').toUpperCase()}
 # ============================================
 
 trainer = DefaultTrainer(cfg)
 trainer.resume_or_load(resume=False)
 trainer.train()
 
-print("\\n✅ Entrenamiento completado!")
-print(f"📁 Resultados en: {cfg.OUTPUT_DIR}")
+print("\\n✅ ${t('export.code.template.trainingCompleted')}!")
+print(f"📁 ${t('export.code.template.resultsIn')}: {cfg.OUTPUT_DIR}")
 
 # ============================================
-# 5. EVALUAR
+# 5. ${t('export.code.template.evaluateModel').toUpperCase()}
 # ============================================
 
 from detectron2.evaluation import inference_on_dataset
@@ -740,25 +743,26 @@ evaluator = COCOEvaluator("${projectName}_val", cfg, False, output_dir=cfg.OUTPU
 val_loader = build_detection_test_loader(cfg, "${projectName}_val")
 results = inference_on_dataset(trainer.model, val_loader, evaluator)
 
-print("\\n📊 MÉTRICAS FINALES:")
+print("\\n📊 ${t('export.code.template.finalMetrics').toUpperCase()}:")
 print(results)
 `;
     }
 
     _generateClassificationCode(framework, projectName, projectType, device, numClasses, batch, epochs, lr, imgsz, model, optimizer, augFlip, augRotate, augScale, augHsv, saveMetricsCsv, savePlots) {
+        const t = (key) => this.t(key);
         const useTorchvision = framework === 'torchvision';
 
         return `"""
-${projectName} - Training Script
-Generado automáticamente por Annotix
+${projectName} - ${t('export.code.template.trainingScript')}
+${t('export.code.template.generatedBy')}
 Framework: ${useTorchvision ? 'TorchVision' : 'PyTorch timm'}
-Tipo de proyecto: ${this.getProjectTypeLabel(projectType)}
+${t('export.code.template.projectType')}: ${this.getProjectTypeLabel(projectType)}
 
-IMPORTANTE: Clasificación con arquitecturas modernas
+${t('export.code.template.importantClassification')}
 """
 
 # ============================================
-# 1. INSTALACIÓN DE DEPENDENCIAS
+# 1. ${t('export.code.template.installation').toUpperCase()}
 # ============================================
 # pip install torch torchvision${!useTorchvision ? '\n# pip install timm  # PyTorch Image Models' : ''}
 # pip install pillow numpy${saveMetricsCsv ? ' pandas' : ''}${savePlots ? ' matplotlib seaborn' : ''}
@@ -774,7 +778,7 @@ print(f"PyTorch version: {torch.__version__}")
 print(f"CUDA available: {torch.cuda.is_available()}")
 
 # ============================================
-# 2. CONFIGURACIÓN
+# 2. ${t('export.code.template.configuration').toUpperCase()}
 # ============================================
 
 DEVICE = torch.device('${device.replace('cuda:0', 'cuda')}')
@@ -785,10 +789,10 @@ LEARNING_RATE = ${lr}
 IMG_SIZE = ${imgsz}
 
 # ============================================
-# 3. DATA AUGMENTATION Y LOADERS
+# 3. ${t('export.code.template.dataAugmentation').toUpperCase()}
 # ============================================
 
-# Transformaciones de entrenamiento
+# ${t('export.code.template.trainTransforms')}
 train_transform = transforms.Compose([
     transforms.Resize((IMG_SIZE, IMG_SIZE)),${augFlip ? '\n    transforms.RandomHorizontalFlip(0.5),' : ''}${augRotate ? '\n    transforms.RandomRotation(10),' : ''}${augScale ? '\n    transforms.RandomResizedCrop(IMG_SIZE, scale=(0.8, 1.0)),' : ''}${augHsv ? '\n    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),' : ''}
     transforms.ToTensor(),
@@ -796,7 +800,7 @@ train_transform = transforms.Compose([
                        std=[0.229, 0.224, 0.225])
 ])
 
-# Transformaciones de validación
+# ${t('export.code.template.valTransforms')}
 val_transform = transforms.Compose([
     transforms.Resize((IMG_SIZE, IMG_SIZE)),
     transforms.ToTensor(),
@@ -804,7 +808,7 @@ val_transform = transforms.Compose([
                        std=[0.229, 0.224, 0.225])
 ])
 
-# Cargar dataset (estructura: train/class1, train/class2, ...)
+# ${t('export.code.template.loadDataset')}
 train_dataset = datasets.ImageFolder('path/to/train', transform=train_transform)
 val_dataset = datasets.ImageFolder('path/to/val', transform=val_transform)
 
@@ -813,27 +817,27 @@ train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE,
 val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE,
                        shuffle=False, num_workers=4, pin_memory=True)
 
-print(f"📦 Train samples: {len(train_dataset)}")
-print(f"📦 Val samples: {len(val_dataset)}")
-print(f"📦 Classes: {train_dataset.classes}")
+print(f"📦 ${t('export.code.template.trainSamples')}: {len(train_dataset)}")
+print(f"📦 ${t('export.code.template.valSamples')}: {len(val_dataset)}")
+print(f"📦 ${t('export.code.template.classes')}: {train_dataset.classes}")
 
 # ============================================
-# 4. MODELO
+# 4. ${t('export.code.template.model').toUpperCase()}
 # ============================================
 
-${useTorchvision ? `# TorchVision models
-model = models.resnet50(pretrained=True)  # Opciones: resnet18, resnet50, efficientnet_b0
-model.fc = nn.Linear(model.fc.in_features, NUM_CLASSES)` : `# timm models (más modelos disponibles)
+${useTorchvision ? `# ${t('export.code.template.torchvisionModels')}
+model = models.resnet50(pretrained=True)  # ${t('export.code.template.options')}: resnet18, resnet50, efficientnet_b0
+model.fc = nn.Linear(model.fc.in_features, NUM_CLASSES)` : `# ${t('export.code.template.timmModels')}
 model = timm.create_model('efficientnet_b${model === 'n' ? '0' : model === 's' ? '1' : model === 'm' ? '2' : model === 'l' ? '3' : '4'}',
                          pretrained=True,
                          num_classes=NUM_CLASSES)`}
 
 model = model.to(DEVICE)
-print(f"✅ Modelo cargado")
-print(f"📦 Parámetros: {sum(p.numel() for p in model.parameters()):,}")
+print(f"✅ ${t('export.code.template.modelLoaded')}")
+print(f"📦 ${t('export.code.template.parameters')}: {sum(p.numel() for p in model.parameters()):,}")
 
 # ============================================
-# 5. LOSS Y OPTIMIZER
+# 5. ${t('export.code.template.lossOptimizer').toUpperCase()}
 # ============================================
 
 criterion = nn.CrossEntropyLoss()
@@ -841,14 +845,14 @@ optimizer = optim.${optimizer}(model.parameters(), lr=LEARNING_RATE)
 scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
 
 # ============================================
-# 6. ENTRENAMIENTO
+# 6. ${t('export.code.template.training').toUpperCase()}
 # ============================================
 
 best_acc = 0.0
 history = {'train_loss': [], 'val_loss': [], 'train_acc': [], 'val_acc': []}
 
 for epoch in range(EPOCHS):
-    # Training
+    # ${t('export.code.template.training')}
     model.train()
     train_loss = 0.0
     train_correct = 0
@@ -868,7 +872,7 @@ for epoch in range(EPOCHS):
         train_total += labels.size(0)
         train_correct += predicted.eq(labels).sum().item()
 
-    # Validation
+    # ${t('export.code.template.validation')}
     model.eval()
     val_loss = 0.0
     val_correct = 0
@@ -885,7 +889,7 @@ for epoch in range(EPOCHS):
             val_total += labels.size(0)
             val_correct += predicted.eq(labels).sum().item()
 
-    # Metrics
+    # ${t('export.code.template.metrics')}
     train_acc = 100. * train_correct / train_total
     val_acc = 100. * val_correct / val_total
 
@@ -900,23 +904,23 @@ for epoch in range(EPOCHS):
           f"Val Loss: {val_loss/len(val_loader):.4f}, "
           f"Val Acc: {val_acc:.2f}%")
 
-    # Save best model
+    # ${t('export.code.template.saveBestModel')}
     if val_acc > best_acc:
         best_acc = val_acc
         torch.save(model.state_dict(), 'best_model.pth')
-        print(f"💾 Mejor modelo guardado (accuracy: {best_acc:.2f}%)")
+        print(f"💾 ${t('export.code.template.bestModelSaved')} (accuracy: {best_acc:.2f}%)")
 
     scheduler.step()
 
-print("\\n✅ Entrenamiento completado!")
-print(f"🏆 Mejor accuracy: {best_acc:.2f}%")
+print("\\n✅ ${t('export.code.template.trainingCompleted')}!")
+print(f"🏆 ${t('export.code.template.bestAccuracy')}: {best_acc:.2f}%")
 
-${saveMetricsCsv ? `# Guardar métricas
+${saveMetricsCsv ? `# ${t('export.code.template.saveMetrics')}
 metrics_df = pd.DataFrame(history)
 metrics_df.to_csv('training_metrics.csv', index=False)
-print("💾 Métricas guardadas en: training_metrics.csv")` : ''}
+print("💾 ${t('export.code.template.metricsSaved')}: training_metrics.csv")` : ''}
 
-${savePlots ? `# Graficar resultados
+${savePlots ? `# ${t('export.code.template.plotResults')}
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
 
 ax1.plot(history['train_loss'], label='Train')
@@ -930,22 +934,23 @@ ax2.set_title('Accuracy')
 ax2.legend()
 
 plt.savefig('training_curves.png')
-print("📊 Gráficos guardados en: training_curves.png")` : ''}
+print("📊 ${t('export.code.template.plotsSaved')}: training_curves.png")` : ''}
 `;
     }
 
     _generateSMPCode(projectName, projectType, device, numClasses, batch, epochs, lr, imgsz, model, optimizer, augFlip, augRotate, augScale, augHsv, saveMetricsCsv) {
+        const t = (key) => this.t(key);
         return `"""
-${projectName} - Training Script
-Generado automáticamente por Annotix
+${projectName} - ${t('export.code.template.trainingScript')}
+${t('export.code.template.generatedBy')}
 Framework: segmentation_models.pytorch
-Tipo de proyecto: ${this.getProjectTypeLabel(projectType)}
+${t('export.code.template.projectType')}: ${this.getProjectTypeLabel(projectType)}
 
-IMPORTANTE: Segmentación semántica con arquitecturas modernas
+${t('export.code.template.importantSegmentation')}
 """
 
 # ============================================
-# 1. INSTALACIÓN DE DEPENDENCIAS
+# 1. ${t('export.code.template.installation').toUpperCase()}
 # ============================================
 # pip install segmentation-models-pytorch
 # pip install torch torchvision
@@ -964,7 +969,7 @@ print(f"PyTorch version: {torch.__version__}")
 print(f"SMP version: {smp.__version__}")
 
 # ============================================
-# 2. CONFIGURACIÓN
+# 2. ${t('export.code.template.configuration').toUpperCase()}
 # ============================================
 
 DEVICE = torch.device('${device.replace('cuda:0', 'cuda')}')
@@ -975,7 +980,7 @@ LEARNING_RATE = ${lr}
 IMG_SIZE = ${imgsz}
 
 # ============================================
-# 3. DATASET PERSONALIZADO
+# 3. ${t('export.code.template.customDataset').toUpperCase()}
 # ============================================
 
 class SegmentationDataset(Dataset):
@@ -1003,7 +1008,7 @@ class SegmentationDataset(Dataset):
 
         return image, mask.long()
 
-# Data Augmentation
+# ${t('export.code.template.dataAugmentation')}
 train_transform = A.Compose([
     A.Resize(IMG_SIZE, IMG_SIZE),${augFlip ? '\n    A.HorizontalFlip(p=0.5),' : ''}${augRotate ? '\n    A.Rotate(limit=10, p=0.5),' : ''}${augScale ? '\n    A.RandomScale(scale_limit=0.2, p=0.5),' : ''}${augHsv ? '\n    A.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1, p=0.5),' : ''}
     A.Normalize(),
@@ -1023,10 +1028,10 @@ train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, nu
 val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
 
 # ============================================
-# 4. MODELO
+# 4. ${t('export.code.template.model').toUpperCase()}
 # ============================================
 
-# Arquitecturas disponibles: Unet, UnetPlusPlus, MAnet, Linknet, FPN, PSPNet, DeepLabV3, DeepLabV3Plus
+# ${t('export.code.template.availableArchitectures')}: Unet, UnetPlusPlus, MAnet, Linknet, FPN, PSPNet, DeepLabV3, DeepLabV3Plus
 model = smp.Unet(
     encoder_name="resnet${model === 'n' ? '18' : model === 's' ? '34' : model === 'm' ? '50' : model === 'l' ? '101' : '152'}",
     encoder_weights="imagenet",
@@ -1035,10 +1040,10 @@ model = smp.Unet(
 )
 
 model = model.to(DEVICE)
-print(f"✅ Modelo U-Net cargado")
+print(f"✅ ${t('export.code.template.unetLoaded')}")
 
 # ============================================
-# 5. LOSS Y OPTIMIZER
+# 5. ${t('export.code.template.lossOptimizer').toUpperCase()}
 # ============================================
 
 loss_fn = smp.losses.DiceLoss(mode='multiclass')
@@ -1051,14 +1056,14 @@ metrics = [
 ]
 
 # ============================================
-# 6. ENTRENAMIENTO
+# 6. ${t('export.code.template.training').toUpperCase()}
 # ============================================
 
 best_iou = 0.0
 history = {'train_loss': [], 'val_loss': [], 'val_iou': []}
 
 for epoch in range(EPOCHS):
-    # Training
+    # ${t('export.code.template.training')}
     model.train()
     train_loss = 0.0
 
@@ -1073,7 +1078,7 @@ for epoch in range(EPOCHS):
 
         train_loss += loss.item()
 
-    # Validation
+    # ${t('export.code.template.validation')}
     model.eval()
     val_loss = 0.0
     val_ious = []
@@ -1085,7 +1090,7 @@ for epoch in range(EPOCHS):
             loss = loss_fn(outputs, masks)
             val_loss += loss.item()
 
-            # Calculate IoU
+            # ${t('export.code.template.calculateIoU')}
             tp, fp, fn, tn = smp.metrics.get_stats(outputs.argmax(1), masks, mode='multiclass', num_classes=NUM_CLASSES)
             iou = smp.metrics.iou_score(tp, fp, fn, tn, reduction="micro")
             val_ious.append(iou.item())
@@ -1104,12 +1109,12 @@ for epoch in range(EPOCHS):
     if avg_val_iou > best_iou:
         best_iou = avg_val_iou
         torch.save(model.state_dict(), 'best_unet.pth')
-        print(f"💾 Mejor modelo guardado (IoU: {best_iou:.4f})")
+        print(f"💾 ${t('export.code.template.bestModelSaved')} (IoU: {best_iou:.4f})")
 
     scheduler.step()
 
-print("\\n✅ Entrenamiento completado!")
-print(f"🏆 Mejor IoU: {best_iou:.4f}")
+print("\\n✅ ${t('export.code.template.trainingCompleted')}!")
+print(f"🏆 ${t('export.code.template.bestIoU')}: {best_iou:.4f}")
 `;
     }
 
@@ -1123,13 +1128,13 @@ print(f"🏆 Mejor IoU: {best_iou:.4f}")
 
     getProjectTypeLabel(projectType) {
         const labels = {
-            'classification': 'Clasificación Simple',
-            'multiLabel': 'Clasificación Multi-Etiqueta',
-            'detection': 'Detección de Objetos',
-            'segmentation': 'Segmentación Semántica',
-            'instanceSeg': 'Segmentación de Instancias',
-            'keypoints': 'Puntos Clave',
-            'obb': 'Cajas Rotadas (OBB)'
+            'classification': this.t('projectTypes.classification'),
+            'multiLabel': this.t('projectTypes.multiLabel'),
+            'detection': this.t('projectTypes.detection'),
+            'segmentation': this.t('projectTypes.segmentation'),
+            'instanceSeg': this.t('projectTypes.instanceSeg'),
+            'keypoints': this.t('projectTypes.keypoints'),
+            'obb': this.t('projectTypes.obb')
         };
         return labels[projectType] || projectType;
     }
@@ -1139,9 +1144,9 @@ print(f"🏆 Mejor IoU: {best_iou:.4f}")
         if (code) {
             try {
                 await navigator.clipboard.writeText(code);
-                this.ui.showToast('Código copiado al portapapeles', 'success');
+                this.ui.showToast(this.t('export.code.codeCopied'), 'success');
             } catch (err) {
-                this.ui.showToast('Error al copiar código', 'error');
+                this.ui.showToast(this.t('export.code.copyError'), 'error');
             }
         }
     }
@@ -1158,7 +1163,7 @@ print(f"🏆 Mejor IoU: {best_iou:.4f}")
             a.download = `${projectName}_train.py`;
             a.click();
             URL.revokeObjectURL(url);
-            this.ui.showToast('Archivo .py descargado', 'success');
+            this.ui.showToast(this.t('export.code.pyDownloaded'), 'success');
         } else if (format === 'ipynb') {
             // Create Jupyter notebook format
             const notebook = {
@@ -1166,7 +1171,7 @@ print(f"🏆 Mejor IoU: {best_iou:.4f}")
                     {
                         cell_type: 'markdown',
                         metadata: {},
-                        source: [`# ${projectName} - Training Notebook\n\nGenerado automáticamente por Annotix`]
+                        source: [`# ${projectName} - ${this.t('export.code.trainingNotebook')}\n\n${this.t('export.code.template.generatedBy')}`]
                     },
                     {
                         cell_type: 'code',
@@ -1198,7 +1203,7 @@ print(f"🏆 Mejor IoU: {best_iou:.4f}")
             a.download = `${projectName}_train.ipynb`;
             a.click();
             URL.revokeObjectURL(url);
-            this.ui.showToast('Notebook .ipynb descargado', 'success');
+            this.ui.showToast(this.t('export.code.ipynbDownloaded'), 'success');
         }
     }
 
