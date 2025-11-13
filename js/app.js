@@ -428,6 +428,11 @@ class YOLOAnnotator {
             this.updateStats();
         });
 
+        window.eventBus.on('classModified', () => {
+            this.updateStats();
+            this.galleryManager.render(); // Update class badges in gallery
+        });
+
         window.eventBus.on('classDeleted', () => {
             this.updateStats();
             this.galleryManager.render(); // Update thumbnail counts (annotations were deleted)
@@ -2631,6 +2636,11 @@ class YOLOAnnotator {
                         // Save to project
                         if (this.projectManager.currentProject) {
                             this.projectManager.updateProject({ classes: this.canvasManager.classes });
+                        }
+
+                        // Emit event for UI updates
+                        if (window.eventBus) {
+                            window.eventBus.emit('classModified', { class: cls });
                         }
 
                         this.ui.showToast(window.i18n.t('classes.updated') || 'Class updated successfully', 'success');
