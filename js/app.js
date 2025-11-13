@@ -448,6 +448,7 @@ class YOLOAnnotator {
     async loadProjects() {
         const projects = await this.db.getAllProjects();
         const selector = document.getElementById('projectSelector');
+        const selectorContainer = document.getElementById('projectSelectorContainer');
 
         if (selector) {
             // Store current selection
@@ -479,7 +480,19 @@ class YOLOAnnotator {
                 newSelector.value = projects[0].id;
                 await this.loadProject(projects[0].id);
             }
+
+            // Hide selector container if no projects exist
+            if (selectorContainer) {
+                if (projects.length === 0) {
+                    selectorContainer.style.display = 'none';
+                } else {
+                    selectorContainer.style.display = 'flex';
+                }
+            }
         }
+
+        // Update storage indicator
+        await this.updateStorageIndicator();
     }
 
     async loadProject(projectId) {
@@ -1048,6 +1061,7 @@ class YOLOAnnotator {
         if (loadedCount > 0) {
             await this.galleryManager.loadImages(this.projectManager.currentProject.id);
             this.updateStats();
+            await this.updateStorageIndicator();
 
             if (firstImageId) {
                 await this.galleryManager.loadImage(firstImageId);
@@ -2888,6 +2902,67 @@ class YOLOAnnotator {
                 progressTextEl.textContent = `${annotated}/${images.length} ${window.i18n.t('stats.progress')}`;
             }
         });
+    }
+
+    async updateStorageIndicator() {
+        const storageIndicator = document.getElementById('storageIndicator');
+        const storageSizeEl = document.getElementById('storageSize');
+
+        if (!storageIndicator || !storageSizeEl) return;
+
+        try {
+            // Calculate total size of all data in IndexedDB
+            let totalSize = 0;
+
+            // Get all projects
+            const projects = await this.db.getAllProjects();
+
+            // Estimate project metadata size (rough estimate)
+            const projectsJSON = JSON.stringify(projects);
+            totalSize += new Blob([projectsJSON]).size;
+
+            // Get all images across all projects
+            for (const project of projects) {
+                const images = await this.db.getAllImages(project.id);
+
+                // Add size of each image blob and its metadata
+                for (const image of images) {
+                    if (image.image) {
+                        totalSize += image.image.size; // Blob size
+                    }
+
+                    // Add size of annotations (as JSON)
+                    if (image.annotations) {
+                        const annotationsJSON = JSON.stringify(image.annotations);
+                        totalSize += new Blob([annotationsJSON]).size;
+                    }
+                }
+            }
+
+            // Format size for display
+            const formattedSize = this.formatBytes(totalSize);
+            storageSizeEl.textContent = formattedSize;
+
+            // Show indicator if there's data
+            if (totalSize > 0) {
+                storageIndicator.style.display = 'flex';
+            } else {
+                storageIndicator.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error calculating storage size:', error);
+            storageIndicator.style.display = 'none';
+        }
+    }
+
+    formatBytes(bytes) {
+        if (bytes === 0) return '0 B';
+
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+        return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
     }
 
     showExportModal() {

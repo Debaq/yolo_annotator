@@ -63,9 +63,17 @@
 
                 <!-- Project Controls -->
                 <div class="header-center">
-                    <select id="projectSelector" class="project-selector">
-                        <option value="" data-i18n="header.selectProject">Seleccionar proyecto...</option>
-                    </select>
+                    <div id="projectSelectorContainer" style="display: flex; align-items: center; gap: 12px;">
+                        <select id="projectSelector" class="project-selector">
+                            <option value="" data-i18n="header.selectProject">Seleccionar proyecto...</option>
+                        </select>
+
+                        <!-- IndexedDB Storage Indicator -->
+                        <div id="storageIndicator" class="storage-indicator" style="display: none;" data-tippy-content="Almacenamiento usado en IndexedDB" data-i18n-title="storage.used">
+                            <i class="fas fa-database"></i>
+                            <span id="storageSize">0 MB</span>
+                        </div>
+                    </div>
 
                     <button class="btn-header btn-icon-only" id="btnNewProject" data-tippy-content="" data-i18n-title="header.newProject">
                         <i class="fas fa-plus"></i>

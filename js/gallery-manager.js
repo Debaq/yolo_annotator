@@ -256,6 +256,7 @@ class GalleryManager {
             // Update stats and class counts after deletion
             this.app.updateStats();
             this.app.updateClassUI();
+            await this.app.updateStorageIndicator();
 
             // Emit event for UI updates
             if (window.eventBus) {

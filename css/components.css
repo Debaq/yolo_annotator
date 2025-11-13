@@ -19,6 +19,36 @@
     color: var(--white);
 }
 
+/* Storage Indicator */
+.storage-indicator {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.95);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.storage-indicator:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
+.storage-indicator i {
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+.storage-indicator span {
+    font-weight: 500;
+    font-family: 'Courier New', monospace;
+}
+
 /* Botones Header - VSCode Flat Style */
 .btn-header {
     background: rgba(255, 255, 255, 0.08);
