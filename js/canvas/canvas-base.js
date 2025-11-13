@@ -534,6 +534,14 @@ class CanvasBase {
         this.markUnsavedChanges();
         this.redraw();
         this.updateAnnotationsBar();
+
+        // Emit event for UI updates
+        if (window.eventBus) {
+            window.eventBus.emit('annotationCreated', {
+                annotation,
+                imageId: this.imageId
+            });
+        }
     }
 
     removeAnnotation(annotation) {
@@ -546,6 +554,14 @@ class CanvasBase {
             this.markUnsavedChanges();
             this.redraw();
             this.updateAnnotationsBar();
+
+            // Emit event for UI updates
+            if (window.eventBus) {
+                window.eventBus.emit('annotationDeleted', {
+                    annotation,
+                    imageId: this.imageId
+                });
+            }
         }
     }
 

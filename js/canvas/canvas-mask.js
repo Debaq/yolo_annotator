@@ -596,6 +596,14 @@ class CanvasMask extends CanvasBase {
             // Redraw to show the editable mask
             this.redraw();
 
+            // Emit event for UI updates - this is a modification event
+            if (window.eventBus) {
+                window.eventBus.emit('annotationModified', {
+                    annotation: maskAnnotation,
+                    imageId: this.imageId
+                });
+            }
+
             this.ui.showToast('Mask loaded for editing - you can now paint or erase', 'info');
         };
         img.src = maskAnnotation.data.imageData;

@@ -205,6 +205,9 @@ class YOLOAnnotator {
                 this.galleryManager.setFilter(btn.dataset.filter);
             });
         });
+
+        // Setup EventBus listeners for automatic UI updates
+        this.setupEventBusListeners();
     }
 
     setupKeyboardShortcuts() {
@@ -394,6 +397,42 @@ class YOLOAnnotator {
     //         }
     //     }, 400);
     // }
+
+    setupEventBusListeners() {
+        if (!window.eventBus) return;
+
+        // Listen for annotation events
+        window.eventBus.on('annotationCreated', () => {
+            this.updateStats();
+            this.galleryManager.render(); // Update thumbnail counts
+        });
+
+        window.eventBus.on('annotationDeleted', () => {
+            this.updateStats();
+            this.galleryManager.render(); // Update thumbnail counts
+        });
+
+        window.eventBus.on('annotationModified', () => {
+            this.updateStats();
+            this.galleryManager.render(); // Update thumbnail counts
+        });
+
+        // Listen for image events
+        window.eventBus.on('imageDeleted', () => {
+            this.updateStats();
+            // Gallery is already updated in deleteImage method
+        });
+
+        // Listen for class events
+        window.eventBus.on('classAdded', () => {
+            this.updateStats();
+        });
+
+        window.eventBus.on('classDeleted', () => {
+            this.updateStats();
+            this.galleryManager.render(); // Update thumbnail counts (annotations were deleted)
+        });
+    }
 
     async loadProjects() {
         const projects = await this.db.getAllProjects();
@@ -2341,6 +2380,11 @@ class YOLOAnnotator {
                 : this.canvasManager.classes;
             this.projectManager.updateProject({ classes: updatedClasses });
         }
+
+        // Emit event for UI updates
+        if (window.eventBus) {
+            window.eventBus.emit('classAdded', { class: newClass });
+        }
     }
 
     updateClassUI() {
@@ -2423,6 +2467,11 @@ class YOLOAnnotator {
             if (this.projectManager.currentProject) {
                 this.projectManager.updateProject({ classes: this.classificationManager.classes });
             }
+
+            // Emit event for UI updates
+            if (window.eventBus) {
+                window.eventBus.emit('classDeleted', { classId });
+            }
         } else {
             // Canvas mode (detection, segmentation, etc.)
             console.log(`Deleting class ${classId} from all images in project...`);
@@ -2478,6 +2527,11 @@ class YOLOAnnotator {
 
             // Update statistics
             this.updateStats();
+
+            // Emit event for UI updates
+            if (window.eventBus) {
+                window.eventBus.emit('classDeleted', { classId });
+            }
 
             this.ui.showToast(window.i18n.t('notifications.classDeleted') || 'Class and all its annotations deleted', 'success');
         }

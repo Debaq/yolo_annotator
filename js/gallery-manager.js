@@ -252,6 +252,11 @@ class GalleryManager {
             // Update stats after deletion
             this.app.updateStats();
 
+            // Emit event for UI updates
+            if (window.eventBus) {
+                window.eventBus.emit('imageDeleted', { imageId });
+            }
+
             this.ui.showToast(window.i18n.t('notifications.imageDeleted'), 'success');
         } catch (error) {
             console.error('Error deleting image:', error);
