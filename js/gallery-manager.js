@@ -118,7 +118,11 @@ class GalleryManager {
                 imageContent = `<img src="${url}" alt="${displayName}" title="${displayName}">`;
             }
 
-            const annotationCount = imageData.annotations ? imageData.annotations.length : 0;
+            // Use the app's countAnnotations method for correct counting
+            // (handles time series grouping correctly)
+            const annotationCount = this.app.countAnnotations
+                ? this.app.countAnnotations(imageData.annotations)
+                : (imageData.annotations ? imageData.annotations.length : 0);
 
             // For classification projects, show class badges instead of count
             let overlayContent = '';
@@ -145,15 +149,21 @@ class GalleryManager {
                 overlayContent = `<span>${annotationCount} labels</span>`;
             }
 
+            // Check if augmentation button should be shown (only for image-based projects)
+            const showAugmentButton = this.app.isImageBasedProject && this.app.isImageBasedProject();
+            const augmentButtonHTML = showAugmentButton ? `
+                <button class="gallery-item-augment" data-id="${imageData.id}" data-i18n-title="augmentation.augmentImage" title="Data Augmentation">
+                    <i class="fas fa-wand-magic-sparkles"></i>
+                </button>
+            ` : '';
+
             item.innerHTML = `
                 ${imageContent}
                 <div class="gallery-item-overlay">
                     ${overlayContent}
                 </div>
                 <div class="gallery-item-actions">
-                    <button class="gallery-item-augment" data-id="${imageData.id}" data-i18n-title="augmentation.augmentImage" title="Data Augmentation">
-                        <i class="fas fa-wand-magic-sparkles"></i>
-                    </button>
+                    ${augmentButtonHTML}
                     <button class="gallery-item-delete" data-id="${imageData.id}" data-i18n-title="actions.delete" title="Delete">
                         <i class="fas fa-times"></i>
                     </button>

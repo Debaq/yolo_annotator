@@ -607,7 +607,7 @@ function updateUIState() {
                 }
                 if (countElement) {
                     countElement.textContent = hasAnnotations ?
-                        window.app.canvasManager.annotations.length : 0;
+                        (window.app.countAnnotations ? window.app.countAnnotations(window.app.canvasManager.annotations) : window.app.canvasManager.annotations.length) : 0;
                 }
             } else {
                 imageInfo.style.display = 'none';

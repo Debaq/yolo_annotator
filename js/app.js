@@ -603,6 +603,44 @@ class YOLOAnnotator {
         }
     }
 
+    // Helper method to check if current project is image-based
+    isImageBasedProject() {
+        if (!this.projectManager || !this.projectManager.currentProject) {
+            return false;
+        }
+
+        const projectType = this.projectManager.currentProject.type;
+
+        // Check if the project type exists in the images modality
+        if (typeof PROJECT_TYPES_CONFIG !== 'undefined' && PROJECT_TYPES_CONFIG.images) {
+            return PROJECT_TYPES_CONFIG.images.types.some(type => type.id === projectType);
+        }
+
+        return false;
+    }
+
+    // Helper method to get the modality of the current project
+    getProjectModality() {
+        if (!this.projectManager || !this.projectManager.currentProject) {
+            return null;
+        }
+
+        const projectType = this.projectManager.currentProject.type;
+
+        if (typeof PROJECT_TYPES_CONFIG === 'undefined') {
+            return null;
+        }
+
+        // Search through all modalities to find which one contains this project type
+        for (const [modalityKey, modality] of Object.entries(PROJECT_TYPES_CONFIG)) {
+            if (modality.types && modality.types.some(type => type.id === projectType)) {
+                return modalityKey;
+            }
+        }
+
+        return null;
+    }
+
     // Update UI elements visibility based on annotation mode
     updateUIForMode() {
         const floatingTools = document.querySelector('.floating-tools');
@@ -667,6 +705,87 @@ class YOLOAnnotator {
             // Show annotations bar
             if (annotationsBar) annotationsBar.style.display = 'block';
         }
+
+        // Show/hide data augmentation buttons based on project modality
+        const isImageProject = this.isImageBasedProject();
+
+        // Hide batch augmentation button if not an image project
+        const btnBatchAugmentation = document.getElementById('btnBatchAugmentation');
+        if (btnBatchAugmentation) {
+            btnBatchAugmentation.style.display = isImageProject ? '' : 'none';
+        }
+
+        // Hide gallery item augmentation buttons if not an image project
+        const galleryAugmentButtons = document.querySelectorAll('.gallery-item-augment');
+        galleryAugmentButtons.forEach(btn => {
+            btn.style.display = isImageProject ? '' : 'none';
+        });
+
+        // Update load button based on project modality
+        this.updateLoadButton();
+    }
+
+    // Update the load button text and accepted file types based on project modality
+    updateLoadButton() {
+        const btnLoadImages = document.getElementById('btnLoadImages');
+        const imageInput = document.getElementById('imageInput');
+
+        if (!btnLoadImages || !imageInput) {
+            return;
+        }
+
+        const modality = this.getProjectModality();
+
+        // Configuration for each modality
+        const modalityConfig = {
+            images: {
+                icon: 'fa-image',
+                text: 'Cargar Imágenes',
+                accept: 'image/*'
+            },
+            audio: {
+                icon: 'fa-microphone',
+                text: 'Cargar Audio',
+                accept: 'audio/*'
+            },
+            video: {
+                icon: 'fa-video',
+                text: 'Cargar Video',
+                accept: 'video/*'
+            },
+            timeSeries: {
+                icon: 'fa-file-csv',
+                text: 'Cargar CSV',
+                accept: '.csv,text/csv'
+            },
+            threeD: {
+                icon: 'fa-cube',
+                text: 'Cargar 3D',
+                accept: '.ply,.obj,.pcd,.stl,.dae'
+            },
+            text: {
+                icon: 'fa-file-text',
+                text: 'Cargar Texto',
+                accept: '.txt,.json,.xml'
+            }
+        };
+
+        const config = modalityConfig[modality] || modalityConfig.images;
+
+        // Update button icon
+        const icon = btnLoadImages.querySelector('i');
+        if (icon) {
+            icon.className = `fas ${config.icon}`;
+        }
+
+        // Update button text
+        const span = btnLoadImages.querySelector('span');
+        if (span) {
+            span.textContent = config.text;
+        }
+
+        // Update input accept attribute
+        imageInput.accept = config.accept;
     }
 
     openProjectFile() {
@@ -3360,12 +3479,53 @@ class YOLOAnnotator {
         if (btnNext) btnNext.disabled = !this.galleryManager.canNavigateNext();
     }
 
+    // Helper method to count annotations correctly based on project type
+    countAnnotations(annotations) {
+        if (!annotations || annotations.length === 0) {
+            return 0;
+        }
+
+        // Check if this is a time series project
+        const modality = this.getProjectModality();
+        const isTimeSeries = modality === 'timeSeries';
+
+        if (!isTimeSeries) {
+            // For non-time series, simple count
+            return annotations.length;
+        }
+
+        // For time series, count differently:
+        // - Range annotations: each counts as 1
+        // - Point annotations: group by index/x position and count groups
+        const rangeCount = annotations.filter(ann => ann.type === 'range').length;
+        const pointAnnotations = annotations.filter(ann => ann.type === 'point');
+
+        if (pointAnnotations.length === 0) {
+            return rangeCount;
+        }
+
+        // Group point annotations by their temporal index
+        const pointGroups = new Map();
+        pointAnnotations.forEach(ann => {
+            const key = ann.data?.index ?? ann.data?.x;
+            if (key !== undefined && key !== null) {
+                if (!pointGroups.has(key)) {
+                    pointGroups.set(key, []);
+                }
+                pointGroups.get(key).push(ann);
+            }
+        });
+
+        // Count: ranges + unique point groups
+        return rangeCount + pointGroups.size;
+    }
+
     updateStats() {
         const images = this.galleryManager.images;
 
         // Count annotations from saved images
         let totalLabels = images.reduce((sum, img) =>
-            sum + (img.annotations ? img.annotations.length : 0), 0);
+            sum + this.countAnnotations(img.annotations), 0);
 
         // Add current unsaved annotations if there's an active image
         if (this.annotationMode === 'classification') {
@@ -3374,7 +3534,7 @@ class YOLOAnnotator {
                 const currentImg = images.find(img => img.id === this.classificationManager.imageId);
                 if (currentImg) {
                     // Subtract old count, add new count
-                    totalLabels -= (currentImg.annotations?.length || 0);
+                    totalLabels -= this.countAnnotations(currentImg.annotations);
                     totalLabels += this.classificationManager.labels.length;
                 }
             }
@@ -3383,8 +3543,8 @@ class YOLOAnnotator {
             const currentImg = images.find(img => img.id === this.canvasManager.imageId);
             if (currentImg) {
                 // Subtract old count, add new count
-                totalLabels -= (currentImg.annotations?.length || 0);
-                totalLabels += this.canvasManager.annotations.length;
+                totalLabels -= this.countAnnotations(currentImg.annotations);
+                totalLabels += this.countAnnotations(this.canvasManager.annotations);
             }
         }
 
@@ -3424,7 +3584,7 @@ class YOLOAnnotator {
 
         const images = this.galleryManager.images;
         const totalLabels = images.reduce((sum, img) =>
-            sum + (img.annotations ? img.annotations.length : 0), 0);
+            sum + this.countAnnotations(img.annotations), 0);
         const annotated = images.filter(img => img.annotations && img.annotations.length > 0).length;
 
         // Use requestAnimationFrame to batch DOM updates and prevent reflow
