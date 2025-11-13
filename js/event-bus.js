@@ -51,8 +51,10 @@ class EventBus {
      * @param {*} data - Data to pass to subscribers
      */
     emit(eventName, data) {
+        console.log(`EventBus: Emitting "${eventName}"`, data);
         const callbacks = this.listeners.get(eventName);
         if (callbacks) {
+            console.log(`EventBus: Found ${callbacks.length} listener(s) for "${eventName}"`);
             callbacks.forEach(callback => {
                 try {
                     callback(data);
@@ -60,6 +62,8 @@ class EventBus {
                     console.error(`Error in event listener for "${eventName}":`, error);
                 }
             });
+        } else {
+            console.warn(`EventBus: No listeners registered for "${eventName}"`);
         }
     }
 

@@ -399,10 +399,16 @@ class YOLOAnnotator {
     // }
 
     setupEventBusListeners() {
-        if (!window.eventBus) return;
+        if (!window.eventBus) {
+            console.error('EventBus not found!');
+            return;
+        }
+
+        console.log('Setting up EventBus listeners...');
 
         // Listen for annotation events
         window.eventBus.on('annotationCreated', () => {
+            console.log('EventBus listener: annotationCreated triggered');
             this.updateStats();
             this.galleryManager.render(); // Update thumbnail counts
         });
