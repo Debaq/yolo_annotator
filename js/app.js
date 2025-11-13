@@ -4320,48 +4320,79 @@ class YOLOAnnotator {
     getAvailableFormats() {
         const projectType = this.projectManager.currentProject?.type;
 
-        // Return formats based on project type
-        if (projectType === 'classification' || projectType === 'multiLabel') {
+        // Get modality using the same logic as TrainingCodeGenerator
+        const modality = this.trainingCodeGenerator.getProjectModality(projectType);
+
+        // Return formats based on modality
+        if (modality === 'timeSeries') {
+            // Time Series specific formats
             return [
-                { id: 'folders', key: 'folders' },
+                { id: 'csvTimeSeries', key: 'csvTimeSeries' },
+                { id: 'jsonTimeSeries', key: 'jsonTimeSeries' },
+                { id: 'numpyTimeSeries', key: 'numpyTimeSeries' }
+            ];
+        } else if (modality === 'audio') {
+            // Audio specific formats
+            return [
+                { id: 'csvAudio', key: 'csvAudio' },
+                { id: 'jsonAudio', key: 'jsonAudio' }
+            ];
+        } else if (modality === 'video') {
+            // Video specific formats
+            return [
+                { id: 'csvVideo', key: 'csvVideo' },
+                { id: 'jsonVideo', key: 'jsonVideo' }
+            ];
+        } else if (modality === 'text') {
+            // Text specific formats
+            return [
+                { id: 'csvText', key: 'csvText' },
+                { id: 'jsonText', key: 'jsonText' }
+            ];
+        } else {
+            // Image-based formats (default)
+            if (projectType === 'classification' || projectType === 'multiLabel') {
+                return [
+                    { id: 'folders', key: 'folders' },
+                    { id: 'csv', key: 'csv' }
+                ];
+            } else if (projectType === 'detection' || projectType === 'obb') {
+                return [
+                    { id: 'yolo', key: 'yolo' },
+                    { id: 'coco', key: 'coco' },
+                    { id: 'voc', key: 'voc' }
+                ];
+            } else if (projectType === 'segmentation' || projectType === 'instanceSeg') {
+                return [
+                    { id: 'yoloSeg', key: 'yoloSeg' },
+                    { id: 'coco', key: 'coco' },
+                    { id: 'masksPng', key: 'masksPng' }
+                ];
+            } else if (projectType === 'polygon') {
+                return [
+                    { id: 'yoloSeg', key: 'yoloSeg' },
+                    { id: 'coco', key: 'coco' }
+                ];
+            } else if (projectType === 'keypoints') {
+                return [
+                    { id: 'yoloPose', key: 'yoloPose' },
+                    { id: 'coco', key: 'coco' }
+                ];
+            } else if (projectType === 'landmarks') {
+                return [
+                    { id: 'yolo', key: 'yolo' },
+                    { id: 'csv', key: 'csv' },
+                    { id: 'coco', key: 'coco' }
+                ];
+            }
+
+            // Default: image formats
+            return [
+                { id: 'yolo', key: 'yolo' },
+                { id: 'coco', key: 'coco' },
                 { id: 'csv', key: 'csv' }
             ];
-        } else if (projectType === 'detection' || projectType === 'obb') {
-            return [
-                { id: 'yolo', key: 'yolo' },
-                { id: 'coco', key: 'coco' },
-                { id: 'voc', key: 'voc' }
-            ];
-        } else if (projectType === 'segmentation' || projectType === 'instanceSeg') {
-            return [
-                { id: 'yoloSeg', key: 'yoloSeg' },
-                { id: 'coco', key: 'coco' },
-                { id: 'masksPng', key: 'masksPng' }
-            ];
-        } else if (projectType === 'polygon') {
-            return [
-                { id: 'yoloSeg', key: 'yoloSeg' },
-                { id: 'coco', key: 'coco' }
-            ];
-        } else if (projectType === 'keypoints') {
-            return [
-                { id: 'yoloPose', key: 'yoloPose' },
-                { id: 'coco', key: 'coco' }
-            ];
-        } else if (projectType === 'landmarks') {
-            return [
-                { id: 'yolo', key: 'yolo' },
-                { id: 'csv', key: 'csv' },
-                { id: 'coco', key: 'coco' }
-            ];
         }
-
-        // Default: all formats
-        return [
-            { id: 'yolo', key: 'yolo' },
-            { id: 'coco', key: 'coco' },
-            { id: 'csv', key: 'csv' }
-        ];
     }
 
     async exportProjectTix() {

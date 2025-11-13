@@ -238,6 +238,42 @@
       }
     },
     "formats": {
+      "csvTimeSeries": {
+        "name": "CSV for Time Series",
+        "description": "Standard CSV format with timestamp, features and target columns"
+      },
+      "jsonTimeSeries": {
+        "name": "Structured JSON",
+        "description": "JSON format with metadata and structured time series"
+      },
+      "numpyTimeSeries": {
+        "name": "NumPy Arrays (.npz)",
+        "description": "Compressed NumPy arrays for efficient Python processing"
+      },
+      "csvAudio": {
+        "name": "CSV for Audio",
+        "description": "Audio metadata with file paths and labels"
+      },
+      "jsonAudio": {
+        "name": "JSON for Audio",
+        "description": "JSON format with audio configuration and annotations"
+      },
+      "csvVideo": {
+        "name": "CSV for Video",
+        "description": "Video metadata with timestamps and per-frame labels"
+      },
+      "jsonVideo": {
+        "name": "JSON for Video",
+        "description": "JSON format with video information and temporal annotations"
+      },
+      "csvText": {
+        "name": "CSV for Text",
+        "description": "CSV format with text and labels for NLP"
+      },
+      "jsonText": {
+        "name": "JSON for Text",
+        "description": "Structured JSON format for language processing tasks"
+      },
       "yolo": {
         "name": "YOLO Detection",
         "description": "Bounding boxes in YOLO format (.txt) with data.yaml"
