@@ -2446,30 +2446,30 @@ class YOLOAnnotator {
 
         const showStep1 = () => {
             this.ui.showModal(
-                'Add Keypoint Class - Step 1/2: Basic Info',
+                window.i18n.t('skeleton.addKeypointClass') + ' - ' + window.i18n.t('skeleton.step1'),
                 `
                     <div class="modal-steps">
-                        <div class="step active">1. Basic</div>
-                        <div class="step">2. Skeleton</div>
+                        <div class="step active">1. ${window.i18n.t('skeleton.step1').split(':')[1] || 'Basic'}</div>
+                        <div class="step">2. ${window.i18n.t('skeleton.step2').split(':')[1] || 'Skeleton'}</div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Class Name:</label>
-                        <input type="text" id="keypointClassName" class="form-control" value="${className}" placeholder="e.g., Person, Hand, Face">
+                        <label class="form-label">${window.i18n.t('skeleton.className')}:</label>
+                        <input type="text" id="keypointClassName" class="form-control" value="${className}" placeholder="${window.i18n.t('skeleton.classNamePlaceholder')}">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Color:</label>
+                        <label class="form-label">${window.i18n.t('skeleton.classColor')}:</label>
                         <input type="color" id="keypointClassColor" class="color-input" value="${classColor}">
                     </div>
                 `,
                 [
                     {
-                        text: 'Cancel',
+                        text: window.i18n.t('actions.cancel'),
                         type: 'secondary',
                         action: 'cancel',
                         handler: (modal, close) => close()
                     },
                     {
-                        text: 'Next →',
+                        text: window.i18n.t('skeleton.next') + ' →',
                         type: 'primary',
                         icon: 'fas fa-arrow-right',
                         action: 'next',
@@ -2479,7 +2479,7 @@ class YOLOAnnotator {
 
                             const name = nameInput.value.trim();
                             if (!name) {
-                                this.ui.showToast('Please enter a class name', 'warning');
+                                this.ui.showToast(window.i18n.t('classes.enterName'), 'warning');
                                 return;
                             }
 
@@ -2522,7 +2522,7 @@ class YOLOAnnotator {
                             <div class="preset-card ${isSelected}" data-preset="${preset.id}">
                                 <div class="preset-header">
                                     <strong>${preset.name}</strong>
-                                    <span class="preset-count">${preset.keypoints.length} pts</span>
+                                    <span class="preset-count">${preset.keypoints.length} ${window.i18n.t('skeleton.points')}</span>
                                 </div>
                                 <div class="preset-description">${preset.description}</div>
                             </div>
@@ -2536,25 +2536,26 @@ class YOLOAnnotator {
             });
 
             this.ui.showModal(
-                'Add Keypoint Class - Step 2/2: Skeleton Configuration',
+                window.i18n.t('skeleton.addKeypointClass') + ' - ' + window.i18n.t('skeleton.step2'),
                 `
                     <div class="modal-steps">
-                        <div class="step completed">1. Basic</div>
-                        <div class="step active">2. Skeleton</div>
+                        <div class="step completed">1. ${window.i18n.t('skeleton.step1').split(':')[1] || 'Basic'}</div>
+                        <div class="step active">2. ${window.i18n.t('skeleton.step2').split(':')[1] || 'Skeleton'}</div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Select Skeleton Preset:</label>
+                        <label class="form-label">${window.i18n.t('skeleton.selectPreset')}</label>
+                        <p class="help-text">${window.i18n.t('skeleton.presetInfo')}</p>
                         <div id="presetContainer" class="preset-container">
                             ${presetsHTML}
                         </div>
                     </div>
                     <div class="selected-preset-info" id="selectedPresetInfo">
-                        <strong>Selected:</strong> <span id="selectedPresetName">COCO 17 Keypoints</span>
+                        <strong>${window.i18n.t('classes.active')}:</strong> <span id="selectedPresetName">COCO 17 Keypoints</span>
                     </div>
                 `,
                 [
                     {
-                        text: '← Back',
+                        text: '← ' + window.i18n.t('skeleton.previous'),
                         type: 'secondary',
                         icon: 'fas fa-arrow-left',
                         action: 'back',
@@ -2564,7 +2565,7 @@ class YOLOAnnotator {
                         }
                     },
                     {
-                        text: 'Create Class',
+                        text: window.i18n.t('skeleton.finish'),
                         type: 'primary',
                         icon: 'fas fa-check',
                         action: 'create',
@@ -2572,7 +2573,7 @@ class YOLOAnnotator {
                             // Get selected preset
                             const preset = SkeletonPresets.getPreset(selectedPreset);
                             if (!preset) {
-                                this.ui.showToast('Please select a skeleton preset', 'warning');
+                                this.ui.showToast(window.i18n.t('skeleton.selectPreset'), 'warning');
                                 return;
                             }
 

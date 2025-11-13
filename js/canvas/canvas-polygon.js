@@ -112,7 +112,7 @@ class CanvasPolygon extends CanvasBase {
         if (this.currentTool === 'polygon') {
             // Validate classes exist
             if (!this.classes || this.classes.length === 0) {
-                this.ui.showToast('Add at least one class before annotating', 'warning');
+                this.ui.showToast(window.i18n.t('annotations.addClassFirst'), 'warning');
                 return;
             }
 
@@ -138,7 +138,7 @@ class CanvasPolygon extends CanvasBase {
                     class: this.classes[this.currentClass]?.id || 0
                 };
                 this.redraw();
-                this.ui.showToast('Click to add points. Double-click or press Enter to close.', 'info');
+                this.ui.showToast(window.i18n.t('polygon.clickToAdd'), 'info');
             }
         } else if (this.currentTool === 'select') {
             // Check if clicking on a point
@@ -200,7 +200,7 @@ class CanvasPolygon extends CanvasBase {
     // Close current polygon and add to annotations
     closeCurrentPolygon() {
         if (!this.currentPolygon || this.currentPolygon.points.length < this.minPolygonPoints) {
-            this.ui.showToast(`Need at least ${this.minPolygonPoints} points to create a polygon`, 'warning');
+            this.ui.showToast(window.i18n.t('polygon.needMinPoints', { min: this.minPolygonPoints }), 'warning');
             return;
         }
 
@@ -219,7 +219,7 @@ class CanvasPolygon extends CanvasBase {
         this.isDrawing = false;
         this.hasUnsavedChanges = true;
         this.redraw();
-        this.ui.showToast('Polygon created', 'success');
+        this.ui.showToast(window.i18n.t('polygon.created'), 'success');
     }
 
     // Cancel current polygon drawing
@@ -228,7 +228,7 @@ class CanvasPolygon extends CanvasBase {
             this.currentPolygon = null;
             this.isDrawing = false;
             this.redraw();
-            this.ui.showToast('Drawing cancelled', 'info');
+            this.ui.showToast(window.i18n.t('polygon.cancelled'), 'info');
         }
     }
 
@@ -460,13 +460,13 @@ class CanvasPolygon extends CanvasBase {
 
         const points = this.selectedAnnotation.data.points;
         if (points.length <= this.minPolygonPoints) {
-            this.ui.showToast(`Cannot delete point. Minimum ${this.minPolygonPoints} points required.`, 'warning');
+            this.ui.showToast(window.i18n.t('polygon.cannotDeletePoint', { min: this.minPolygonPoints }), 'warning');
             return;
         }
 
         points.splice(pointIndex, 1);
         this.hasUnsavedChanges = true;
         this.redraw();
-        this.ui.showToast('Point deleted', 'success');
+        this.ui.showToast(window.i18n.t('polygon.pointDeleted'), 'success');
     }
 }

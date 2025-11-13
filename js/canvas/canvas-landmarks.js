@@ -111,7 +111,7 @@ class CanvasLandmarks extends CanvasBase {
         if (this.currentTool === 'landmark') {
             // Validate classes exist
             if (!this.classes || this.classes.length === 0) {
-                this.ui.showToast('Add at least one class before annotating', 'warning');
+                this.ui.showToast(window.i18n.t('annotations.addClassFirst'), 'warning');
                 return;
             }
 
@@ -138,7 +138,7 @@ class CanvasLandmarks extends CanvasBase {
             this.selectedAnnotation = landmark;
             this.hasUnsavedChanges = true;
             this.redraw();
-            this.ui.showToast(`Landmark "${autoName}" placed`, 'success');
+            this.ui.showToast(window.i18n.t('landmarks.placed', { name: autoName }), 'success');
 
         } else if (this.currentTool === 'select') {
             // Check if clicking on a landmark
@@ -298,19 +298,19 @@ class CanvasLandmarks extends CanvasBase {
 
     renameLandmark() {
         if (!this.selectedAnnotation || this.selectedAnnotation.type !== 'landmark') {
-            this.ui.showToast('Select a landmark first', 'warning');
+            this.ui.showToast(window.i18n.t('landmarks.selectFirst'), 'warning');
             return;
         }
 
         const currentName = this.selectedAnnotation.data.name || '';
 
         this.ui.showModal(
-            'Rename Landmark',
+            window.i18n.t('landmarks.renameLandmark'),
             `
                 <div class="form-group">
-                    <label class="form-label">Landmark Name:</label>
+                    <label class="form-label">${window.i18n.t('landmarks.landmarkName')}</label>
                     <input type="text" id="landmarkNameInput" class="form-control"
-                           value="${currentName}" placeholder="e.g., Center, Top-Left, Entrance">
+                           value="${currentName}" placeholder="${window.i18n.t('landmarks.namePlaceholder')}">
                 </div>
             `,
             [
@@ -330,14 +330,14 @@ class CanvasLandmarks extends CanvasBase {
                         const newName = input.value.trim();
 
                         if (!newName) {
-                            this.ui.showToast('Please enter a name', 'warning');
+                            this.ui.showToast(window.i18n.t('landmarks.enterName'), 'warning');
                             return;
                         }
 
                         this.selectedAnnotation.data.name = newName;
                         this.hasUnsavedChanges = true;
                         this.redraw();
-                        this.ui.showToast('Landmark renamed', 'success');
+                        this.ui.showToast(window.i18n.t('landmarks.renamed'), 'success');
                         close();
                     }
                 }
@@ -385,6 +385,6 @@ class CanvasLandmarks extends CanvasBase {
 
         this.hasUnsavedChanges = true;
         this.redraw();
-        this.ui.showToast(`Renumbered ${landmarksOfClass.length} landmarks`, 'success');
+        this.ui.showToast(window.i18n.t('landmarks.renumbered', { count: landmarksOfClass.length }), 'success');
     }
 }
