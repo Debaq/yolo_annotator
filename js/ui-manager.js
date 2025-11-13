@@ -16,7 +16,16 @@ class UIManager {
         document.body.appendChild(this.toastContainer);
     }
 
-    showToast(message, type = 'info', duration = 3000) {
+    showToast(message, type = 'info', duration = 2000) {
+        // Prevent duplicate toasts - check if same message already exists
+        const existingToasts = this.toastContainer.querySelectorAll('.toast');
+        for (const existing of existingToasts) {
+            const existingMessage = existing.querySelector('.toast-message')?.textContent;
+            if (existingMessage === message) {
+                return; // Don't show duplicate
+            }
+        }
+
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
 
