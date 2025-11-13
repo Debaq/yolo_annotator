@@ -215,6 +215,9 @@ class GalleryManager {
 
             // Update gallery display
             this.render();
+
+            // Update stats after loading image
+            this.app.updateStats();
         } catch (error) {
             console.error('Error loading image:', error);
             this.ui.showToast(window.i18n.t('notifications.error.loadImage'), 'error');
