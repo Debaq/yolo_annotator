@@ -1,6 +1,38 @@
 /**
  * TRAINING CODE GENERATOR
  * Generates training scripts for various ML frameworks (YOLO, Detectron2, PyTorch, etc.)
+ *
+ * CONTROL APPLICABILITY BY MODALITY:
+ *
+ * Universal (all modalities):
+ * - Framework (auto-populated based on project type)
+ * - Device (CPU, CUDA, MPS)
+ * - Epochs
+ * - Batch Size
+ * - Optimizer (Adam, AdamW, SGD, RMSprop)
+ * - Learning Rate
+ * - Patience (Early Stop)
+ * - Validation Split
+ * - Save plots
+ * - Export metrics CSV
+ *
+ * Images only (.modality-images):
+ * - Model size (n, s, m, l, x)
+ * - Image size (416, 640, 1280)
+ * - Data Augmentation (Mosaic, Mixup, HSV, Flips, Rotate, Scale)
+ * - Confusion Matrix
+ * - Precision-Recall Curves
+ * - Visualize Predictions
+ * - Model Export (ONNX, TorchScript, TFLite, OpenVINO, CoreML, TensorRT)
+ *
+ * Time Series only (.modality-timeSeries):
+ * - Sequence Length
+ * - Forecast Horizon
+ * - Hidden Size
+ *
+ * Audio/Video/3D/Text:
+ * - Currently using same universal controls
+ * - Specific controls can be added as needed
  */
 
 class TrainingCodeGenerator {
@@ -20,6 +52,8 @@ class TrainingCodeGenerator {
         // Map project types to modalities
         const typeToModality = {
             // Images
+            'bbox': 'images',  // Original YOLO Annotator bbox type
+            'mask': 'images',  // Original YOLO Annotator mask type
             'classification': 'images',
             'multiLabel': 'images',
             'detection': 'images',
@@ -92,23 +126,70 @@ class TrainingCodeGenerator {
         return typeToModality[projectType] || 'images';
     }
 
+    // Populate select options with translated strings
+    populateSelectOptions() {
+        // Model sizes
+        const modelSelect = document.getElementById('codeModel');
+        if (modelSelect) {
+            const currentValue = modelSelect.value || 'm';
+            modelSelect.innerHTML = `
+                <option value="n">${this.t('export.code.modelSizes.nano')}</option>
+                <option value="s">${this.t('export.code.modelSizes.small')}</option>
+                <option value="m">${this.t('export.code.modelSizes.medium')}</option>
+                <option value="l">${this.t('export.code.modelSizes.large')}</option>
+                <option value="x">${this.t('export.code.modelSizes.xlarge')}</option>
+            `;
+            modelSelect.value = currentValue;
+        }
+
+        // Devices
+        const deviceSelect = document.getElementById('codeDevice');
+        if (deviceSelect) {
+            const currentValue = deviceSelect.value || 'cuda:0';
+            deviceSelect.innerHTML = `
+                <option value="cpu">${this.t('export.code.devices.cpu')}</option>
+                <option value="cuda:0">${this.t('export.code.devices.gpu')}</option>
+                <option value="mps">${this.t('export.code.devices.mps')}</option>
+            `;
+            deviceSelect.value = currentValue;
+        }
+
+        // Optimizers
+        const optimizerSelect = document.getElementById('codeOptimizer');
+        if (optimizerSelect) {
+            const currentValue = optimizerSelect.value || 'Adam';
+            optimizerSelect.innerHTML = `
+                <option value="Adam">${this.t('export.code.optimizers.adam')}</option>
+                <option value="AdamW">${this.t('export.code.optimizers.adamw')}</option>
+                <option value="SGD">${this.t('export.code.optimizers.sgd')}</option>
+                <option value="RMSprop">${this.t('export.code.optimizers.rmsprop')}</option>
+            `;
+            optimizerSelect.value = currentValue;
+        }
+    }
+
     updateConfigUI() {
         const projectType = this.projectManager.currentProject?.type || 'detection';
         const modality = this.getProjectModality(projectType);
 
         // Show/hide controls based on modality
+        // Each control can have one or more modality classes (e.g., .modality-images, .modality-timeSeries)
         const imageControls = document.querySelectorAll('.modality-images');
         const timeSeriesControls = document.querySelectorAll('.modality-timeSeries');
         const audioControls = document.querySelectorAll('.modality-audio');
         const videoControls = document.querySelectorAll('.modality-video');
+        const threeDControls = document.querySelectorAll('.modality-threeD');
+        const textControls = document.querySelectorAll('.modality-text');
 
-        // Hide all first
+        // Hide all modality-specific controls first
         imageControls.forEach(el => el.style.display = 'none');
         timeSeriesControls.forEach(el => el.style.display = 'none');
         audioControls.forEach(el => el.style.display = 'none');
         videoControls.forEach(el => el.style.display = 'none');
+        threeDControls.forEach(el => el.style.display = 'none');
+        textControls.forEach(el => el.style.display = 'none');
 
-        // Show only relevant ones
+        // Show only controls relevant to current modality
         if (modality === 'images') {
             imageControls.forEach(el => el.style.display = '');
         } else if (modality === 'timeSeries') {
@@ -117,7 +198,14 @@ class TrainingCodeGenerator {
             audioControls.forEach(el => el.style.display = '');
         } else if (modality === 'video') {
             videoControls.forEach(el => el.style.display = '');
+        } else if (modality === 'threeD') {
+            threeDControls.forEach(el => el.style.display = '');
+        } else if (modality === 'text') {
+            textControls.forEach(el => el.style.display = '');
         }
+
+        // Populate select options with translations
+        this.populateSelectOptions();
 
         // Update frameworks after UI is updated
         this.populateFrameworks();
@@ -133,7 +221,7 @@ class TrainingCodeGenerator {
 
         // Define frameworks based on modality and project type
         if (modality === 'images') {
-            if (projectType === 'detection') {
+            if (projectType === 'detection' || projectType === 'bbox') {
                 frameworks = [
                     { value: 'yolov8', label: 'YOLOv8 (Ultralytics)' },
                     { value: 'yolov5', label: 'YOLOv5' },
@@ -141,7 +229,7 @@ class TrainingCodeGenerator {
                     { value: 'yolo-nas', label: 'YOLO-NAS' },
                     { value: 'detectron2', label: 'Detectron2 (Faster R-CNN)' }
                 ];
-            } else if (projectType === 'segmentation' || projectType === 'instanceSeg' || projectType === 'polygon' || projectType === 'semanticSeg') {
+            } else if (projectType === 'segmentation' || projectType === 'instanceSeg' || projectType === 'polygon' || projectType === 'semanticSeg' || projectType === 'mask') {
                 frameworks = [
                     { value: 'yolov8-seg', label: 'YOLOv8 Segmentation' },
                     { value: 'yolov11-seg', label: 'YOLOv11 Segmentation' },
@@ -277,7 +365,7 @@ class TrainingCodeGenerator {
             code = this._generateTimeSeriesCode(framework, projectName, projectType, device, numClasses, batch, epochs, lr, optimizer, saveMetricsCsv, savePlots, seqLength, forecastHorizon, hiddenSize);
         } else if (modality === 'images') {
             // Existing image-based frameworks
-            code = this._generateImageCode(framework, projectName, projectType, model, device, epochs, batch, imgsz, optimizer, lr, patience, valSplit, augMosaic, augMixup, augHsv, augFlip, augRotate, augScale, savePlots, saveConfMatrix, savePredictions, saveMetricsCsv, exportOnnx, exportTorchscript, exportTflite, exportOpenvino, exportCoreml, exportTensorrt, numClasses);
+            code = this._generateImageCode(framework, projectName, projectType, model, device, epochs, batch, imgsz, optimizer, lr, patience, valSplit, augMosaic, augMixup, augHsv, augFlip, augRotate, augScale, savePlots, saveConfMatrix, savePrCurves, savePredictions, saveMetricsCsv, exportOnnx, exportTorchscript, exportTflite, exportOpenvino, exportCoreml, exportTensorrt, numClasses);
         } else {
             code = `# ${this.t('export.code.template.important')}: ${modality} ${this.t('export.code.template.important').toLowerCase()}\n# Coming soon...`;
         }
@@ -288,7 +376,7 @@ class TrainingCodeGenerator {
         }
     }
 
-    _generateImageCode(framework, projectName, projectType, model, device, epochs, batch, imgsz, optimizer, lr, patience, valSplit, augMosaic, augMixup, augHsv, augFlip, augRotate, augScale, savePlots, saveConfMatrix, savePredictions, saveMetricsCsv, exportOnnx, exportTorchscript, exportTflite, exportOpenvino, exportCoreml, exportTensorrt, numClasses) {
+    _generateImageCode(framework, projectName, projectType, model, device, epochs, batch, imgsz, optimizer, lr, patience, valSplit, augMosaic, augMixup, augHsv, augFlip, augRotate, augScale, savePlots, saveConfMatrix, savePrCurves, savePredictions, saveMetricsCsv, exportOnnx, exportTorchscript, exportTflite, exportOpenvino, exportCoreml, exportTensorrt, numClasses) {
         let code = '';
         const t = (key) => this.t(key);
 
@@ -433,11 +521,11 @@ metrics = model_best.val()
 # ${t('export.code.template.printMetrics')}
 print("\\n📊 ${t('export.code.template.finalMetrics').toUpperCase()}:")
 print("-" * 40)
-${projectType === 'detection' || projectType === 'obb' ? `print(f"mAP50:     {metrics.box.map50:.4f}")
+${projectType === 'detection' || projectType === 'obb' || projectType === 'bbox' ? `print(f"mAP50:     {metrics.box.map50:.4f}")
 print(f"mAP50-95:  {metrics.box.map:.4f}")
 print(f"Precision: {metrics.box.mp:.4f}")
 print(f"Recall:    {metrics.box.mr:.4f}")` :
-projectType === 'segmentation' || projectType === 'instanceSeg' ? `print(f"mAP50 (box):  {metrics.box.map50:.4f}")
+projectType === 'segmentation' || projectType === 'instanceSeg' || projectType === 'mask' ? `print(f"mAP50 (box):  {metrics.box.map50:.4f}")
 print(f"mAP50 (mask): {metrics.seg.map50:.4f}")
 print(f"mAP50-95 (box):  {metrics.box.map:.4f}")
 print(f"mAP50-95 (mask): {metrics.seg.map:.4f}")` :
@@ -1120,14 +1208,16 @@ print(f"🏆 ${t('export.code.template.bestIoU')}: {best_iou:.4f}")
 
     getYOLOTask(projectType) {
         if (projectType === 'classification' || projectType === 'multiLabel') return '-cls';
-        if (projectType === 'segmentation' || projectType === 'instanceSeg') return '-seg';
+        if (projectType === 'segmentation' || projectType === 'instanceSeg' || projectType === 'mask') return '-seg';
         if (projectType === 'keypoints') return '-pose';
         if (projectType === 'obb') return '-obb';
-        return '';  // detection
+        return '';  // detection (includes 'bbox')
     }
 
     getProjectTypeLabel(projectType) {
         const labels = {
+            'bbox': 'Object Detection (Bounding Boxes)',
+            'mask': 'Instance Segmentation (Masks)',
             'classification': this.t('projectTypes.classification'),
             'multiLabel': this.t('projectTypes.multiLabel'),
             'detection': this.t('projectTypes.detection'),

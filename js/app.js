@@ -3931,39 +3931,33 @@ class YOLOAnnotator {
                                             <!-- Populated dynamically based on project type -->
                                         </select>
                                     </div>
-                                    <div class="config-item">
+                                    <div class="config-item modality-images">
                                         <label class="form-label">
-                                            Modelo
+                                            <span data-i18n="export.code.labels.model">Modelo</span>
                                             <span class="help-icon" data-i18n-title="export.code.tooltips.model">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
                                         </label>
                                         <select class="form-control form-select" id="codeModel">
-                                            <option value="n">Nano (más rápido)</option>
-                                            <option value="s">Small</option>
-                                            <option value="m" selected>Medium</option>
-                                            <option value="l">Large</option>
-                                            <option value="x">XLarge (más preciso)</option>
+                                            <!-- Options populated dynamically -->
                                         </select>
                                     </div>
                                 </div>
                                 <div class="config-row">
                                     <div class="config-item">
                                         <label class="form-label">
-                                            Dispositivo
+                                            <span data-i18n="export.code.labels.device">Dispositivo</span>
                                             <span class="help-icon" data-i18n-title="export.code.tooltips.device">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
                                         </label>
                                         <select class="form-control form-select" id="codeDevice">
-                                            <option value="cpu">🖥️ CPU</option>
-                                            <option value="cuda:0" selected>🎮 GPU (CUDA)</option>
-                                            <option value="mps">🍎 Apple Silicon (MPS)</option>
+                                            <!-- Options populated dynamically -->
                                         </select>
                                     </div>
                                     <div class="config-item">
                                         <label class="form-label">
-                                            Epochs
+                                            <span data-i18n="export.code.labels.epochs">Epochs</span>
                                             <span class="help-icon" data-i18n-title="export.code.tooltips.epochs">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
@@ -3974,7 +3968,7 @@ class YOLOAnnotator {
                                 <div class="config-row">
                                     <div class="config-item">
                                         <label class="form-label">
-                                            Batch Size
+                                            <span data-i18n="export.code.labels.batchSize">Batch Size</span>
                                             <span class="help-icon" data-i18n-title="export.code.tooltips.batch">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
@@ -3983,7 +3977,7 @@ class YOLOAnnotator {
                                     </div>
                                     <div class="config-item modality-images">
                                         <label class="form-label">
-                                            Tamaño Imagen
+                                            <span data-i18n="export.code.labels.imageSize">Tamaño Imagen</span>
                                             <span class="help-icon" data-i18n-title="export.code.tooltips.imgsz">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
@@ -3996,7 +3990,7 @@ class YOLOAnnotator {
                                     </div>
                                     <div class="config-item modality-timeSeries" style="display: none;">
                                         <label class="form-label">
-                                            Sequence Length
+                                            <span data-i18n="export.code.labels.sequenceLength">Sequence Length</span>
                                             <span class="help-icon" data-i18n-title="export.code.tooltips.seqLength">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
@@ -4007,7 +4001,7 @@ class YOLOAnnotator {
                                 <div class="config-row modality-timeSeries" style="display: none;">
                                     <div class="config-item">
                                         <label class="form-label">
-                                            Forecast Horizon
+                                            <span data-i18n="export.code.labels.forecastHorizon">Forecast Horizon</span>
                                             <span class="help-icon" data-i18n-title="export.code.tooltips.forecastHorizon">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
@@ -4016,7 +4010,7 @@ class YOLOAnnotator {
                                     </div>
                                     <div class="config-item">
                                         <label class="form-label">
-                                            Hidden Size
+                                            <span data-i18n="export.code.labels.hiddenSize">Hidden Size</span>
                                             <span class="help-icon" data-i18n-title="export.code.tooltips.hiddenSize">
                                                 <i class="fas fa-question-circle"></i>
                                             </span>
@@ -4029,32 +4023,29 @@ class YOLOAnnotator {
                                 <div class="config-accordion">
                                     <button class="config-accordion-toggle" type="button" id="toggleAdvanced">
                                         <i class="fas fa-chevron-down"></i>
-                                        <span>Opciones Avanzadas</span>
+                                        <span data-i18n="export.code.labels.advancedOptions">Opciones Avanzadas</span>
                                     </button>
                                     <div class="config-accordion-content" id="advancedOptions">
                                         <!-- Training Options -->
                                         <div class="config-section">
                                             <h5 class="config-section-title">
-                                                <i class="fas fa-cogs"></i> Entrenamiento
+                                                <i class="fas fa-cogs"></i> <span data-i18n="export.code.labels.training">Entrenamiento</span>
                                             </h5>
                                             <div class="config-row">
                                                 <div class="config-item">
                                                     <label class="form-label">
-                                                        Optimizer
+                                                        <span data-i18n="export.code.labels.optimizer">Optimizer</span>
                                                         <span class="help-icon" data-i18n-title="export.code.tooltips.optimizer">
                                                             <i class="fas fa-question-circle"></i>
                                                         </span>
                                                     </label>
                                                     <select class="form-control form-select" id="codeOptimizer">
-                                                        <option value="Adam" selected>Adam (recomendado para principiantes)</option>
-                                                        <option value="AdamW">AdamW (Adam mejorado con weight decay)</option>
-                                                        <option value="SGD">SGD (clásico, requiere más ajuste)</option>
-                                                        <option value="RMSprop">RMSprop (bueno para redes recurrentes)</option>
+                                                        <!-- Options populated dynamically -->
                                                     </select>
                                                 </div>
                                                 <div class="config-item">
                                                     <label class="form-label">
-                                                        Learning Rate
+                                                        <span data-i18n="export.code.labels.learningRate">Learning Rate</span>
                                                         <span class="help-icon" data-i18n-title="export.code.tooltips.lr">
                                                             <i class="fas fa-question-circle"></i>
                                                         </span>
@@ -4065,7 +4056,7 @@ class YOLOAnnotator {
                                             <div class="config-row">
                                                 <div class="config-item">
                                                     <label class="form-label">
-                                                        Patience (Early Stop)
+                                                        <span data-i18n="export.code.labels.patience">Patience (Early Stop)</span>
                                                         <span class="help-icon" data-i18n-title="export.code.tooltips.patience">
                                                             <i class="fas fa-question-circle"></i>
                                                         </span>
@@ -4074,7 +4065,7 @@ class YOLOAnnotator {
                                                 </div>
                                                 <div class="config-item">
                                                     <label class="form-label">
-                                                        Validation Split (%)
+                                                        <span data-i18n="export.code.labels.validationSplit">Validation Split (%)</span>
                                                         <span class="help-icon" data-i18n-title="export.code.tooltips.valSplit">
                                                             <i class="fas fa-question-circle"></i>
                                                         </span>
@@ -4087,7 +4078,7 @@ class YOLOAnnotator {
                                         <!-- Data Augmentation (Images only) -->
                                         <div class="config-section modality-images">
                                             <h5 class="config-section-title">
-                                                <i class="fas fa-magic"></i> Data Augmentation
+                                                <i class="fas fa-magic"></i> <span data-i18n="export.code.labels.dataAugmentation">Data Augmentation</span>
                                                 <span class="help-icon" data-i18n-title="export.code.tooltips.augmentationTitle">
                                                     <i class="fas fa-question-circle"></i>
                                                 </span>
@@ -4095,27 +4086,27 @@ class YOLOAnnotator {
                                             <div class="config-checkboxes">
                                                 <label class="checkbox-label" data-i18n-title="export.code.tooltips.augMosaic">
                                                     <input type="checkbox" id="augMosaic" checked>
-                                                    <span>Mosaic (combina 4 imágenes)</span>
+                                                    <span data-i18n="export.code.augmentation.mosaic">Mosaic (combina 4 imágenes)</span>
                                                 </label>
                                                 <label class="checkbox-label" data-i18n-title="export.code.tooltips.augMixup">
                                                     <input type="checkbox" id="augMixup">
-                                                    <span>Mixup (mezcla transparencias)</span>
+                                                    <span data-i18n="export.code.augmentation.mixup">Mixup (mezcla transparencias)</span>
                                                 </label>
                                                 <label class="checkbox-label" data-i18n-title="export.code.tooltips.augHsv">
                                                     <input type="checkbox" id="augHsv" checked>
-                                                    <span>HSV (color jitter)</span>
+                                                    <span data-i18n="export.code.augmentation.hsv">HSV (color jitter)</span>
                                                 </label>
                                                 <label class="checkbox-label" data-i18n-title="export.code.tooltips.augFlip">
                                                     <input type="checkbox" id="augFlip" checked>
-                                                    <span>Flips (horizontal/vertical)</span>
+                                                    <span data-i18n="export.code.augmentation.flip">Flips (horizontal/vertical)</span>
                                                 </label>
                                                 <label class="checkbox-label" data-i18n-title="export.code.tooltips.augRotate">
                                                     <input type="checkbox" id="augRotate">
-                                                    <span>Rotación</span>
+                                                    <span data-i18n="export.code.augmentation.rotate">Rotación</span>
                                                 </label>
                                                 <label class="checkbox-label" data-i18n-title="export.code.tooltips.augScale">
                                                     <input type="checkbox" id="augScale" checked>
-                                                    <span>Scale/Crop</span>
+                                                    <span data-i18n="export.code.augmentation.scale">Scale/Crop</span>
                                                 </label>
                                             </div>
                                         </div>
@@ -4123,7 +4114,7 @@ class YOLOAnnotator {
                                         <!-- Metrics & Plots -->
                                         <div class="config-section">
                                             <h5 class="config-section-title">
-                                                <i class="fas fa-chart-line"></i> Métricas y Gráficos
+                                                <i class="fas fa-chart-line"></i> <span data-i18n="export.code.labels.metricsAndPlots">Métricas y Gráficos</span>
                                                 <span class="help-icon" data-i18n-title="export.code.tooltips.metricsTitle">
                                                     <i class="fas fa-question-circle"></i>
                                                 </span>
@@ -4131,31 +4122,31 @@ class YOLOAnnotator {
                                             <div class="config-checkboxes">
                                                 <label class="checkbox-label" data-i18n-title="export.code.tooltips.savePlots">
                                                     <input type="checkbox" id="savePlots" checked>
-                                                    <span>Guardar gráficos de entrenamiento</span>
-                                                </label>
-                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.saveConfMatrix">
-                                                    <input type="checkbox" id="saveConfMatrix" checked>
-                                                    <span>Matriz de confusión</span>
-                                                </label>
-                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.savePrCurves">
-                                                    <input type="checkbox" id="savePrCurves" checked>
-                                                    <span>Curvas Precision-Recall</span>
-                                                </label>
-                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.savePredictions">
-                                                    <input type="checkbox" id="savePredictions">
-                                                    <span>Visualizar predicciones</span>
+                                                    <span data-i18n="export.code.metrics.savePlots">Guardar gráficos de entrenamiento</span>
                                                 </label>
                                                 <label class="checkbox-label" data-i18n-title="export.code.tooltips.saveMetricsCsv">
                                                     <input type="checkbox" id="saveMetricsCsv" checked>
-                                                    <span>Exportar métricas a CSV</span>
+                                                    <span data-i18n="export.code.metrics.saveMetricsCsv">Exportar métricas a CSV</span>
+                                                </label>
+                                                <label class="checkbox-label modality-images" data-i18n-title="export.code.tooltips.saveConfMatrix">
+                                                    <input type="checkbox" id="saveConfMatrix" checked>
+                                                    <span data-i18n="export.code.metrics.saveConfMatrix">Matriz de confusión</span>
+                                                </label>
+                                                <label class="checkbox-label modality-images" data-i18n-title="export.code.tooltips.savePrCurves">
+                                                    <input type="checkbox" id="savePrCurves" checked>
+                                                    <span data-i18n="export.code.metrics.savePrCurves">Curvas Precision-Recall</span>
+                                                </label>
+                                                <label class="checkbox-label modality-images" data-i18n-title="export.code.tooltips.savePredictions">
+                                                    <input type="checkbox" id="savePredictions">
+                                                    <span data-i18n="export.code.metrics.savePredictions">Visualizar predicciones</span>
                                                 </label>
                                             </div>
                                         </div>
 
-                                        <!-- Model Export -->
-                                        <div class="config-section">
+                                        <!-- Model Export (Images only) -->
+                                        <div class="config-section modality-images">
                                             <h5 class="config-section-title">
-                                                <i class="fas fa-file-export"></i> Exportación del Modelo
+                                                <i class="fas fa-file-export"></i> <span data-i18n="export.code.labels.modelExport">Exportación del Modelo</span>
                                                 <span class="help-icon" data-i18n-title="export.code.tooltips.exportTitle">
                                                     <i class="fas fa-question-circle"></i>
                                                 </span>
@@ -4163,27 +4154,27 @@ class YOLOAnnotator {
                                             <div class="config-checkboxes">
                                                 <label class="checkbox-label" data-i18n-title="export.code.tooltips.exportOnnx">
                                                     <input type="checkbox" id="exportOnnx" checked>
-                                                    <span>ONNX (recomendado)</span>
+                                                    <span data-i18n="export.code.exportFormats.onnx">ONNX (recomendado)</span>
                                                 </label>
                                                 <label class="checkbox-label" data-i18n-title="export.code.tooltips.exportTorchscript">
                                                     <input type="checkbox" id="exportTorchscript">
-                                                    <span>TorchScript</span>
+                                                    <span data-i18n="export.code.exportFormats.torchscript">TorchScript</span>
                                                 </label>
                                                 <label class="checkbox-label" data-i18n-title="export.code.tooltips.exportTflite">
                                                     <input type="checkbox" id="exportTflite">
-                                                    <span>TensorFlow Lite</span>
+                                                    <span data-i18n="export.code.exportFormats.tflite">TensorFlow Lite</span>
                                                 </label>
                                                 <label class="checkbox-label" data-i18n-title="export.code.tooltips.exportOpenvino">
                                                     <input type="checkbox" id="exportOpenvino">
-                                                    <span>OpenVINO</span>
+                                                    <span data-i18n="export.code.exportFormats.openvino">OpenVINO</span>
                                                 </label>
                                                 <label class="checkbox-label" data-i18n-title="export.code.tooltips.exportCoreml">
                                                     <input type="checkbox" id="exportCoreml">
-                                                    <span>CoreML</span>
+                                                    <span data-i18n="export.code.exportFormats.coreml">CoreML</span>
                                                 </label>
                                                 <label class="checkbox-label" data-i18n-title="export.code.tooltips.exportTensorrt">
                                                     <input type="checkbox" id="exportTensorrt">
-                                                    <span>TensorRT</span>
+                                                    <span data-i18n="export.code.exportFormats.tensorrt">TensorRT</span>
                                                 </label>
                                             </div>
                                         </div>
@@ -4223,6 +4214,12 @@ class YOLOAnnotator {
                 handler: (modal, close) => close()
             }
         ]);
+
+        // Update i18n for dynamically created content
+        window.i18n.updateDOM();
+
+        // Reinitialize Tippy.js tooltips for new elements
+        this.initTooltips();
 
         // Setup event listeners for buttons in modal
         setTimeout(() => {

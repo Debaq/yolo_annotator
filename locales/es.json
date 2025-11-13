@@ -205,6 +205,66 @@
       "copy": "Copiar Código",
       "downloadPy": "Descargar .py",
       "downloadIpynb": "Descargar .ipynb",
+      "labels": {
+        "model": "Modelo",
+        "device": "Dispositivo",
+        "epochs": "Epochs",
+        "batchSize": "Batch Size",
+        "imageSize": "Tamaño Imagen",
+        "sequenceLength": "Sequence Length",
+        "forecastHorizon": "Forecast Horizon",
+        "hiddenSize": "Hidden Size",
+        "advancedOptions": "Opciones Avanzadas",
+        "training": "Entrenamiento",
+        "optimizer": "Optimizer",
+        "learningRate": "Learning Rate",
+        "patience": "Patience (Early Stop)",
+        "validationSplit": "Validation Split (%)",
+        "dataAugmentation": "Data Augmentation",
+        "metricsAndPlots": "Métricas y Gráficos",
+        "modelExport": "Exportación del Modelo"
+      },
+      "modelSizes": {
+        "nano": "Nano (más rápido)",
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large",
+        "xlarge": "XLarge (más preciso)"
+      },
+      "devices": {
+        "cpu": "🖥️ CPU",
+        "gpu": "🎮 GPU (CUDA)",
+        "mps": "🍎 Apple Silicon (MPS)"
+      },
+      "optimizers": {
+        "adam": "Adam (recomendado para principiantes)",
+        "adamw": "AdamW (Adam mejorado con weight decay)",
+        "sgd": "SGD (clásico, requiere más ajuste)",
+        "rmsprop": "RMSprop (bueno para redes recurrentes)"
+      },
+      "augmentation": {
+        "mosaic": "Mosaic (combina 4 imágenes)",
+        "mixup": "Mixup (mezcla transparencias)",
+        "hsv": "HSV (color jitter)",
+        "flip": "Flips (horizontal/vertical)",
+        "rotate": "Rotación",
+        "scale": "Scale/Crop"
+      },
+      "metrics": {
+        "savePlots": "Guardar gráficos de entrenamiento",
+        "saveMetricsCsv": "Exportar métricas a CSV",
+        "saveConfMatrix": "Matriz de confusión",
+        "savePrCurves": "Curvas Precision-Recall",
+        "savePredictions": "Visualizar predicciones"
+      },
+      "exportFormats": {
+        "onnx": "ONNX (recomendado)",
+        "torchscript": "TorchScript",
+        "tflite": "TensorFlow Lite",
+        "openvino": "OpenVINO",
+        "coreml": "CoreML",
+        "tensorrt": "TensorRT"
+      },
       "template": {
         "generatedBy": "Generado automáticamente por Annotix",
         "projectType": "Tipo de proyecto",
