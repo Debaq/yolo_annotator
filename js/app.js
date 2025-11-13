@@ -1314,7 +1314,7 @@ class YOLOAnnotator {
 
         if (savedCount > 0) {
             // Update gallery
-            await this.galleryManager.loadGallery(projectId);
+            await this.galleryManager.loadImages(projectId);
             this.updateStats();
             await this.updateStorageIndicator();
 

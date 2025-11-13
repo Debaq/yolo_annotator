@@ -32,6 +32,11 @@ class TimeSeriesCanvasManager {
         this.currentTool = this.projectConfig.tools[0] || 'select';
         this.selectedClassId = 0;
 
+        // Compatibility properties (set before data loads)
+        this.imageName = null;
+        this.imageId = null;
+        this.image = null;
+
         // Interaction state
         this.startX = null;
         this.tempRangeStart = null;

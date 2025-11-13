@@ -573,7 +573,7 @@ function updateUIState() {
                     nameElement.textContent = window.app.canvasManager.imageName ||
                         (window.i18n ? window.i18n.t('imageInfo.noName') : 'No name');
                 }
-                if (dimensionsElement) {
+                if (dimensionsElement && window.app.canvasManager.image) {
                     dimensionsElement.textContent =
                         `${window.app.canvasManager.image.width}x${window.app.canvasManager.image.height}`;
                 }
