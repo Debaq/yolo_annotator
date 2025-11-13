@@ -126,6 +126,48 @@ class TrainingCodeGenerator {
         return typeToModality[projectType] || 'images';
     }
 
+    // Populate select options with translated strings
+    populateSelectOptions() {
+        // Model sizes
+        const modelSelect = document.getElementById('codeModel');
+        if (modelSelect) {
+            const currentValue = modelSelect.value || 'm';
+            modelSelect.innerHTML = `
+                <option value="n">${this.t('export.code.modelSizes.nano')}</option>
+                <option value="s">${this.t('export.code.modelSizes.small')}</option>
+                <option value="m">${this.t('export.code.modelSizes.medium')}</option>
+                <option value="l">${this.t('export.code.modelSizes.large')}</option>
+                <option value="x">${this.t('export.code.modelSizes.xlarge')}</option>
+            `;
+            modelSelect.value = currentValue;
+        }
+
+        // Devices
+        const deviceSelect = document.getElementById('codeDevice');
+        if (deviceSelect) {
+            const currentValue = deviceSelect.value || 'cuda:0';
+            deviceSelect.innerHTML = `
+                <option value="cpu">${this.t('export.code.devices.cpu')}</option>
+                <option value="cuda:0">${this.t('export.code.devices.gpu')}</option>
+                <option value="mps">${this.t('export.code.devices.mps')}</option>
+            `;
+            deviceSelect.value = currentValue;
+        }
+
+        // Optimizers
+        const optimizerSelect = document.getElementById('codeOptimizer');
+        if (optimizerSelect) {
+            const currentValue = optimizerSelect.value || 'Adam';
+            optimizerSelect.innerHTML = `
+                <option value="Adam">${this.t('export.code.optimizers.adam')}</option>
+                <option value="AdamW">${this.t('export.code.optimizers.adamw')}</option>
+                <option value="SGD">${this.t('export.code.optimizers.sgd')}</option>
+                <option value="RMSprop">${this.t('export.code.optimizers.rmsprop')}</option>
+            `;
+            optimizerSelect.value = currentValue;
+        }
+    }
+
     updateConfigUI() {
         const projectType = this.projectManager.currentProject?.type || 'detection';
         const modality = this.getProjectModality(projectType);
@@ -161,6 +203,9 @@ class TrainingCodeGenerator {
         } else if (modality === 'text') {
             textControls.forEach(el => el.style.display = '');
         }
+
+        // Populate select options with translations
+        this.populateSelectOptions();
 
         // Update frameworks after UI is updated
         this.populateFrameworks();
