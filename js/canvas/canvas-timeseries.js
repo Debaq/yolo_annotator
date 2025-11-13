@@ -37,6 +37,13 @@ class TimeSeriesCanvasManager {
         this.imageId = null;
         this.image = null;
 
+        // View state
+        this.showLabels = true;
+        this.showGrid = true;
+        this.showXAxisLabels = true;
+        this.scaleY = 1.0;
+        this.scaleX = 1.0;
+
         // Interaction state
         this.startX = null;
         this.tempRangeStart = null;
@@ -272,6 +279,12 @@ class TimeSeriesCanvasManager {
                         title: {
                             display: true,
                             text: this.timeSeriesMetadata.timeColumn || 'Índice'
+                        },
+                        ticks: {
+                            display: this.showXAxisLabels
+                        },
+                        grid: {
+                            display: this.showGrid
                         }
                     },
                     y: {
@@ -279,7 +292,12 @@ class TimeSeriesCanvasManager {
                         title: {
                             display: true,
                             text: 'Valor'
-                        }
+                        },
+                        grid: {
+                            display: this.showGrid
+                        },
+                        min: undefined,
+                        max: undefined
                     }
                 }
             }
@@ -688,6 +706,109 @@ class TimeSeriesCanvasManager {
         if (rangeBtn) {
             rangeBtn.style.display = this.projectConfig.allowRange ? 'flex' : 'none';
         }
+    }
+
+    /**
+     * Redraw chart (compatibility with image canvas)
+     */
+    redraw() {
+        if (this.chart) {
+            this.chart.update();
+        }
+    }
+
+    /**
+     * Toggle grid visibility
+     */
+    toggleGrid() {
+        this.showGrid = !this.showGrid;
+        if (this.chart) {
+            this.chart.options.scales.x.grid.display = this.showGrid;
+            this.chart.options.scales.y.grid.display = this.showGrid;
+            this.chart.update();
+        }
+    }
+
+    /**
+     * Toggle annotation labels visibility
+     */
+    toggleLabels() {
+        this.showLabels = !this.showLabels;
+        // For now, just a placeholder - could hide annotation labels in future
+        this.redraw();
+    }
+
+    /**
+     * Toggle X-axis labels visibility
+     */
+    toggleXAxisLabels() {
+        this.showXAxisLabels = !this.showXAxisLabels;
+        if (this.chart) {
+            this.chart.options.scales.x.ticks.display = this.showXAxisLabels;
+            this.chart.update();
+        }
+    }
+
+    /**
+     * Zoom in (increase Y scale)
+     */
+    zoomIn() {
+        this.scaleY *= 1.2;
+        this.applyScale();
+    }
+
+    /**
+     * Zoom out (decrease Y scale)
+     */
+    zoomOut() {
+        this.scaleY /= 1.2;
+        this.applyScale();
+    }
+
+    /**
+     * Reset zoom to default
+     */
+    resetZoom() {
+        this.scaleY = 1.0;
+        this.scaleX = 1.0;
+        this.applyScale();
+    }
+
+    /**
+     * Apply current scale to chart
+     */
+    applyScale() {
+        if (!this.chart || !this.parsedData || this.parsedData.length === 0) return;
+
+        // Get original Y data range
+        let minY = Infinity;
+        let maxY = -Infinity;
+
+        this.chart.data.datasets.forEach(dataset => {
+            dataset.data.forEach(value => {
+                if (typeof value === 'number') {
+                    minY = Math.min(minY, value);
+                    maxY = Math.max(maxY, value);
+                }
+            });
+        });
+
+        // Apply scale
+        const center = (minY + maxY) / 2;
+        const range = (maxY - minY) / this.scaleY;
+
+        this.chart.options.scales.y.min = center - range / 2;
+        this.chart.options.scales.y.max = center + range / 2;
+
+        this.chart.update();
+    }
+
+    /**
+     * Set zoom level (compatibility method)
+     */
+    setZoom(level) {
+        this.scaleY = level;
+        this.applyScale();
     }
 
     /**

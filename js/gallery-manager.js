@@ -97,10 +97,24 @@ class GalleryManager {
                 item.classList.add('active');
             }
             
-            // Create blob URL and store it
-            const url = URL.createObjectURL(imageData.image);
-            this.blobUrls.set(imageData.id, url);
-            
+            // Detect if this is a time series (CSV)
+            const isTimeSeries = imageData.mimeType === 'text/csv' || imageData.timeSeriesMetadata;
+            let imageContent;
+
+            if (isTimeSeries) {
+                // For time series, show a placeholder icon
+                imageContent = `
+                    <div class="gallery-timeseries-placeholder">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                `;
+            } else {
+                // For regular images, create blob URL and store it
+                const url = URL.createObjectURL(imageData.image);
+                this.blobUrls.set(imageData.id, url);
+                imageContent = `<img src="${url}" alt="${displayName}" title="${displayName}">`;
+            }
+
             const annotationCount = imageData.annotations ? imageData.annotations.length : 0;
 
             // For classification projects, show class badges instead of count
@@ -132,7 +146,7 @@ class GalleryManager {
             const displayName = imageData.displayName || imageData.originalFileName || imageData.name;
 
             item.innerHTML = `
-                <img src="${url}" alt="${displayName}" title="${displayName}">
+                ${imageContent}
                 <div class="gallery-item-overlay">
                     ${overlayContent}
                 </div>

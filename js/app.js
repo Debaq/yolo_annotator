@@ -3197,22 +3197,40 @@ class YOLOAnnotator {
 
     toggleLabels() {
         if (!this.canvasManager) return;
-        this.canvasManager.showLabels = !this.canvasManager.showLabels;
-        const btn = document.getElementById('btnToggleLabels');
-        if (btn) {
-            btn.classList.toggle('active', this.canvasManager.showLabels);
+
+        // For time series, toggle X-axis labels instead of annotation labels
+        if (this.canvasManager.toggleXAxisLabels) {
+            this.canvasManager.toggleXAxisLabels();
+            const btn = document.getElementById('btnToggleLabels');
+            if (btn) {
+                btn.classList.toggle('active', this.canvasManager.showXAxisLabels);
+            }
+        } else {
+            // For images, toggle annotation labels
+            this.canvasManager.showLabels = !this.canvasManager.showLabels;
+            const btn = document.getElementById('btnToggleLabels');
+            if (btn) {
+                btn.classList.toggle('active', this.canvasManager.showLabels);
+            }
+            this.canvasManager.redraw();
         }
-        this.canvasManager.redraw();
     }
 
     toggleGrid() {
         if (!this.canvasManager) return;
-        this.canvasManager.showGrid = !this.canvasManager.showGrid;
+
+        // For time series and other canvas types with specific toggleGrid method
+        if (this.canvasManager.toggleGrid && typeof this.canvasManager.toggleGrid === 'function') {
+            this.canvasManager.toggleGrid();
+        } else {
+            this.canvasManager.showGrid = !this.canvasManager.showGrid;
+            this.canvasManager.redraw();
+        }
+
         const btn = document.getElementById('btnToggleGrid');
         if (btn) {
             btn.classList.toggle('active', this.canvasManager.showGrid);
         }
-        this.canvasManager.redraw();
     }
 
     rotateImageLeft() {

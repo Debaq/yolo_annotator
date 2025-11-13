@@ -532,8 +532,8 @@
         // Update button states based on current state
 function updateUIState() {
     if (window.app && window.app.canvasManager) {
-        const hasImage = window.app.canvasManager.image !== null;
-        const hasAnnotations = window.app.canvasManager.annotations.length > 0;
+        const hasImage = window.app.canvasManager.image !== null && window.app.canvasManager.image !== undefined;
+        const hasAnnotations = window.app.canvasManager.annotations && window.app.canvasManager.annotations.length > 0;
         const hasProject = window.app.projectManager.currentProject !== null;
 
         // Update button states - con verificación de existencia
