@@ -111,6 +111,7 @@
     "classesHelp": "Durch Kommas getrennt. Sie können später weitere hinzufügen.",
     "enterName": "Geben Sie einen Namen für das Projekt ein",
     "created": "Projekt \"{name}\" erstellt",
+    "updated": "Updated",
     "loaded": "Projekt \"{name}\" geladen",
     "deleted": "Projekt gelöscht",
     "exported": "Projekt exportiert",

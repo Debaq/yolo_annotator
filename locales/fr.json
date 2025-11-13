@@ -111,6 +111,7 @@
     "classesHelp": "Séparées par des virgules. Vous pouvez en ajouter plus tard.",
     "enterName": "Entrez un nom pour le projet",
     "created": "Projet \"{name}\" créé",
+    "updated": "Updated",
     "loaded": "Projet \"{name}\" chargé",
     "deleted": "Projet supprimé",
     "exported": "Projet exporté",

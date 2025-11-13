@@ -101,6 +101,11 @@ class YOLOAnnotator {
 
         // Button to trigger file input
         document.getElementById('btnLoadImages')?.addEventListener('click', () => {
+            // Validate project exists before allowing image load
+            if (!this.projectManager.currentProject) {
+                this.ui.showToast('Create or select a project first', 'warning');
+                return;
+            }
             document.getElementById('imageInput')?.click();
         });
 
@@ -200,6 +205,9 @@ class YOLOAnnotator {
                 this.galleryManager.setFilter(btn.dataset.filter);
             });
         });
+
+        // Setup EventBus listeners for automatic UI updates
+        this.setupEventBusListeners();
     }
 
     setupKeyboardShortcuts() {
@@ -390,11 +398,61 @@ class YOLOAnnotator {
     //     }, 400);
     // }
 
+    setupEventBusListeners() {
+        if (!window.eventBus) {
+            console.error('EventBus not found!');
+            return;
+        }
+
+        // Listen for annotation events
+        window.eventBus.on('annotationCreated', () => {
+            this.updateStats();
+            this.updateClassUI(); // Update class counts
+            this.galleryManager.render(); // Update thumbnail counts
+        });
+
+        window.eventBus.on('annotationDeleted', () => {
+            this.updateStats();
+            this.updateClassUI(); // Update class counts
+            this.galleryManager.render(); // Update thumbnail counts
+        });
+
+        window.eventBus.on('annotationModified', () => {
+            this.updateStats();
+            this.updateClassUI(); // Update class counts
+            this.galleryManager.render(); // Update thumbnail counts
+        });
+
+        // Listen for image events
+        window.eventBus.on('imageDeleted', () => {
+            this.updateStats();
+            // Gallery is already updated in deleteImage method
+        });
+
+        // Listen for class events
+        window.eventBus.on('classAdded', () => {
+            this.updateStats();
+        });
+
+        window.eventBus.on('classModified', () => {
+            this.updateStats();
+            this.galleryManager.render(); // Update class badges in gallery
+        });
+
+        window.eventBus.on('classDeleted', () => {
+            this.updateStats();
+            this.galleryManager.render(); // Update thumbnail counts (annotations were deleted)
+        });
+    }
+
     async loadProjects() {
         const projects = await this.db.getAllProjects();
         const selector = document.getElementById('projectSelector');
-        
+
         if (selector) {
+            // Store current selection
+            const currentProjectId = this.projectManager.currentProject?.id;
+
             selector.innerHTML = `<option value="">${window.i18n.t('header.selectProject')}</option>`;
             projects.forEach(project => {
                 const option = document.createElement('option');
@@ -402,16 +460,23 @@ class YOLOAnnotator {
                 option.textContent = project.name;
                 selector.appendChild(option);
             });
-            
-            selector.addEventListener('change', (e) => {
+
+            // Remove old event listeners by cloning
+            const newSelector = selector.cloneNode(true);
+            selector.parentNode.replaceChild(newSelector, selector);
+
+            // Add single event listener
+            newSelector.addEventListener('change', (e) => {
                 if (e.target.value) {
                     this.loadProject(parseInt(e.target.value));
                 }
             });
 
-            // Auto-select first project if exists and none selected
-            if (projects.length > 0 && !selector.value) {
-                selector.value = projects[0].id;
+            // Restore previous selection or auto-select first
+            if (currentProjectId && projects.find(p => p.id === currentProjectId)) {
+                newSelector.value = currentProjectId;
+            } else if (projects.length > 0 && !newSelector.value) {
+                newSelector.value = projects[0].id;
                 await this.loadProject(projects[0].id);
             }
         }
@@ -449,6 +514,9 @@ class YOLOAnnotator {
                     if (this.canvasManager.projectType !== project.type) {
                         this.canvasManager.destroy();
                         this.canvasManager = null;
+                    } else {
+                        // Same type, just clear the canvas for new project
+                        this.canvasManager.clearCanvas();
                     }
                 }
 
@@ -479,6 +547,7 @@ class YOLOAnnotator {
             this.updateClassUI();
             await this.galleryManager.loadImages(projectId);
             this.updateStats();
+            this.updateButtonStates();
         } catch (error) {
             console.error('Error loading project:', error);
         }
@@ -1209,8 +1278,19 @@ class YOLOAnnotator {
                                         // If deleted project was current, clear it
                                         if (this.projectManager.currentProject?.id === projectId) {
                                             this.projectManager.currentProject = null;
-                                            this.canvasManager.clearCanvas();
-                                            this.galleryManager.clearGallery();
+                                            if (this.canvasManager) {
+                                                this.canvasManager.clearCanvas();
+                                            }
+                                            if (this.classificationManager && this.classificationManager.classificationUI) {
+                                                this.classificationManager.clear();
+                                            }
+                                            // Clear gallery
+                                            this.galleryManager.images = [];
+                                            this.galleryManager.cleanupBlobUrls();
+                                            this.galleryManager.render();
+                                            // Update UI
+                                            this.updateStats();
+                                            this.updateButtonStates();
                                         }
 
                                         await this.loadProjects();
@@ -2311,6 +2391,11 @@ class YOLOAnnotator {
                 : this.canvasManager.classes;
             this.projectManager.updateProject({ classes: updatedClasses });
         }
+
+        // Emit event for UI updates
+        if (window.eventBus) {
+            window.eventBus.emit('classAdded', { class: newClass });
+        }
     }
 
     updateClassUI() {
@@ -2341,8 +2426,24 @@ class YOLOAnnotator {
             // Show number only if index is 0-8 (keys 1-9)
             const classNumber = index < 9 ? `[${index + 1}] ` : '';
 
-            // Count annotations using this class
-            const annotationCount = this.canvasManager.annotations.filter(a => a.class === cls.id).length;
+            // Count annotations in current image
+            const currentImageCount = this.canvasManager.annotations.filter(a => a.class === cls.id).length;
+
+            // Count annotations across all images in project
+            const totalCount = this.galleryManager.images.reduce((sum, img) => {
+                const imgAnnotations = img.annotations || [];
+                // If this is the current image with unsaved changes, use memory count
+                if (this.canvasManager.imageId === img.id && this.canvasManager.hasUnsavedChanges) {
+                    return sum + currentImageCount;
+                }
+                // Otherwise use saved count
+                return sum + imgAnnotations.filter(a => a.class === cls.id).length;
+            }, 0);
+
+            // Show as "current/total"
+            const annotationCount = currentImageCount > 0 || totalCount > 0
+                ? `${currentImageCount}/${totalCount}`
+                : '0';
 
             item.innerHTML = `
                 <div class="class-color" style="background: ${cls.color}"></div>
@@ -2392,6 +2493,11 @@ class YOLOAnnotator {
 
             if (this.projectManager.currentProject) {
                 this.projectManager.updateProject({ classes: this.classificationManager.classes });
+            }
+
+            // Emit event for UI updates
+            if (window.eventBus) {
+                window.eventBus.emit('classDeleted', { classId });
             }
         } else {
             // Canvas mode (detection, segmentation, etc.)
@@ -2448,6 +2554,11 @@ class YOLOAnnotator {
 
             // Update statistics
             this.updateStats();
+
+            // Emit event for UI updates
+            if (window.eventBus) {
+                window.eventBus.emit('classDeleted', { classId });
+            }
 
             this.ui.showToast(window.i18n.t('notifications.classDeleted') || 'Class and all its annotations deleted', 'success');
         }
@@ -2549,6 +2660,11 @@ class YOLOAnnotator {
                             this.projectManager.updateProject({ classes: this.canvasManager.classes });
                         }
 
+                        // Emit event for UI updates
+                        if (window.eventBus) {
+                            window.eventBus.emit('classModified', { class: cls });
+                        }
+
                         this.ui.showToast(window.i18n.t('classes.updated') || 'Class updated successfully', 'success');
                         close();
                     }
@@ -2642,6 +2758,14 @@ class YOLOAnnotator {
     }
 
     updateButtonStates() {
+        // Disable load images button if no project
+        const btnLoadImages = document.getElementById('btnLoadImages');
+        if (btnLoadImages) {
+            btnLoadImages.disabled = !this.projectManager.currentProject;
+            btnLoadImages.style.opacity = this.projectManager.currentProject ? '1' : '0.5';
+            btnLoadImages.style.cursor = this.projectManager.currentProject ? 'pointer' : 'not-allowed';
+        }
+
         if (!this.canvasManager) return;
 
         // Update labels button (default is true)
@@ -2685,9 +2809,46 @@ class YOLOAnnotator {
 
     updateStats() {
         const images = this.galleryManager.images;
-        const totalLabels = images.reduce((sum, img) =>
+
+        // Count annotations from saved images
+        let totalLabels = images.reduce((sum, img) =>
             sum + (img.annotations ? img.annotations.length : 0), 0);
-        const annotated = images.filter(img => img.annotations && img.annotations.length > 0).length;
+
+        // Add current unsaved annotations if there's an active image
+        if (this.annotationMode === 'classification') {
+            if (this.classificationManager.imageId && this.classificationManager.hasUnsavedChanges) {
+                // Find current image in array
+                const currentImg = images.find(img => img.id === this.classificationManager.imageId);
+                if (currentImg) {
+                    // Subtract old count, add new count
+                    totalLabels -= (currentImg.annotations?.length || 0);
+                    totalLabels += this.classificationManager.labels.length;
+                }
+            }
+        } else if (this.canvasManager && this.canvasManager.imageId && this.canvasManager.hasUnsavedChanges) {
+            // Find current image in array
+            const currentImg = images.find(img => img.id === this.canvasManager.imageId);
+            if (currentImg) {
+                // Subtract old count, add new count
+                totalLabels -= (currentImg.annotations?.length || 0);
+                totalLabels += this.canvasManager.annotations.length;
+            }
+        }
+
+        const annotated = images.filter(img => {
+            // Check if this is the current image with unsaved changes
+            if (this.annotationMode === 'classification' &&
+                this.classificationManager.imageId === img.id &&
+                this.classificationManager.hasUnsavedChanges) {
+                return this.classificationManager.labels.length > 0;
+            } else if (this.canvasManager &&
+                       this.canvasManager.imageId === img.id &&
+                       this.canvasManager.hasUnsavedChanges) {
+                return this.canvasManager.annotations.length > 0;
+            }
+            // Otherwise use saved data
+            return img.annotations && img.annotations.length > 0;
+        }).length;
 
         document.getElementById('statTotalImages').textContent = images.length;
         document.getElementById('statAnnotated').textContent = annotated;

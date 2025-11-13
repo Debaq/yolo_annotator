@@ -174,6 +174,12 @@ class CanvasMask extends CanvasBase {
 
     handleDrawStart(x, y) {
         if (this.currentTool === 'mask') {
+            // Validate classes exist before allowing annotation
+            if (!this.classes || this.classes.length === 0) {
+                this.ui.showToast('Add at least one class before annotating', 'warning');
+                return;
+            }
+
             this.isDrawing = true;
 
             // Create temporary mask canvas if not exists
@@ -589,6 +595,14 @@ class CanvasMask extends CanvasBase {
 
             // Redraw to show the editable mask
             this.redraw();
+
+            // Emit event for UI updates - this is a modification event
+            if (window.eventBus) {
+                window.eventBus.emit('annotationModified', {
+                    annotation: maskAnnotation,
+                    imageId: this.imageId
+                });
+            }
 
             this.ui.showToast('Mask loaded for editing - you can now paint or erase', 'info');
         };

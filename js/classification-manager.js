@@ -138,6 +138,14 @@ class ClassificationManager {
         this.renderClassList();
         this.updateImageInfo();
         this.updateLabelsOverlay();
+
+        // Emit event for UI updates (classification labels are like annotations)
+        if (window.eventBus) {
+            window.eventBus.emit('annotationModified', {
+                imageId: this.imageId,
+                labels: this.labels
+            });
+        }
     }
 
     // Cycle to next class (for A/D keyboard navigation)

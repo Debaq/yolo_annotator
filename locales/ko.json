@@ -111,6 +111,7 @@
     "classesHelp": "쉼표로 구분. 나중에 더 추가할 수 있습니다.",
     "enterName": "프로젝트 이름을 입력하세요",
     "created": "프로젝트 \"{name}\"이(가) 생성되었습니다",
+    "updated": "Updated",
     "loaded": "프로젝트 \"{name}\"이(가) 로드되었습니다",
     "deleted": "프로젝트가 삭제되었습니다",
     "exported": "프로젝트가 내보내졌습니다",

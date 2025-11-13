@@ -241,8 +241,20 @@ class GalleryManager {
             this.render();
 
             // Clear canvas if this was the current image
-            if (this.canvasManager.imageId === imageId) {
-                this.canvasManager.clear();
+            if (this.app.annotationMode === 'classification') {
+                if (this.app.classificationManager && this.app.classificationManager.imageId === imageId) {
+                    this.app.classificationManager.clear();
+                }
+            } else if (this.app.canvasManager && this.app.canvasManager.imageId === imageId) {
+                this.app.canvasManager.clearCanvas();
+            }
+
+            // Update stats after deletion
+            this.app.updateStats();
+
+            // Emit event for UI updates
+            if (window.eventBus) {
+                window.eventBus.emit('imageDeleted', { imageId });
             }
 
             this.ui.showToast(window.i18n.t('notifications.imageDeleted'), 'success');
