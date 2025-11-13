@@ -423,6 +423,41 @@
     transform: scale(1.1);
 }
 
+.annotation-range-label {
+    padding: 2px 4px;
+    font-size: 0.65em;
+    color: var(--dark);
+    background: var(--gray-light);
+    text-align: center;
+    font-weight: 500;
+    border-top: 1px solid var(--border);
+}
+
+/* Annotation item - compatible with annotation-card */
+.annotation-item {
+    min-width: 100px;
+    max-width: 100px;
+    background: var(--white);
+    border: 2px solid var(--gray);
+    border-radius: 6px;
+    padding: 0;
+    cursor: pointer;
+    transition: var(--transition);
+    overflow: hidden;
+}
+
+.annotation-item:hover {
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px var(--shadow);
+    transform: translateY(-2px);
+}
+
+.annotation-item.selected {
+    border-color: var(--primary);
+    border-width: 3px;
+    box-shadow: 0 2px 12px var(--shadow-strong);
+}
+
 /* ============================================
    FLOATING TOOLS MENU
    Menú flotante de herramientas en el lado izquierdo

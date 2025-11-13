@@ -553,6 +553,14 @@ class YOLOAnnotator {
                     try {
                         this.canvasManager = CanvasFactory.create(project.type, this.canvas, this.ui, project.classes || []);
 
+                        // Setup auto-save callback for time series canvas
+                        if (this.canvasManager && this.canvasManager.onAnnotationsChanged !== undefined) {
+                            this.canvasManager.onAnnotationsChanged = () => {
+                                // Auto-save when annotations change
+                                this.saveCurrentImage(true); // true = silent save
+                            };
+                        }
+
                         // Clear annotation-list when creating new canvas for new project
                         if (this.canvasManager && this.canvasManager.updateAnnotationsBar) {
                             this.canvasManager.updateAnnotationsBar();
@@ -1864,6 +1872,14 @@ class YOLOAnnotator {
                     height: this.canvasManager.image.height,
                     timestamp: Date.now()
                 };
+
+                // Preserve time series metadata if it exists
+                if (this.canvasManager.timeSeriesMetadata) {
+                    imageData.timeSeriesMetadata = this.canvasManager.timeSeriesMetadata;
+                }
+                if (this.canvasManager.currentData && this.canvasManager.currentData.mimeType) {
+                    imageData.mimeType = this.canvasManager.currentData.mimeType;
+                }
 
                 const id = await this.db.saveImage(imageData);
                 this.canvasManager.imageId = id;

@@ -26,11 +26,13 @@ class TimeSeriesCanvasManager {
         // Annotations
         this.annotations = [];
         this.activeAnnotation = null;
+        this.selectedAnnotation = null;  // For annotation bar selection
         this.isDrawing = false;
+        this.hasUnsavedChanges = false;
 
         // Current tool - set default based on project type
         this.currentTool = this.projectConfig.tools[0] || 'select';
-        this.selectedClassId = 0;
+        this.currentClass = 0;
 
         // Compatibility properties (set before data loads)
         this.imageName = null;
@@ -40,13 +42,17 @@ class TimeSeriesCanvasManager {
         // View state
         this.showLabels = true;
         this.showGrid = true;
-        this.showXAxisLabels = true;
+        this.showXAxisLabels = false;  // Hidden by default
         this.scaleY = 1.0;
         this.scaleX = 1.0;
 
         // Interaction state
         this.startX = null;
         this.tempRangeStart = null;
+
+        // Preview state
+        this.previewX = null;
+        this.previewY = null;
 
         this.setupCanvas();
     }
@@ -66,6 +72,18 @@ class TimeSeriesCanvasManager {
         this.chartCanvas = document.createElement('canvas');
         this.chartCanvas.id = 'timeseriesChart';
         this.chartContainer.appendChild(this.chartCanvas);
+
+        // Create overlay canvas for previews
+        this.overlayCanvas = document.createElement('canvas');
+        this.overlayCanvas.id = 'timeseriesOverlay';
+        this.overlayCanvas.style.position = 'absolute';
+        this.overlayCanvas.style.top = '0';
+        this.overlayCanvas.style.left = '0';
+        this.overlayCanvas.style.pointerEvents = 'none';
+        this.overlayCanvas.style.width = '100%';
+        this.overlayCanvas.style.height = '100%';
+        this.chartContainer.appendChild(this.overlayCanvas);
+        this.overlayCtx = this.overlayCanvas.getContext('2d');
 
         // Insert after original canvas
         this.canvas.parentNode.insertBefore(this.chartContainer, this.canvas.nextSibling);
@@ -202,6 +220,7 @@ class TimeSeriesCanvasManager {
             // Set compatibility properties for UI
             this.imageName = dataEntry.name;
             this.imageId = dataEntry.id;
+            this.originalImageBlob = dataEntry.image;  // Store original CSV blob for saving
             // Create pseudo-image object for compatibility with UI code
             this.image = {
                 width: parsed.data.length,  // Number of time points
@@ -210,6 +229,12 @@ class TimeSeriesCanvasManager {
 
             // Render chart
             this.renderChart();
+
+            // Update annotations bar
+            this.updateAnnotationsBar();
+
+            // Clear unsaved changes flag after loading
+            this.hasUnsavedChanges = false;
 
         } catch (error) {
             console.error('Error loading time series data:', error);
@@ -256,6 +281,7 @@ class TimeSeriesCanvasManager {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: false,  // Disable animations
                 interaction: {
                     mode: 'index',
                     intersect: false,
@@ -270,6 +296,9 @@ class TimeSeriesCanvasManager {
                     },
                     // Custom plugin for annotations
                     annotation: {
+                        animations: {
+                            numbers: { duration: 0 }
+                        },
                         annotations: this.getChartAnnotations()
                     }
                 },
@@ -375,13 +404,18 @@ class TimeSeriesCanvasManager {
                     radius: 6
                 };
             } else if (ann.type === 'range') {
+                // Check if this is the selected annotation
+                const isSelected = this.selectedAnnotation === ann;
+                const color = this.getClassColor(ann.class);
+
                 chartAnnotations[`range_${index}`] = {
                     type: 'box',
                     xMin: ann.data.start,
                     xMax: ann.data.end,
-                    backgroundColor: this.getClassColor(ann.class) + '33',
-                    borderColor: this.getClassColor(ann.class),
-                    borderWidth: 2
+                    backgroundColor: color + (isSelected ? '55' : '33'),  // More opaque if selected
+                    borderColor: color,
+                    borderWidth: isSelected ? 3 : 2,  // Thicker border if selected
+                    borderDash: isSelected ? [] : undefined  // Solid line if selected
                 };
             }
         });
@@ -395,6 +429,19 @@ class TimeSeriesCanvasManager {
     renderAnnotations() {
         // Annotations are now rendered by Chart.js plugin
         // This method can be used for temporary UI elements during drawing
+    }
+
+    /**
+     * Update only annotations without recreating chart
+     */
+    updateAnnotations() {
+        if (!this.chart) return;
+
+        // Update annotation plugin options
+        this.chart.options.plugins.annotation.annotations = this.getChartAnnotations();
+
+        // Update chart without animation
+        this.chart.update('none');
     }
 
     /**
@@ -420,14 +467,25 @@ class TimeSeriesCanvasManager {
      * Mouse move handler
      */
     onMouseMove(e) {
-        if (!this.isDrawing) return;
-
         const rect = this.chartCanvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
 
-        if (this.currentTool === 'range') {
-            // Update temporary range visualization
-            this.updateTempRange(x);
+        // Update preview position
+        this.previewX = x;
+        this.previewY = y;
+
+        // Draw preview based on tool and state
+        if (this.currentTool === 'point' && !this.isDrawing) {
+            this.drawPointPreview(x, y);
+        } else if (this.currentTool === 'range') {
+            if (this.isDrawing) {
+                this.drawRangePreview(this.startX, x);
+            } else {
+                this.drawVerticalLinePreview(x);
+            }
+        } else {
+            this.clearPreview();
         }
     }
 
@@ -447,6 +505,7 @@ class TimeSeriesCanvasManager {
         this.isDrawing = false;
         this.startX = null;
         this.tempRangeStart = null;
+        this.clearPreview();
     }
 
     /**
@@ -458,6 +517,7 @@ class TimeSeriesCanvasManager {
             this.startX = null;
             this.tempRangeStart = null;
         }
+        this.clearPreview();
     }
 
     /**
@@ -471,28 +531,39 @@ class TimeSeriesCanvasManager {
         }
 
         const xValue = this.getXValue(canvasX);
-        const yValue = this.getYValue(canvasY);
+        if (xValue === null) return;
 
-        if (xValue === null || yValue === null) return;
+        const dataIndex = this.getClosestDataIndex(xValue);
 
-        const annotation = {
-            type: 'point',
-            class: this.selectedClassId,
-            data: {
-                x: xValue,
-                y: yValue,
-                index: this.getClosestDataIndex(xValue)
-            }
-        };
+        // Create a point for each dataset (variable/line)
+        if (this.chart && this.chart.data.datasets) {
+            this.chart.data.datasets.forEach((dataset, i) => {
+                const value = dataset.data[dataIndex];
+                if (value === null || value === undefined) return;
 
-        // For regression type, could add UI to input target value
-        if (this.projectConfig.pointType === 'regression') {
-            annotation.data.targetValue = yValue; // Store Y value as target
+                const annotation = {
+                    type: 'point',
+                    class: this.currentClass,
+                    data: {
+                        x: xValue,
+                        y: value,
+                        index: dataIndex,
+                        datasetIndex: i,  // Store which dataset this point belongs to
+                        datasetLabel: dataset.label  // Store dataset label for reference
+                    }
+                };
+
+                // For regression type, could add UI to input target value
+                if (this.projectConfig.pointType === 'regression') {
+                    annotation.data.targetValue = value; // Store Y value as target
+                }
+
+                this.annotations.push(annotation);
+            });
+
+            this.updateAnnotations();
+            this.onAnnotationsChanged();
         }
-
-        this.annotations.push(annotation);
-        this.renderChart();
-        this.onAnnotationsChanged();
     }
 
     /**
@@ -514,7 +585,7 @@ class TimeSeriesCanvasManager {
 
         const annotation = {
             type: 'range',
-            class: this.selectedClassId,
+            class: this.currentClass,
             data: {
                 start: start,
                 end: end,
@@ -525,7 +596,8 @@ class TimeSeriesCanvasManager {
         };
 
         this.annotations.push(annotation);
-        this.renderChart();
+        this.updateAnnotations();
+        this.updateAnnotationsBar();
         this.onAnnotationsChanged();
     }
 
@@ -577,6 +649,144 @@ class TimeSeriesCanvasManager {
     }
 
     /**
+     * Update overlay canvas size to match chart canvas
+     */
+    updateOverlaySize() {
+        if (!this.chartCanvas || !this.overlayCanvas) return;
+
+        const rect = this.chartCanvas.getBoundingClientRect();
+        this.overlayCanvas.width = rect.width;
+        this.overlayCanvas.height = rect.height;
+    }
+
+    /**
+     * Clear preview overlay
+     */
+    clearPreview() {
+        if (!this.overlayCtx || !this.overlayCanvas) return;
+        this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
+    }
+
+    /**
+     * Draw point preview (follows mouse on curves)
+     */
+    drawPointPreview(x, y) {
+        if (!this.chart || !this.overlayCtx) return;
+
+        this.updateOverlaySize();
+        this.clearPreview();
+
+        const xValue = this.getXValue(x);
+        if (xValue === null) return;
+
+        // Get chart area bounds
+        const chartArea = this.chart.chartArea;
+        if (x < chartArea.left || x > chartArea.right) return;
+
+        const classColor = this.getClassColor(this.currentClass);
+
+        // Draw vertical line at cursor position
+        this.overlayCtx.strokeStyle = classColor + '40';
+        this.overlayCtx.lineWidth = 1;
+        this.overlayCtx.setLineDash([5, 5]);
+        this.overlayCtx.beginPath();
+        this.overlayCtx.moveTo(x, chartArea.top);
+        this.overlayCtx.lineTo(x, chartArea.bottom);
+        this.overlayCtx.stroke();
+        this.overlayCtx.setLineDash([]);
+
+        // Draw points on each dataset at this x position
+        const dataIndex = this.getClosestDataIndex(xValue);
+        this.chart.data.datasets.forEach((dataset, i) => {
+            const value = dataset.data[dataIndex];
+            if (value === null || value === undefined) return;
+
+            const yScale = this.chart.scales.y;
+            const yPixel = yScale.getPixelForValue(value);
+
+            // Draw preview point
+            this.overlayCtx.fillStyle = classColor + '60';
+            this.overlayCtx.strokeStyle = classColor;
+            this.overlayCtx.lineWidth = 2;
+            this.overlayCtx.beginPath();
+            this.overlayCtx.arc(x, yPixel, 5, 0, Math.PI * 2);
+            this.overlayCtx.fill();
+            this.overlayCtx.stroke();
+        });
+    }
+
+    /**
+     * Draw vertical line preview
+     */
+    drawVerticalLinePreview(x) {
+        if (!this.chart || !this.overlayCtx) return;
+
+        this.updateOverlaySize();
+        this.clearPreview();
+
+        const chartArea = this.chart.chartArea;
+        if (x < chartArea.left || x > chartArea.right) return;
+
+        const classColor = this.getClassColor(this.currentClass);
+
+        // Draw vertical line
+        this.overlayCtx.strokeStyle = classColor + '60';
+        this.overlayCtx.lineWidth = 2;
+        this.overlayCtx.setLineDash([5, 5]);
+        this.overlayCtx.beginPath();
+        this.overlayCtx.moveTo(x, chartArea.top);
+        this.overlayCtx.lineTo(x, chartArea.bottom);
+        this.overlayCtx.stroke();
+        this.overlayCtx.setLineDash([]);
+    }
+
+    /**
+     * Draw range preview (area between start and current position)
+     */
+    drawRangePreview(startX, endX) {
+        if (!this.chart || !this.overlayCtx) return;
+
+        this.updateOverlaySize();
+        this.clearPreview();
+
+        const chartArea = this.chart.chartArea;
+
+        // Clamp to chart area
+        startX = Math.max(chartArea.left, Math.min(chartArea.right, startX));
+        endX = Math.max(chartArea.left, Math.min(chartArea.right, endX));
+
+        const classColor = this.getClassColor(this.currentClass);
+
+        // Draw filled area
+        this.overlayCtx.fillStyle = classColor + '20';
+        this.overlayCtx.fillRect(
+            Math.min(startX, endX),
+            chartArea.top,
+            Math.abs(endX - startX),
+            chartArea.bottom - chartArea.top
+        );
+
+        // Draw border lines
+        this.overlayCtx.strokeStyle = classColor + '80';
+        this.overlayCtx.lineWidth = 2;
+        this.overlayCtx.setLineDash([5, 5]);
+
+        // Start line
+        this.overlayCtx.beginPath();
+        this.overlayCtx.moveTo(startX, chartArea.top);
+        this.overlayCtx.lineTo(startX, chartArea.bottom);
+        this.overlayCtx.stroke();
+
+        // End line
+        this.overlayCtx.beginPath();
+        this.overlayCtx.moveTo(endX, chartArea.top);
+        this.overlayCtx.lineTo(endX, chartArea.bottom);
+        this.overlayCtx.stroke();
+
+        this.overlayCtx.setLineDash([]);
+    }
+
+    /**
      * Select annotation at coordinates
      */
     selectAnnotation(x, y) {
@@ -592,7 +802,7 @@ class TimeSeriesCanvasManager {
         if (this.activeAnnotation !== null) {
             this.annotations.splice(this.activeAnnotation, 1);
             this.activeAnnotation = null;
-            this.renderChart();
+            this.updateAnnotations();
             this.onAnnotationsChanged();
         }
     }
@@ -613,13 +823,14 @@ class TimeSeriesCanvasManager {
         this.isDrawing = false;
         this.startX = null;
         this.tempRangeStart = null;
+        this.clearPreview();
     }
 
     /**
      * Set selected class
      */
     setSelectedClass(classId) {
-        this.selectedClassId = classId;
+        this.currentClass = classId;
     }
 
     /**
@@ -633,8 +844,19 @@ class TimeSeriesCanvasManager {
      * Callback when annotations change
      */
     onAnnotationsChanged() {
+        // Mark as having unsaved changes
+        this.hasUnsavedChanges = true;
+
         // Override this method to handle annotation changes
         // (e.g., trigger auto-save)
+
+        // Emit event for UI updates
+        if (window.eventBus) {
+            window.eventBus.emit('annotationModified', {
+                imageId: this.imageId,
+                annotations: this.annotations
+            });
+        }
     }
 
     /**
@@ -650,7 +872,9 @@ class TimeSeriesCanvasManager {
     clearAnnotations() {
         this.annotations = [];
         this.activeAnnotation = null;
-        this.renderChart();
+        this.selectedAnnotation = null;
+        this.updateAnnotations();
+        this.updateAnnotationsBar();
         this.onAnnotationsChanged();
     }
 
@@ -669,11 +893,175 @@ class TimeSeriesCanvasManager {
     }
 
     /**
-     * Dummy updateAnnotationsBar for compatibility
+     * Update annotations bar with segment previews
      */
     updateAnnotationsBar() {
-        // Time series doesn't use the annotations bar yet
-        // This is for compatibility with the existing interface
+        const annotationsList = document.getElementById('annotationsList');
+        if (!annotationsList) return;
+
+        // Clear previous annotations
+        annotationsList.innerHTML = '';
+
+        // Filter only range annotations (segments)
+        const rangeAnnotations = this.annotations.filter(ann => ann.type === 'range');
+
+        if (rangeAnnotations.length === 0) {
+            annotationsList.innerHTML = '<div class="empty-annotations">No hay segmentos marcados</div>';
+            return;
+        }
+
+        // Create card for each range annotation
+        rangeAnnotations.forEach((ann, index) => {
+            const cls = this.classes.find(c => c.id === ann.class);
+            const color = cls ? cls.color : '#667eea';
+            const className = cls ? cls.name : 'Unknown';
+
+            const card = document.createElement('div');
+            card.className = 'annotation-item';
+            if (this.selectedAnnotation === ann) {
+                card.classList.add('selected');
+            }
+
+            const rangeLabel = ann.data.rangeType || 'segment';
+            const startLabel = typeof ann.data.start === 'number' ? ann.data.start.toFixed(2) : ann.data.start;
+            const endLabel = typeof ann.data.end === 'number' ? ann.data.end.toFixed(2) : ann.data.end;
+
+            card.innerHTML = `
+                <div class="annotation-thumbnail">
+                    <canvas width="100" height="75"></canvas>
+                    <div class="annotation-overlay">
+                        <div class="annotation-class-label" style="background: ${color}">
+                            ${className}
+                        </div>
+                        <div class="annotation-type-badge">${rangeLabel}</div>
+                        <button class="annotation-delete-btn" data-action="delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="annotation-range-label">${startLabel} - ${endLabel}</div>
+                </div>
+            `;
+
+            // Render segment preview
+            const thumbnailCanvas = card.querySelector('canvas');
+            this.renderSegmentThumbnail(thumbnailCanvas, ann, color);
+
+            // Click to select
+            card.addEventListener('click', (e) => {
+                if (!e.target.closest('.annotation-delete-btn')) {
+                    this.selectedAnnotation = ann;
+                    this.updateAnnotations();
+                    this.updateAnnotationsBar();
+                }
+            });
+
+            // Delete button
+            const deleteBtn = card.querySelector('.annotation-delete-btn');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const annIndex = this.annotations.indexOf(ann);
+                    if (annIndex > -1) {
+                        this.annotations.splice(annIndex, 1);
+                        if (this.selectedAnnotation === ann) {
+                            this.selectedAnnotation = null;
+                        }
+                        this.updateAnnotations();
+                        this.updateAnnotationsBar();
+                        this.onAnnotationsChanged();
+                    }
+                });
+            }
+
+            annotationsList.appendChild(card);
+        });
+    }
+
+    /**
+     * Render segment thumbnail preview
+     */
+    renderSegmentThumbnail(canvas, annotation, color) {
+        if (!this.chart || !canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+
+        // Clear canvas
+        ctx.clearRect(0, 0, width, height);
+
+        // Draw background
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(0, 0, width, height);
+
+        // Get data within the range
+        const startIndex = annotation.data.startIndex;
+        const endIndex = annotation.data.endIndex;
+
+        if (!this.parsedData || startIndex >= this.parsedData.length) return;
+
+        // Extract data for this segment from all datasets
+        const segmentData = [];
+        this.chart.data.datasets.forEach((dataset, i) => {
+            const values = [];
+            for (let idx = startIndex; idx <= endIndex && idx < dataset.data.length; idx++) {
+                values.push(dataset.data[idx]);
+            }
+            if (values.length > 0) {
+                segmentData.push({
+                    values: values,
+                    color: dataset.borderColor
+                });
+            }
+        });
+
+        if (segmentData.length === 0) return;
+
+        // Find min/max for scaling
+        let minY = Infinity;
+        let maxY = -Infinity;
+        segmentData.forEach(series => {
+            series.values.forEach(val => {
+                if (typeof val === 'number') {
+                    minY = Math.min(minY, val);
+                    maxY = Math.max(maxY, val);
+                }
+            });
+        });
+
+        const padding = 5;
+        const chartHeight = height - padding * 2;
+        const chartWidth = width - padding * 2;
+        const range = maxY - minY || 1;
+
+        // Draw each dataset
+        segmentData.forEach(series => {
+            ctx.strokeStyle = series.color || color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            const stepX = chartWidth / (series.values.length - 1 || 1);
+
+            series.values.forEach((val, idx) => {
+                if (typeof val !== 'number') return;
+
+                const x = padding + idx * stepX;
+                const y = padding + chartHeight - ((val - minY) / range) * chartHeight;
+
+                if (idx === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+
+            ctx.stroke();
+        });
+
+        // Draw border
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(0, 0, width, height);
     }
 
     /**
@@ -823,6 +1211,10 @@ class TimeSeriesCanvasManager {
         if (this.chartContainer && this.chartContainer.parentNode) {
             this.chartContainer.parentNode.removeChild(this.chartContainer);
         }
+
+        // Clean up overlay
+        this.overlayCanvas = null;
+        this.overlayCtx = null;
 
         // Show original canvas again
         if (this.canvas) {
