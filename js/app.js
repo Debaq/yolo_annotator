@@ -398,8 +398,11 @@ class YOLOAnnotator {
     async loadProjects() {
         const projects = await this.db.getAllProjects();
         const selector = document.getElementById('projectSelector');
-        
+
         if (selector) {
+            // Store current selection
+            const currentProjectId = this.projectManager.currentProject?.id;
+
             selector.innerHTML = `<option value="">${window.i18n.t('header.selectProject')}</option>`;
             projects.forEach(project => {
                 const option = document.createElement('option');
@@ -407,16 +410,23 @@ class YOLOAnnotator {
                 option.textContent = project.name;
                 selector.appendChild(option);
             });
-            
-            selector.addEventListener('change', (e) => {
+
+            // Remove old event listeners by cloning
+            const newSelector = selector.cloneNode(true);
+            selector.parentNode.replaceChild(newSelector, selector);
+
+            // Add single event listener
+            newSelector.addEventListener('change', (e) => {
                 if (e.target.value) {
                     this.loadProject(parseInt(e.target.value));
                 }
             });
 
-            // Auto-select first project if exists and none selected
-            if (projects.length > 0 && !selector.value) {
-                selector.value = projects[0].id;
+            // Restore previous selection or auto-select first
+            if (currentProjectId && projects.find(p => p.id === currentProjectId)) {
+                newSelector.value = currentProjectId;
+            } else if (projects.length > 0 && !newSelector.value) {
+                newSelector.value = projects[0].id;
                 await this.loadProject(projects[0].id);
             }
         }
@@ -454,6 +464,9 @@ class YOLOAnnotator {
                     if (this.canvasManager.projectType !== project.type) {
                         this.canvasManager.destroy();
                         this.canvasManager = null;
+                    } else {
+                        // Same type, just clear the canvas for new project
+                        this.canvasManager.clearCanvas();
                     }
                 }
 
@@ -1218,10 +1231,16 @@ class YOLOAnnotator {
                                             if (this.canvasManager) {
                                                 this.canvasManager.clearCanvas();
                                             }
+                                            if (this.classificationManager && this.classificationManager.classificationUI) {
+                                                this.classificationManager.clear();
+                                            }
                                             // Clear gallery
                                             this.galleryManager.images = [];
                                             this.galleryManager.cleanupBlobUrls();
                                             this.galleryManager.render();
+                                            // Update UI
+                                            this.updateStats();
+                                            this.updateButtonStates();
                                         }
 
                                         await this.loadProjects();
