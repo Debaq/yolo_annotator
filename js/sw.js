@@ -7,26 +7,26 @@ const DYNAMIC_CACHE = 'annotix-dynamic-v1';
 
 // Files to cache immediately on install
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/css/variables.css',
-  '/css/base.css',
-  '/css/layout.css',
-  '/css/components.css',
-  '/css/canvas.css',
-  '/css/modals.css',
-  '/css/gallery.css',
-  '/css/responsive.css',
-  '/css/utilities.css',
-  '/js/app.js',
-  '/js/database-manager.js',
-  '/js/project-manager.js',
-  '/js/canvas-manager.js',
-  '/js/tool-manager.js',
-  '/js/gallery-manager.js',
-  '/js/ui-manager.js',
-  '/js/i18n.js',
-  '/manifest.json'
+  './',
+  './index.html',
+  './css/variables.css',
+  './css/base.css',
+  './css/layout.css',
+  './css/components.css',
+  './css/canvas.css',
+  './css/modals.css',
+  './css/gallery.css',
+  './css/responsive.css',
+  './css/utilities.css',
+  './js/app.js',
+  './js/database-manager.js',
+  './js/project-manager.js',
+  './js/canvas-manager.js',
+  './js/tool-manager.js',
+  './js/gallery-manager.js',
+  './js/ui-manager.js',
+  './js/i18n.js',
+  './manifest.json'
 ];
 
 // CDN resources (cache with network-first strategy)
@@ -146,7 +146,7 @@ self.addEventListener('fetch', (event) => {
             console.error('[SW] Fetch failed:', error);
 
             // Return offline page if available
-            return caches.match('/index.html');
+            return caches.match('./index.html');
           });
       })
   );
