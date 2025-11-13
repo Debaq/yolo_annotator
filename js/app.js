@@ -3637,7 +3637,7 @@ document.addEventListener('DOMContentLoaded', () => {
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', async () => {
         try {
-            const registration = await navigator.serviceWorker.register('./js/sw.js', {
+            const registration = await navigator.serviceWorker.register('./sw.js', {
                 scope: './'
             });
             console.log('[PWA] Service Worker registered successfully:', registration.scope);
