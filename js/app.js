@@ -4215,6 +4215,9 @@ class YOLOAnnotator {
             }
         ]);
 
+        // Update i18n for dynamically created content
+        window.i18n.updateDOM();
+
         // Setup event listeners for buttons in modal
         setTimeout(() => {
             document.getElementById('btnExportProjectTix')?.addEventListener('click', () => this.exportProjectTix());
