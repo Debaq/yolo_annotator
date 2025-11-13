@@ -92,6 +92,37 @@ class TrainingCodeGenerator {
         return typeToModality[projectType] || 'images';
     }
 
+    updateConfigUI() {
+        const projectType = this.projectManager.currentProject?.type || 'detection';
+        const modality = this.getProjectModality(projectType);
+
+        // Show/hide controls based on modality
+        const imageControls = document.querySelectorAll('.modality-images');
+        const timeSeriesControls = document.querySelectorAll('.modality-timeSeries');
+        const audioControls = document.querySelectorAll('.modality-audio');
+        const videoControls = document.querySelectorAll('.modality-video');
+
+        // Hide all first
+        imageControls.forEach(el => el.style.display = 'none');
+        timeSeriesControls.forEach(el => el.style.display = 'none');
+        audioControls.forEach(el => el.style.display = 'none');
+        videoControls.forEach(el => el.style.display = 'none');
+
+        // Show only relevant ones
+        if (modality === 'images') {
+            imageControls.forEach(el => el.style.display = '');
+        } else if (modality === 'timeSeries') {
+            timeSeriesControls.forEach(el => el.style.display = '');
+        } else if (modality === 'audio') {
+            audioControls.forEach(el => el.style.display = '');
+        } else if (modality === 'video') {
+            videoControls.forEach(el => el.style.display = '');
+        }
+
+        // Update frameworks after UI is updated
+        this.populateFrameworks();
+    }
+
     populateFrameworks() {
         const projectType = this.projectManager.currentProject?.type || 'detection';
         const modality = this.getProjectModality(projectType);
@@ -236,9 +267,14 @@ class TrainingCodeGenerator {
 
         let code = '';
 
+        // Read modality-specific parameters
+        const seqLength = document.getElementById('codeSeqLength')?.value || '50';
+        const forecastHorizon = document.getElementById('codeForecastHorizon')?.value || '10';
+        const hiddenSize = document.getElementById('codeHiddenSize')?.value || '128';
+
         // Route to appropriate code generator based on modality and framework
         if (modality === 'timeSeries') {
-            code = this._generateTimeSeriesCode(framework, projectName, projectType, device, numClasses, batch, epochs, lr, optimizer, saveMetricsCsv, savePlots);
+            code = this._generateTimeSeriesCode(framework, projectName, projectType, device, numClasses, batch, epochs, lr, optimizer, saveMetricsCsv, savePlots, seqLength, forecastHorizon, hiddenSize);
         } else if (modality === 'images') {
             // Existing image-based frameworks
             code = this._generateImageCode(framework, projectName, projectType, model, device, epochs, batch, imgsz, optimizer, lr, patience, valSplit, augMosaic, augMixup, augHsv, augFlip, augRotate, augScale, savePlots, saveConfMatrix, savePredictions, saveMetricsCsv, exportOnnx, exportTorchscript, exportTflite, exportOpenvino, exportCoreml, exportTensorrt, numClasses);
@@ -1166,7 +1202,7 @@ print(f"🏆 Mejor IoU: {best_iou:.4f}")
         }
     }
 
-    _generateTimeSeriesCode(framework, projectName, projectType, device, numClasses, batch, epochs, lr, optimizer, saveMetricsCsv, savePlots) {
+    _generateTimeSeriesCode(framework, projectName, projectType, device, numClasses, batch, epochs, lr, optimizer, saveMetricsCsv, savePlots, seqLength, forecastHorizon, hiddenSize) {
         const t = (key) => this.t(key);
         const projectTypeLabel = this.getProjectTypeLabel(projectType);
 
@@ -1211,8 +1247,9 @@ NUM_CLASSES = ${numClasses}
 BATCH_SIZE = ${batch}
 EPOCHS = ${epochs}
 LEARNING_RATE = ${lr}
-SEQUENCE_LENGTH = 50  # Ajustar según tus datos
-${isForecasting ? 'FORECAST_HORIZON = 10  # Pasos a predecir' : ''}
+HIDDEN_SIZE = ${hiddenSize}
+SEQUENCE_LENGTH = ${seqLength}
+${isForecasting ? `FORECAST_HORIZON = ${forecastHorizon}  # Pasos a predecir` : ''}
 
 print(f"Device: {DEVICE}")
 
@@ -1281,7 +1318,7 @@ test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 # ============================================
 
 class ${isClassification ? 'TimeSeriesClassifier' : isForecasting ? 'TimeSeriesForecaster' : 'TimeSeriesAnomalyDetector'}(nn.Module):
-    def __init__(self, input_size, hidden_size=128, num_layers=2${isClassification ? ', num_classes=' + numClasses : isForecasting ? ', forecast_horizon=' + 'FORECAST_HORIZON' : ''}):
+    def __init__(self, input_size, hidden_size, num_layers=2${isClassification ? ', num_classes=' + numClasses : isForecasting ? ', forecast_horizon=' + 'FORECAST_HORIZON' : ''}):
         super().__init__()
 
         # LSTM layers
@@ -1300,7 +1337,8 @@ class ${isClassification ? 'TimeSeriesClassifier' : isForecasting ? 'TimeSeriesF
         return out
 
 model = ${isClassification ? 'TimeSeriesClassifier' : isForecasting ? 'TimeSeriesForecaster' : 'TimeSeriesAnomalyDetector'}(
-    input_size=X_train.shape[2]${isClassification ? '' : isForecasting ? ', forecast_horizon=FORECAST_HORIZON' : ''}
+    input_size=X_train.shape[2],
+    hidden_size=HIDDEN_SIZE${isClassification ? '' : isForecasting ? ',\n    forecast_horizon=FORECAST_HORIZON' : ''}
 ).to(DEVICE)
 
 print(f"✅ ${t('export.code.template.modelLoaded')}")

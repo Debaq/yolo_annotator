@@ -3981,7 +3981,7 @@ class YOLOAnnotator {
                                         </label>
                                         <input type="number" class="form-control" id="codeBatch" value="16" min="1">
                                     </div>
-                                    <div class="config-item">
+                                    <div class="config-item modality-images">
                                         <label class="form-label">
                                             Tamaño Imagen
                                             <span class="help-icon" data-tippy-content="Resolución de las imágenes durante entrenamiento. Más grande = más detalle pero más lento.">
@@ -3993,6 +3993,35 @@ class YOLOAnnotator {
                                             <option value="640" selected>640</option>
                                             <option value="1280">1280</option>
                                         </select>
+                                    </div>
+                                    <div class="config-item modality-timeSeries" style="display: none;">
+                                        <label class="form-label">
+                                            Sequence Length
+                                            <span class="help-icon" data-tippy-content="Cantidad de pasos de tiempo a usar como entrada. Ej: usar 50 valores pasados para predecir el futuro.">
+                                                <i class="fas fa-question-circle"></i>
+                                            </span>
+                                        </label>
+                                        <input type="number" class="form-control" id="codeSeqLength" value="50" min="1">
+                                    </div>
+                                </div>
+                                <div class="config-row modality-timeSeries" style="display: none;">
+                                    <div class="config-item">
+                                        <label class="form-label">
+                                            Forecast Horizon
+                                            <span class="help-icon" data-tippy-content="Cuántos pasos futuros predecir (solo para forecasting). Ej: predecir los próximos 10 valores.">
+                                                <i class="fas fa-question-circle"></i>
+                                            </span>
+                                        </label>
+                                        <input type="number" class="form-control" id="codeForecastHorizon" value="10" min="1">
+                                    </div>
+                                    <div class="config-item">
+                                        <label class="form-label">
+                                            Hidden Size
+                                            <span class="help-icon" data-tippy-content="Tamaño de la capa oculta de la red neuronal (LSTM). Más grande = más capacidad pero más lento.">
+                                                <i class="fas fa-question-circle"></i>
+                                            </span>
+                                        </label>
+                                        <input type="number" class="form-control" id="codeHiddenSize" value="128" min="16" step="16">
                                     </div>
                                 </div>
 
@@ -4055,8 +4084,8 @@ class YOLOAnnotator {
                                             </div>
                                         </div>
 
-                                        <!-- Data Augmentation -->
-                                        <div class="config-section">
+                                        <!-- Data Augmentation (Images only) -->
+                                        <div class="config-section modality-images">
                                             <h5 class="config-section-title">
                                                 <i class="fas fa-magic"></i> Data Augmentation
                                                 <span class="help-icon" data-tippy-content="Técnicas para crear variaciones de tus imágenes y evitar que el modelo memorice. Ayuda a generalizar mejor.">
@@ -4226,7 +4255,7 @@ class YOLOAnnotator {
                         // Expand modal to full screen mode
                         if (modal) modal.classList.add('code-mode');
 
-                        this.trainingCodeGenerator.populateFrameworks();
+                        this.trainingCodeGenerator.updateConfigUI();
                         this.trainingCodeGenerator.generateTrainingCode();
                     } else {
                         // Show project card and restore normal width
@@ -4253,7 +4282,8 @@ class YOLOAnnotator {
             });
 
             // Code generation controls - basic
-            ['codeFramework', 'codeModel', 'codeDevice', 'codeEpochs', 'codeBatch', 'codeImgsz'].forEach(id => {
+            ['codeFramework', 'codeModel', 'codeDevice', 'codeEpochs', 'codeBatch', 'codeImgsz',
+             'codeSeqLength', 'codeForecastHorizon', 'codeHiddenSize'].forEach(id => {
                 document.getElementById(id)?.addEventListener('change', () => this.trainingCodeGenerator.generateTrainingCode());
                 document.getElementById(id)?.addEventListener('input', () => this.trainingCodeGenerator.generateTrainingCode());
             });
