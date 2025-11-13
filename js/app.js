@@ -684,42 +684,30 @@ class YOLOAnnotator {
         const preprocessor = new ImagePreprocessor();
         const sizeOptions = preprocessor.standardSizes;
 
-        // Define project types with their internal IDs, icons and colors
-        const projectTypes = [
-            { id: 'classification', key: 'classification', icon: 'fa-tag', color: '#667eea' },
-            { id: 'multiLabel', key: 'multiLabel', icon: 'fa-tags', color: '#9333ea' },
-            { id: 'detection', key: 'detection', icon: 'fa-vector-square', color: '#10b981' },
-            { id: 'segmentation', key: 'segmentation', icon: 'fa-fill-drip', color: '#f59e0b' },
-            { id: 'instanceSeg', key: 'instanceSeg', icon: 'fa-object-group', color: '#ef4444' },
-            { id: 'keypoints', key: 'keypoints', icon: 'fa-braille', color: '#06b6d4' },
-            { id: 'polygon', key: 'polygon', icon: 'fa-draw-polygon', color: '#8b5cf6' },
-            { id: 'landmarks', key: 'landmarks', icon: 'fa-location-dot', color: '#ec4899' },
-            { id: 'obb', key: 'obb', icon: 'fa-rotate', color: '#6366f1' }
-        ];
+        // Helper function to render project types for a given modality
+        const renderProjectTypes = (modalityKey) => {
+            const modality = PROJECT_TYPES_CONFIG[modalityKey];
+            if (!modality) return '<p>No hay tipos de proyecto disponibles para esta modalidad.</p>';
 
-        const content = `
-            <div class="form-group">
-                <label class="form-label">${window.i18n.t('project.name')}</label>
-                <input type="text" id="projectName" class="form-control" placeholder="${window.i18n.t('project.namePlaceholder')}">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">${window.i18n.t('project.type')}</label>
+            return `
                 <div class="project-type-grid">
-                    ${projectTypes.map(type => {
-                        const name = window.i18n.t(`project.types.${type.key}.name`);
-                        const description = window.i18n.t(`project.types.${type.key}.description`);
-                        const difficulty = window.i18n.t(`project.types.${type.key}.difficulty`);
-                        const useCases = window.i18n.t(`project.types.${type.key}.useCases`);
-                        const models = window.i18n.t(`project.types.${type.key}.models`);
+                    ${modality.types.map((type, index) => {
+                        const name = window.i18n.t(`project.types.${type.key}.name`) || type.key;
+                        const description = window.i18n.t(`project.types.${type.key}.description`) || 'Descripción pendiente';
+                        const difficulty = window.i18n.t(`project.types.${type.key}.difficulty`) || 'Intermedio';
+                        const useCases = window.i18n.t(`project.types.${type.key}.useCases`) || 'Casos de uso pendientes';
+                        const models = window.i18n.t(`project.types.${type.key}.models`) || 'Modelos pendientes';
 
                         const difficultyColor =
                             difficulty === 'Principiante' || difficulty === 'Beginner' ? '#10b981' :
                             difficulty === 'Intermedio' || difficulty === 'Intermediate' ? '#f59e0b' : '#ef4444';
 
+                        // Auto-select first type of images (detection for backwards compatibility)
+                        const isChecked = modalityKey === 'images' && type.id === 'detection';
+
                         return `
                             <label class="project-type-card-compact" data-type-color="${type.color}">
-                                <input type="radio" name="projectType" value="${type.id}" ${type.id === 'detection' ? 'checked' : ''}>
+                                <input type="radio" name="projectType" value="${type.id}" ${isChecked ? 'checked' : ''}>
                                 <div class="type-card-icon" style="color: ${type.color};">
                                     <i class="fas ${type.icon}"></i>
                                 </div>
@@ -744,15 +732,87 @@ class YOLOAnnotator {
                         `;
                     }).join('')}
                 </div>
+            `;
+        };
+
+        const content = `
+            <!-- Project Name -->
+            <div class="form-group">
+                <label class="form-label">${window.i18n.t('project.name')}</label>
+                <input type="text" id="projectName" class="form-control" placeholder="${window.i18n.t('project.namePlaceholder')}">
             </div>
 
+            <!-- Modality Tabs -->
+            <div class="form-group">
+                <label class="form-label">${window.i18n.t('project.modality') || 'Modalidad'}</label>
+                <div class="modality-tabs">
+                    <button type="button" class="modality-tab active" data-modality="images">
+                        <i class="fas fa-image"></i>
+                        <span>Imágenes</span>
+                    </button>
+                    <button type="button" class="modality-tab" data-modality="audio">
+                        <i class="fas fa-microphone"></i>
+                        <span>Audio</span>
+                    </button>
+                    <button type="button" class="modality-tab" data-modality="video">
+                        <i class="fas fa-video"></i>
+                        <span>Video</span>
+                    </button>
+                    <button type="button" class="modality-tab" data-modality="timeSeries">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Series Temporales</span>
+                    </button>
+                    <button type="button" class="modality-tab" data-modality="threeD">
+                        <i class="fas fa-cube"></i>
+                        <span>3D</span>
+                    </button>
+                    <button type="button" class="modality-tab" data-modality="text">
+                        <i class="fas fa-align-left"></i>
+                        <span>Texto</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Project Type Selection (Dynamic Content) -->
+            <div class="form-group">
+                <label class="form-label">${window.i18n.t('project.type')}</label>
+                <div id="modalityContent">
+                    <!-- Images tab (default) -->
+                    <div class="modality-content active" data-content="images">
+                        ${renderProjectTypes('images')}
+                    </div>
+                    <!-- Audio tab -->
+                    <div class="modality-content" data-content="audio">
+                        ${renderProjectTypes('audio')}
+                    </div>
+                    <!-- Video tab -->
+                    <div class="modality-content" data-content="video">
+                        ${renderProjectTypes('video')}
+                    </div>
+                    <!-- Time Series tab -->
+                    <div class="modality-content" data-content="timeSeries">
+                        ${renderProjectTypes('timeSeries')}
+                    </div>
+                    <!-- 3D tab -->
+                    <div class="modality-content" data-content="threeD">
+                        ${renderProjectTypes('threeD')}
+                    </div>
+                    <!-- Text tab -->
+                    <div class="modality-content" data-content="text">
+                        ${renderProjectTypes('text')}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Initial Classes -->
             <div class="form-group">
                 <label class="form-label">${window.i18n.t('project.initialClasses')}</label>
                 <input type="text" id="projectClasses" class="form-control" placeholder="${window.i18n.t('project.classesPlaceholder')}">
                 <small class="text-muted">${window.i18n.t('project.classesHelp')}</small>
             </div>
 
-            <div class="form-group">
+            <!-- Image Dimensions (Only for image projects) -->
+            <div class="form-group" id="imageDimensionsGroup">
                 <label class="form-label">${window.i18n.t('project.imageDimensions')}</label>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <label class="dimension-mode-option">
@@ -793,6 +853,7 @@ class YOLOAnnotator {
             </div>
         `;
 
+        // Create modal with header buttons inline
         this.ui.showModal(window.i18n.t('project.new'), content, [
             {
                 text: window.i18n.t('actions.cancel'),
@@ -807,13 +868,20 @@ class YOLOAnnotator {
                 action: 'create',
                 handler: async (modal, close) => {
                     const name = modal.querySelector('#projectName').value.trim();
-                    const type = modal.querySelector('input[name="projectType"]:checked').value;
-                    const classesText = modal.querySelector('#projectClasses').value.trim();
+                    const typeInput = modal.querySelector('input[name="projectType"]:checked');
 
                     if (!name) {
                         this.ui.showToast(window.i18n.t('project.enterName'), 'warning');
                         return;
                     }
+
+                    if (!typeInput) {
+                        this.ui.showToast('Por favor selecciona un tipo de proyecto', 'warning');
+                        return;
+                    }
+
+                    const type = typeInput.value;
+                    const classesText = modal.querySelector('#projectClasses').value.trim();
 
                     const classes = classesText ?
                         classesText.split(',').map((c, i) => ({
@@ -822,15 +890,20 @@ class YOLOAnnotator {
                             color: Utils.randomColor()
                         })) : [];
 
-                    // Get image dimension configuration
-                    const dimensionMode = modal.querySelector('input[name="dimensionMode"]:checked').value;
-                    const preprocessingConfig = dimensionMode === 'fixed' ? {
-                        enabled: true,
-                        targetSize: parseInt(modal.querySelector('#projectTargetSize').value),
-                        strategy: modal.querySelector('#projectStrategy').value
-                    } : {
-                        enabled: false
-                    };
+                    // Get image dimension configuration (only for image projects)
+                    const activeModality = modal.querySelector('.modality-tab.active')?.dataset.modality;
+                    let preprocessingConfig = { enabled: false };
+
+                    if (activeModality === 'images') {
+                        const dimensionMode = modal.querySelector('input[name="dimensionMode"]:checked')?.value || 'auto';
+                        preprocessingConfig = dimensionMode === 'fixed' ? {
+                            enabled: true,
+                            targetSize: parseInt(modal.querySelector('#projectTargetSize').value),
+                            strategy: modal.querySelector('#projectStrategy').value
+                        } : {
+                            enabled: false
+                        };
+                    }
 
                     const project = await this.projectManager.createProject(name, type, classes, preprocessingConfig);
                     await this.loadProjects();
@@ -848,99 +921,151 @@ class YOLOAnnotator {
             }
         ]);
 
-        // Add event listener to toggle fixed dimensions options
+        // Setup modal interactions
         setTimeout(() => {
             const modal = document.querySelector('.modal');
-            if (modal) {
-                const radioButtons = modal.querySelectorAll('input[name="dimensionMode"]');
-                const fixedOptions = modal.querySelector('#fixedDimensionsOptions');
+            if (!modal) return;
 
-                radioButtons.forEach(radio => {
-                    radio.addEventListener('change', (e) => {
-                        if (fixedOptions) {
-                            fixedOptions.style.display = e.target.value === 'fixed' ? 'block' : 'none';
-                        }
-                    });
+            // Move buttons to header (inline with title)
+            const modalHeader = modal.querySelector('.modal-header');
+            const modalFooter = modal.querySelector('.modal-footer');
+            if (modalHeader && modalFooter) {
+                modalHeader.style.display = 'flex';
+                modalHeader.style.justifyContent = 'space-between';
+                modalHeader.style.alignItems = 'center';
+
+                const buttonsContainer = document.createElement('div');
+                buttonsContainer.className = 'modal-header-buttons';
+                buttonsContainer.style.display = 'flex';
+                buttonsContainer.style.gap = '8px';
+
+                // Move buttons from footer to header
+                const buttons = modalFooter.querySelectorAll('.btn');
+                buttons.forEach(btn => {
+                    buttonsContainer.appendChild(btn);
                 });
 
-                // Add event listeners for project type info buttons
-                const infoButtons = modal.querySelectorAll('.project-type-info-btn');
-                let activeTooltip = null;
+                // Insert before close button
+                const closeButton = modalHeader.querySelector('.modal-close');
+                modalHeader.insertBefore(buttonsContainer, closeButton);
 
-                infoButtons.forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-
-                        // Remove existing tooltip if any
-                        if (activeTooltip) {
-                            activeTooltip.remove();
-                            if (activeTooltip.dataset.btnId === btn.dataset.typeKey) {
-                                activeTooltip = null;
-                                return;
-                            }
-                        }
-
-                        // Create tooltip
-                        const tooltip = document.createElement('div');
-                        tooltip.className = 'project-type-tooltip';
-                        tooltip.dataset.btnId = btn.dataset.typeKey;
-
-                        const difficultyBgColor = btn.dataset.difficultyColor;
-
-                        tooltip.innerHTML = `
-                            <h4>${btn.dataset.name}</h4>
-                            <div class="project-type-tooltip-section">
-                                <span class="project-type-tooltip-label">${window.i18n.t('project.types.useCasesLabel') || 'Casos de uso'}:</span>
-                                <div class="project-type-tooltip-content">${btn.dataset.useCases}</div>
-                            </div>
-                            <div class="project-type-tooltip-section">
-                                <span class="project-type-tooltip-label">${window.i18n.t('project.types.modelsLabel') || 'Modelos'}:</span>
-                                <div class="project-type-tooltip-content">${btn.dataset.models}</div>
-                            </div>
-                            <div class="project-type-tooltip-section">
-                                <span class="project-type-tooltip-label">${window.i18n.t('project.types.difficultyLabel') || 'Dificultad'}:</span>
-                                <span class="project-type-tooltip-difficulty" style="background: ${difficultyBgColor}; color: white;">${btn.dataset.difficulty}</span>
-                            </div>
-                        `;
-
-                        document.body.appendChild(tooltip);
-
-                        // Position tooltip near the button
-                        const btnRect = btn.getBoundingClientRect();
-                        const tooltipRect = tooltip.getBoundingClientRect();
-
-                        let left = btnRect.right + 10;
-                        let top = btnRect.top;
-
-                        // Adjust if tooltip goes off screen
-                        if (left + tooltipRect.width > window.innerWidth) {
-                            left = btnRect.left - tooltipRect.width - 10;
-                        }
-                        if (top + tooltipRect.height > window.innerHeight) {
-                            top = window.innerHeight - tooltipRect.height - 10;
-                        }
-
-                        tooltip.style.left = left + 'px';
-                        tooltip.style.top = top + 'px';
-
-                        activeTooltip = tooltip;
-
-                        // Close tooltip when clicking outside
-                        const closeTooltip = (event) => {
-                            if (!tooltip.contains(event.target) && event.target !== btn) {
-                                tooltip.remove();
-                                activeTooltip = null;
-                                document.removeEventListener('click', closeTooltip);
-                            }
-                        };
-
-                        setTimeout(() => {
-                            document.addEventListener('click', closeTooltip);
-                        }, 10);
-                    });
-                });
+                // Hide footer
+                modalFooter.style.display = 'none';
             }
+
+            // Tab switching functionality
+            const tabs = modal.querySelectorAll('.modality-tab');
+            const contents = modal.querySelectorAll('.modality-content');
+            const imageDimensionsGroup = modal.querySelector('#imageDimensionsGroup');
+            const fixedDimensionsOptions = modal.querySelector('#fixedDimensionsOptions');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const modalityKey = tab.dataset.modality;
+
+                    // Update active tab
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    // Update active content
+                    contents.forEach(c => c.classList.remove('active'));
+                    const targetContent = modal.querySelector(`.modality-content[data-content="${modalityKey}"]`);
+                    if (targetContent) {
+                        targetContent.classList.add('active');
+                    }
+
+                    // Show/hide image dimensions options based on modality
+                    if (imageDimensionsGroup) {
+                        imageDimensionsGroup.style.display = modalityKey === 'images' ? 'block' : 'none';
+                    }
+                    if (fixedDimensionsOptions && modalityKey !== 'images') {
+                        fixedDimensionsOptions.style.display = 'none';
+                    }
+                });
+            });
+
+            // Toggle fixed dimensions options
+            const radioButtons = modal.querySelectorAll('input[name="dimensionMode"]');
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    if (fixedDimensionsOptions) {
+                        fixedDimensionsOptions.style.display = e.target.value === 'fixed' ? 'block' : 'none';
+                    }
+                });
+            });
+
+            // Info buttons tooltips
+            const infoButtons = modal.querySelectorAll('.project-type-info-btn');
+            let activeTooltip = null;
+
+            infoButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    if (activeTooltip) {
+                        activeTooltip.remove();
+                        if (activeTooltip.dataset.btnId === btn.dataset.typeKey) {
+                            activeTooltip = null;
+                            return;
+                        }
+                    }
+
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'project-type-tooltip';
+                    tooltip.dataset.btnId = btn.dataset.typeKey;
+
+                    const difficultyBgColor = btn.dataset.difficultyColor;
+
+                    tooltip.innerHTML = `
+                        <h4>${btn.dataset.name}</h4>
+                        <div class="project-type-tooltip-section">
+                            <span class="project-type-tooltip-label">${window.i18n.t('project.types.useCasesLabel') || 'Casos de uso'}:</span>
+                            <div class="project-type-tooltip-content">${btn.dataset.useCases}</div>
+                        </div>
+                        <div class="project-type-tooltip-section">
+                            <span class="project-type-tooltip-label">${window.i18n.t('project.types.modelsLabel') || 'Modelos'}:</span>
+                            <div class="project-type-tooltip-content">${btn.dataset.models}</div>
+                        </div>
+                        <div class="project-type-tooltip-section">
+                            <span class="project-type-tooltip-label">${window.i18n.t('project.types.difficultyLabel') || 'Dificultad'}:</span>
+                            <span class="project-type-tooltip-difficulty" style="background: ${difficultyBgColor}; color: white;">${btn.dataset.difficulty}</span>
+                        </div>
+                    `;
+
+                    document.body.appendChild(tooltip);
+
+                    const btnRect = btn.getBoundingClientRect();
+                    const tooltipRect = tooltip.getBoundingClientRect();
+
+                    let left = btnRect.right + 10;
+                    let top = btnRect.top;
+
+                    if (left + tooltipRect.width > window.innerWidth) {
+                        left = btnRect.left - tooltipRect.width - 10;
+                    }
+                    if (top + tooltipRect.height > window.innerHeight) {
+                        top = window.innerHeight - tooltipRect.height - 10;
+                    }
+
+                    tooltip.style.left = left + 'px';
+                    tooltip.style.top = top + 'px';
+
+                    activeTooltip = tooltip;
+
+                    const closeTooltip = (event) => {
+                        if (!tooltip.contains(event.target) && event.target !== btn) {
+                            tooltip.remove();
+                            activeTooltip = null;
+                            document.removeEventListener('click', closeTooltip);
+                        }
+                    };
+
+                    setTimeout(() => {
+                        document.addEventListener('click', closeTooltip);
+                    }, 10);
+                });
+            });
         }, 100);
     }
 
