@@ -612,6 +612,9 @@ class CanvasBase {
         this.ctx.setTransform(1, 0, 0, 1, 0, 0);
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.restore();
+
+        // Update annotations bar to clear the list
+        this.updateAnnotationsBar();
     }
 
     // ============================================
@@ -884,5 +887,16 @@ class CanvasBase {
         this.canvas.removeEventListener('mouseup', this.handleMouseUp);
         this.canvas.removeEventListener('mouseleave', this.handleMouseLeave);
         this.canvas.removeEventListener('wheel', this.handleWheel);
+
+        // Clear annotations bar when destroying canvas
+        const annotationsList = document.getElementById('annotationsList');
+        if (annotationsList) {
+            annotationsList.innerHTML = '<div class="empty-annotations">Sin anotaciones</div>';
+        }
+
+        const annotationsBar = document.getElementById('annotationsBar');
+        if (annotationsBar) {
+            annotationsBar.classList.add('collapsed');
+        }
     }
 }
