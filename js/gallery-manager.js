@@ -96,7 +96,10 @@ class GalleryManager {
             if (currentImageId && imageData.id === currentImageId) {
                 item.classList.add('active');
             }
-            
+
+            // Use displayName or originalFileName for showing to user, fallback to name (code)
+            const displayName = imageData.displayName || imageData.originalFileName || imageData.name;
+
             // Detect if this is a time series (CSV)
             const isTimeSeries = imageData.mimeType === 'text/csv' || imageData.timeSeriesMetadata;
             let imageContent;
@@ -141,9 +144,6 @@ class GalleryManager {
                 // For detection/segmentation projects, show annotation count
                 overlayContent = `<span>${annotationCount} labels</span>`;
             }
-
-            // Use displayName or originalFileName for showing to user, fallback to name (code)
-            const displayName = imageData.displayName || imageData.originalFileName || imageData.name;
 
             item.innerHTML = `
                 ${imageContent}
