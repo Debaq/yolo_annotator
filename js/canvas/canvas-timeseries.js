@@ -54,6 +54,10 @@ class TimeSeriesCanvasManager {
         this.previewX = null;
         this.previewY = null;
 
+        // Edit state
+        this.editingHandle = null;  // Which handle is being dragged ('start', 'end', 'delete')
+        this.isDraggingHandle = false;
+
         this.setupCanvas();
     }
 
@@ -459,7 +463,28 @@ class TimeSeriesCanvasManager {
             this.tempRangeStart = this.getXValue(x);
             this.isDrawing = true;
         } else if (this.currentTool === 'select') {
-            this.selectAnnotation(x, y);
+            // Check if clicking on a handle first
+            const handle = this.getHandleAtPosition(x, y);
+            if (handle) {
+                if (handle.type === 'delete') {
+                    // Delete the annotation
+                    const annIndex = this.annotations.indexOf(this.selectedAnnotation);
+                    if (annIndex > -1) {
+                        this.annotations.splice(annIndex, 1);
+                        this.selectedAnnotation = null;
+                        this.updateAnnotations();
+                        this.updateAnnotationsBar();
+                        this.onAnnotationsChanged();
+                    }
+                } else {
+                    // Start dragging handle
+                    this.editingHandle = handle.type;
+                    this.isDraggingHandle = true;
+                }
+            } else {
+                // Try to select an annotation
+                this.selectAnnotationAt(x, y);
+            }
         }
     }
 
@@ -475,6 +500,12 @@ class TimeSeriesCanvasManager {
         this.previewX = x;
         this.previewY = y;
 
+        // Handle dragging in select mode
+        if (this.currentTool === 'select' && this.isDraggingHandle && this.selectedAnnotation) {
+            this.dragHandle(x);
+            return;
+        }
+
         // Draw preview based on tool and state
         if (this.currentTool === 'point' && !this.isDrawing) {
             this.drawPointPreview(x, y);
@@ -484,6 +515,9 @@ class TimeSeriesCanvasManager {
             } else {
                 this.drawVerticalLinePreview(x);
             }
+        } else if (this.currentTool === 'select') {
+            // Draw selection handles if an annotation is selected
+            this.drawSelectionHandles();
         } else {
             this.clearPreview();
         }
@@ -493,6 +527,14 @@ class TimeSeriesCanvasManager {
      * Mouse up handler
      */
     onMouseUp(e) {
+        // Handle end of dragging
+        if (this.isDraggingHandle) {
+            this.isDraggingHandle = false;
+            this.editingHandle = null;
+            this.onAnnotationsChanged();
+            return;
+        }
+
         if (!this.isDrawing) return;
 
         const rect = this.chartCanvas.getBoundingClientRect();
@@ -649,6 +691,169 @@ class TimeSeriesCanvasManager {
     }
 
     /**
+     * Select annotation at coordinates
+     */
+    selectAnnotationAt(x, y) {
+        if (!this.chart) return;
+
+        const xValue = this.getXValue(x);
+        if (xValue === null) return;
+
+        // Find range annotation that contains this x value
+        const rangeAnnotations = this.annotations.filter(ann => ann.type === 'range');
+
+        for (const ann of rangeAnnotations) {
+            if (xValue >= ann.data.start && xValue <= ann.data.end) {
+                this.selectedAnnotation = ann;
+                this.updateAnnotations();
+                this.updateAnnotationsBar();
+                return;
+            }
+        }
+
+        // If no annotation found, deselect
+        if (this.selectedAnnotation) {
+            this.selectedAnnotation = null;
+            this.updateAnnotations();
+            this.updateAnnotationsBar();
+        }
+    }
+
+    /**
+     * Get handle at position (for editing)
+     */
+    getHandleAtPosition(x, y) {
+        if (!this.selectedAnnotation || this.selectedAnnotation.type !== 'range' || !this.chart) {
+            return null;
+        }
+
+        const xScale = this.chart.scales.x;
+        const chartArea = this.chart.chartArea;
+
+        const startPixel = xScale.getPixelForValue(this.selectedAnnotation.data.start);
+        const endPixel = xScale.getPixelForValue(this.selectedAnnotation.data.end);
+
+        const handleSize = 10;
+
+        // Check delete button (top center)
+        const centerX = (startPixel + endPixel) / 2;
+        const deleteY = chartArea.top + 20;
+        if (Math.abs(x - centerX) < handleSize && Math.abs(y - deleteY) < handleSize) {
+            return { type: 'delete' };
+        }
+
+        // Check start handle
+        if (Math.abs(x - startPixel) < handleSize && y >= chartArea.top && y <= chartArea.bottom) {
+            return { type: 'start' };
+        }
+
+        // Check end handle
+        if (Math.abs(x - endPixel) < handleSize && y >= chartArea.top && y <= chartArea.bottom) {
+            return { type: 'end' };
+        }
+
+        return null;
+    }
+
+    /**
+     * Drag handle to resize annotation
+     */
+    dragHandle(x) {
+        if (!this.selectedAnnotation || !this.editingHandle || !this.chart) return;
+
+        const xValue = this.getXValue(x);
+        if (xValue === null) return;
+
+        const chartArea = this.chart.chartArea;
+        const xScale = this.chart.scales.x;
+
+        // Clamp x to chart area
+        const clampedX = Math.max(chartArea.left, Math.min(chartArea.right, x));
+        const clampedValue = xScale.getValueForPixel(clampedX);
+
+        if (this.editingHandle === 'start') {
+            // Don't allow start to go past end
+            if (clampedValue < this.selectedAnnotation.data.end) {
+                this.selectedAnnotation.data.start = clampedValue;
+                this.selectedAnnotation.data.startIndex = this.getClosestDataIndex(clampedValue);
+            }
+        } else if (this.editingHandle === 'end') {
+            // Don't allow end to go before start
+            if (clampedValue > this.selectedAnnotation.data.start) {
+                this.selectedAnnotation.data.end = clampedValue;
+                this.selectedAnnotation.data.endIndex = this.getClosestDataIndex(clampedValue);
+            }
+        }
+
+        // Update display
+        this.updateAnnotations();
+        this.updateAnnotationsBar();
+        this.drawSelectionHandles();
+    }
+
+    /**
+     * Draw selection handles for editing
+     */
+    drawSelectionHandles() {
+        if (!this.selectedAnnotation || this.selectedAnnotation.type !== 'range' || !this.chart) {
+            this.clearPreview();
+            return;
+        }
+
+        this.updateOverlaySize();
+        this.clearPreview();
+
+        const xScale = this.chart.scales.x;
+        const chartArea = this.chart.chartArea;
+
+        const startPixel = xScale.getPixelForValue(this.selectedAnnotation.data.start);
+        const endPixel = xScale.getPixelForValue(this.selectedAnnotation.data.end);
+        const color = this.getClassColor(this.selectedAnnotation.class);
+
+        const handleSize = 10;
+        const handleColor = color;
+
+        // Draw start handle
+        this.overlayCtx.fillStyle = handleColor;
+        this.overlayCtx.strokeStyle = '#ffffff';
+        this.overlayCtx.lineWidth = 2;
+        this.overlayCtx.beginPath();
+        this.overlayCtx.arc(startPixel, (chartArea.top + chartArea.bottom) / 2, handleSize, 0, Math.PI * 2);
+        this.overlayCtx.fill();
+        this.overlayCtx.stroke();
+
+        // Draw end handle
+        this.overlayCtx.beginPath();
+        this.overlayCtx.arc(endPixel, (chartArea.top + chartArea.bottom) / 2, handleSize, 0, Math.PI * 2);
+        this.overlayCtx.fill();
+        this.overlayCtx.stroke();
+
+        // Draw delete button (X) at top center
+        const centerX = (startPixel + endPixel) / 2;
+        const deleteY = chartArea.top + 20;
+        const deleteSize = 16;
+
+        // Background circle
+        this.overlayCtx.fillStyle = '#e74c3c';
+        this.overlayCtx.beginPath();
+        this.overlayCtx.arc(centerX, deleteY, deleteSize, 0, Math.PI * 2);
+        this.overlayCtx.fill();
+        this.overlayCtx.stroke();
+
+        // X mark
+        this.overlayCtx.strokeStyle = '#ffffff';
+        this.overlayCtx.lineWidth = 3;
+        this.overlayCtx.lineCap = 'round';
+        const offset = 6;
+        this.overlayCtx.beginPath();
+        this.overlayCtx.moveTo(centerX - offset, deleteY - offset);
+        this.overlayCtx.lineTo(centerX + offset, deleteY + offset);
+        this.overlayCtx.moveTo(centerX + offset, deleteY - offset);
+        this.overlayCtx.lineTo(centerX - offset, deleteY + offset);
+        this.overlayCtx.stroke();
+    }
+
+    /**
      * Update overlay canvas size to match chart canvas
      */
     updateOverlaySize() {
@@ -787,15 +992,6 @@ class TimeSeriesCanvasManager {
     }
 
     /**
-     * Select annotation at coordinates
-     */
-    selectAnnotation(x, y) {
-        // Find annotation at click position
-        // For now, just clear selection
-        this.activeAnnotation = null;
-    }
-
-    /**
      * Delete selected annotation
      */
     deleteSelectedAnnotation() {
@@ -823,6 +1019,16 @@ class TimeSeriesCanvasManager {
         this.isDrawing = false;
         this.startX = null;
         this.tempRangeStart = null;
+        this.isDraggingHandle = false;
+        this.editingHandle = null;
+
+        // Clear selection when switching away from select tool
+        if (tool !== 'select' && this.selectedAnnotation) {
+            this.selectedAnnotation = null;
+            this.updateAnnotations();
+            this.updateAnnotationsBar();
+        }
+
         this.clearPreview();
     }
 
@@ -990,8 +1196,8 @@ class TimeSeriesCanvasManager {
         // Clear canvas
         ctx.clearRect(0, 0, width, height);
 
-        // Draw background
-        ctx.fillStyle = '#1a1a1a';
+        // Draw background (lighter color)
+        ctx.fillStyle = '#2a2a2a';
         ctx.fillRect(0, 0, width, height);
 
         // Get data within the range
@@ -1029,15 +1235,17 @@ class TimeSeriesCanvasManager {
             });
         });
 
-        const padding = 5;
+        const padding = 8;
         const chartHeight = height - padding * 2;
         const chartWidth = width - padding * 2;
         const range = maxY - minY || 1;
 
-        // Draw each dataset
+        // Draw each dataset with thicker lines
         segmentData.forEach(series => {
             ctx.strokeStyle = series.color || color;
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 2.5;  // Thicker lines for better visibility
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
             ctx.beginPath();
 
             const stepX = chartWidth / (series.values.length - 1 || 1);
