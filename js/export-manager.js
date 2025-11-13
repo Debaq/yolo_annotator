@@ -26,16 +26,28 @@ class ExportManager {
                 case 'yolo':
                     if (project.type === 'bbox' || project.type === 'detection') {
                         await this.exportYOLODetection(project, images);
+                    } else if (project.type === 'landmarks') {
+                        await this.exportYOLOLandmarks(project, images);
                     } else {
-                        this.ui.showToast('YOLO Detection solo para proyectos bbox', 'error');
+                        this.ui.showToast('YOLO Detection solo para proyectos bbox/landmarks', 'error');
                     }
                     break;
 
                 case 'yoloSeg':
                     if (project.type === 'mask' || project.type === 'segmentation') {
                         await this.exportYOLOSegmentation(project, images);
+                    } else if (project.type === 'polygon') {
+                        await this.exportYOLOPolygon(project, images);
                     } else {
-                        this.ui.showToast('YOLO Segmentation solo para proyectos mask', 'error');
+                        this.ui.showToast('YOLO Segmentation solo para proyectos mask/polygon', 'error');
+                    }
+                    break;
+
+                case 'yoloPose':
+                    if (project.type === 'keypoints') {
+                        await this.exportYOLOPose(project, images);
+                    } else {
+                        this.ui.showToast('YOLO Pose solo para proyectos keypoints', 'error');
                     }
                     break;
 
@@ -44,6 +56,10 @@ class ExportManager {
                         await this.exportCOCODetection(project, images);
                     } else if (project.type === 'mask' || project.type === 'segmentation') {
                         await this.exportCOCOSegmentation(project, images);
+                    } else if (project.type === 'polygon') {
+                        await this.exportCOCOPolygon(project, images);
+                    } else if (project.type === 'keypoints') {
+                        await this.exportCOCOKeypoints(project, images);
                     }
                     break;
 
@@ -66,6 +82,8 @@ class ExportManager {
                 case 'csv':
                     if (project.type === 'classification') {
                         await this.exportClassificationCSV(project, images);
+                    } else if (project.type === 'landmarks') {
+                        await this.exportLandmarksCSV(project, images);
                     } else {
                         await this.exportGenericCSV(project, images);
                     }
@@ -902,3 +920,480 @@ names: [${classNames.map(n => `'${n}'`).join(', ')}]
         URL.revokeObjectURL(url);
     }
 }
+
+    // =============================================
+    // POLYGON EXPORT (YOLO Segmentation Format)
+    // =============================================
+
+    async exportYOLOPolygon(project, images) {
+        console.log(`=== YOLO Polygon Export ===`);
+        const zip = new JSZip();
+
+        // Create data.yaml
+        const yamlContent = this.generateYOLODataYaml(project, 'segmentation');
+        zip.file('data.yaml', yamlContent);
+
+        // Create classes.txt
+        const classesContent = project.classes.map(c => c.name).join('\n');
+        zip.file('classes.txt', classesContent);
+
+        // Process each image
+        for (const img of images) {
+            const imageFilename = this.getImageFilename(img);
+            zip.file(`images/${imageFilename}`, img.image);
+
+            // Generate label file with polygons
+            const labelContent = this.generateYOLOPolygonLabels(img);
+            const labelFilename = imageFilename.replace(/\.[^.]+$/, '.txt');
+            zip.file(`labels/${labelFilename}`, labelContent || '');
+        }
+
+        const blob = await zip.generateAsync({ type: 'blob' });
+        this.downloadFile(blob, `${project.name}_yolo_polygon.zip`);
+
+        const imagesWithAnnotations = images.filter(img => img.annotations && img.annotations.length > 0);
+        this.ui.showToast(`✓ Exported: ${images.length} images (${imagesWithAnnotations.length} with polygons)`, 'success');
+    }
+
+    generateYOLOPolygonLabels(image) {
+        let content = '';
+
+        if (!image.annotations || !Array.isArray(image.annotations)) {
+            return content;
+        }
+
+        const width = image.width;
+        const height = image.height;
+
+        if (!width || !height) {
+            console.warn(`Image "${image.name}" missing dimensions`);
+            return content;
+        }
+
+        for (const annotation of image.annotations) {
+            if (annotation.type !== 'polygon' || !annotation.data.closed) continue;
+
+            const classId = annotation.class;
+            const points = annotation.data.points;
+
+            if (!points || points.length < 3) continue;
+
+            // YOLO format: <class_id> <x1> <y1> <x2> <y2> ... <xn> <yn> (normalized)
+            const normalizedPoints = points.map(([x, y]) => {
+                const normX = (x / width).toFixed(6);
+                const normY = (y / height).toFixed(6);
+                return `${normX} ${normY}`;
+            }).join(' ');
+
+            content += `${classId} ${normalizedPoints}\n`;
+        }
+
+        return content;
+    }
+
+    async exportCOCOPolygon(project, images) {
+        console.log(`=== COCO Polygon Export ===`);
+
+        const cocoData = {
+            info: {
+                description: `${project.name} - Polygon Annotations`,
+                version: "1.0",
+                year: new Date().getFullYear(),
+                contributor: "Annotix",
+                date_created: new Date().toISOString().split('T')[0]
+            },
+            licenses: [{ id: 1, name: "Unknown", url: "" }],
+            images: [],
+            annotations: [],
+            categories: project.classes.map((cls, idx) => ({
+                id: cls.id,
+                name: cls.name,
+                supercategory: "object"
+            }))
+        };
+
+        let annotationId = 1;
+
+        for (let imgIdx = 0; imgIdx < images.length; imgIdx++) {
+            const img = images[imgIdx];
+
+            cocoData.images.push({
+                id: imgIdx + 1,
+                file_name: this.getImageFilename(img),
+                width: img.width,
+                height: img.height,
+                license: 1,
+                date_captured: ""
+            });
+
+            if (img.annotations) {
+                for (const ann of img.annotations) {
+                    if (ann.type !== 'polygon' || !ann.data.closed) continue;
+
+                    const points = ann.data.points;
+                    if (!points || points.length < 3) continue;
+
+                    // Flatten points array: [x1, y1, x2, y2, ...]
+                    const segmentation = [points.flat()];
+
+                    // Calculate bounding box
+                    const xs = points.map(p => p[0]);
+                    const ys = points.map(p => p[1]);
+                    const minX = Math.min(...xs);
+                    const minY = Math.min(...ys);
+                    const maxX = Math.max(...xs);
+                    const maxY = Math.max(...ys);
+
+                    // Calculate area (simple polygon area)
+                    let area = 0;
+                    for (let i = 0; i < points.length; i++) {
+                        const j = (i + 1) % points.length;
+                        area += points[i][0] * points[j][1];
+                        area -= points[j][0] * points[i][1];
+                    }
+                    area = Math.abs(area) / 2;
+
+                    cocoData.annotations.push({
+                        id: annotationId++,
+                        image_id: imgIdx + 1,
+                        category_id: ann.class,
+                        segmentation: segmentation,
+                        area: area,
+                        bbox: [minX, minY, maxX - minX, maxY - minY],
+                        iscrowd: 0
+                    });
+                }
+            }
+        }
+
+        const jsonContent = JSON.stringify(cocoData, null, 2);
+        const blob = new Blob([jsonContent], { type: 'application/json' });
+        this.downloadFile(blob, `${project.name}_coco_polygon.json`);
+
+        this.ui.showToast(`✓ COCO JSON exported with ${cocoData.annotations.length} polygons`, 'success');
+    }
+
+    // =============================================
+    // LANDMARKS EXPORT
+    // =============================================
+
+    async exportYOLOLandmarks(project, images) {
+        console.log(`=== YOLO Landmarks Export ===`);
+        const zip = new JSZip();
+
+        // Create data.yaml
+        const yamlContent = this.generateYOLODataYaml(project, 'detection');
+        zip.file('data.yaml', yamlContent);
+
+        // Create classes.txt
+        const classesContent = project.classes.map(c => c.name).join('\n');
+        zip.file('classes.txt', classesContent);
+
+        // Process each image
+        for (const img of images) {
+            const imageFilename = this.getImageFilename(img);
+            zip.file(`images/${imageFilename}`, img.image);
+
+            // Generate label file (landmarks as tiny bboxes)
+            const labelContent = this.generateYOLOLandmarksLabels(img);
+            const labelFilename = imageFilename.replace(/\.[^.]+$/, '.txt');
+            zip.file(`labels/${labelFilename}`, labelContent || '');
+        }
+
+        const blob = await zip.generateAsync({ type: 'blob' });
+        this.downloadFile(blob, `${project.name}_yolo_landmarks.zip`);
+
+        const imagesWithAnnotations = images.filter(img => img.annotations && img.annotations.length > 0);
+        this.ui.showToast(`✓ Exported: ${images.length} images (${imagesWithAnnotations.length} with landmarks)`, 'success');
+    }
+
+    generateYOLOLandmarksLabels(image) {
+        let content = '';
+
+        if (!image.annotations || !Array.isArray(image.annotations)) {
+            return content;
+        }
+
+        const width = image.width;
+        const height = image.height;
+
+        if (!width || !height) {
+            console.warn(`Image "${image.name}" missing dimensions`);
+            return content;
+        }
+
+        // Landmarks exported as tiny 1px bboxes
+        for (const annotation of image.annotations) {
+            if (annotation.type !== 'landmark') continue;
+
+            const classId = annotation.class;
+            const x = annotation.data.x;
+            const y = annotation.data.y;
+
+            // Normalize coordinates
+            const normX = (x / width).toFixed(6);
+            const normY = (y / height).toFixed(6);
+            // Use tiny bbox (1px)
+            const normW = (1 / width).toFixed(6);
+            const normH = (1 / height).toFixed(6);
+
+            content += `${classId} ${normX} ${normY} ${normW} ${normH}\n`;
+        }
+
+        return content;
+    }
+
+    async exportLandmarksCSV(project, images) {
+        console.log(`=== Landmarks CSV Export ===`);
+
+        let csvContent = 'image,landmark_id,class_id,class_name,x,y,name\n';
+
+        for (const img of images) {
+            if (!img.annotations) continue;
+
+            for (const ann of img.annotations) {
+                if (ann.type !== 'landmark') continue;
+
+                const cls = project.classes.find(c => c.id === ann.class);
+                const className = cls ? cls.name : 'unknown';
+                const landmarkName = ann.data.name || '';
+                const x = ann.data.x;
+                const y = ann.data.y;
+
+                csvContent += `${img.name},${ann.data.id},${ann.class},${className},${x},${y},"${landmarkName}"\n`;
+            }
+        }
+
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        this.downloadFile(blob, `${project.name}_landmarks.csv`);
+
+        const totalLandmarks = images.reduce((sum, img) =>
+            sum + (img.annotations?.filter(a => a.type === 'landmark').length || 0), 0);
+
+        this.ui.showToast(`✓ CSV exported with ${totalLandmarks} landmarks`, 'success');
+    }
+
+    // =============================================
+    // KEYPOINTS EXPORT (YOLO Pose Format)
+    // =============================================
+
+    async exportYOLOPose(project, images) {
+        console.log(`=== YOLO Pose Export ===`);
+        const zip = new JSZip();
+
+        // Create data.yaml with keypoint configuration
+        const yamlContent = this.generateYOLOPoseDataYaml(project);
+        zip.file('data.yaml', yamlContent);
+
+        // Create classes.txt
+        const classesContent = project.classes.map(c => c.name).join('\n');
+        zip.file('classes.txt', classesContent);
+
+        // Process each image
+        for (const img of images) {
+            const imageFilename = this.getImageFilename(img);
+            zip.file(`images/${imageFilename}`, img.image);
+
+            // Generate label file with keypoints
+            const labelContent = this.generateYOLOPoseLabels(img, project);
+            const labelFilename = imageFilename.replace(/\.[^.]+$/, '.txt');
+            zip.file(`labels/${labelFilename}`, labelContent || '');
+        }
+
+        const blob = await zip.generateAsync({ type: 'blob' });
+        this.downloadFile(blob, `${project.name}_yolo_pose.zip`);
+
+        const imagesWithAnnotations = images.filter(img => img.annotations && img.annotations.length > 0);
+        this.ui.showToast(`✓ Exported: ${images.length} images (${imagesWithAnnotations.length} with keypoints)`, 'success');
+    }
+
+    generateYOLOPoseDataYaml(project) {
+        // Get keypoint configuration from first class (assuming all use same skeleton type)
+        const firstClassWithSkeleton = project.classes.find(c => c.skeleton);
+
+        let yaml = `# YOLO Pose Dataset Configuration\n`;
+        yaml += `path: ./\n`;
+        yaml += `train: images\n`;
+        yaml += `val: images\n`;
+        yaml += `test: images\n\n`;
+        yaml += `names:\n`;
+        project.classes.forEach((cls, idx) => {
+            yaml += `  ${cls.id}: ${cls.name}\n`;
+        });
+
+        if (firstClassWithSkeleton && firstClassWithSkeleton.skeleton) {
+            const skeleton = firstClassWithSkeleton.skeleton;
+            yaml += `\n# Keypoint configuration\n`;
+            yaml += `kpt_shape: [${skeleton.keypoints.length}, 3]  # number of keypoints, number of dimensions (x, y, visibility)\n`;
+            yaml += `\n# Keypoint names\n`;
+            yaml += `keypoint_names:\n`;
+            skeleton.keypoints.forEach((kp, idx) => {
+                yaml += `  ${idx}: ${kp}\n`;
+            });
+
+            yaml += `\n# Skeleton connections (pairs of keypoint indices)\n`;
+            yaml += `flip_idx:\n`;
+            yaml += `skeleton:\n`;
+            skeleton.connections.forEach(([idx1, idx2]) => {
+                yaml += `  - [${idx1}, ${idx2}]\n`;
+            });
+        }
+
+        return yaml;
+    }
+
+    generateYOLOPoseLabels(image, project) {
+        let content = '';
+
+        if (!image.annotations || !Array.isArray(image.annotations)) {
+            return content;
+        }
+
+        const width = image.width;
+        const height = image.height;
+
+        if (!width || !height) {
+            console.warn(`Image "${image.name}" missing dimensions`);
+            return content;
+        }
+
+        for (const annotation of image.annotations) {
+            if (annotation.type !== 'keypoints') continue;
+
+            const classId = annotation.class;
+            const keypoints = annotation.data.keypoints;
+
+            if (!keypoints || keypoints.length === 0) continue;
+
+            // Calculate bounding box from keypoints
+            const visibleKps = keypoints.filter(kp => kp && kp.x !== null && kp.visibility > 0);
+            if (visibleKps.length === 0) continue;
+
+            const xs = visibleKps.map(kp => kp.x);
+            const ys = visibleKps.map(kp => kp.y);
+            const minX = Math.min(...xs);
+            const minY = Math.min(...ys);
+            const maxX = Math.max(...xs);
+            const maxY = Math.max(...ys);
+
+            // Normalize bbox
+            const bboxCenterX = ((minX + maxX) / 2 / width).toFixed(6);
+            const bboxCenterY = ((minY + maxY) / 2 / height).toFixed(6);
+            const bboxWidth = ((maxX - minX) / width).toFixed(6);
+            const bboxHeight = ((maxY - minY) / height).toFixed(6);
+
+            // Format keypoints: x1 y1 v1 x2 y2 v2 ... (normalized)
+            const kpString = keypoints.map(kp => {
+                if (!kp || kp.x === null) {
+                    return '0 0 0'; // Not labeled
+                }
+                const normX = (kp.x / width).toFixed(6);
+                const normY = (kp.y / height).toFixed(6);
+                const visibility = kp.visibility || 0;
+                return `${normX} ${normY} ${visibility}`;
+            }).join(' ');
+
+            content += `${classId} ${bboxCenterX} ${bboxCenterY} ${bboxWidth} ${bboxHeight} ${kpString}\n`;
+        }
+
+        return content;
+    }
+
+    async exportCOCOKeypoints(project, images) {
+        console.log(`=== COCO Keypoints Export ===`);
+
+        // Get skeleton from first class
+        const firstClassWithSkeleton = project.classes.find(c => c.skeleton);
+        const skeleton = firstClassWithSkeleton ? firstClassWithSkeleton.skeleton : null;
+
+        const cocoData = {
+            info: {
+                description: `${project.name} - Keypoints Annotations`,
+                version: "1.0",
+                year: new Date().getFullYear(),
+                contributor: "Annotix",
+                date_created: new Date().toISOString().split('T')[0]
+            },
+            licenses: [{ id: 1, name: "Unknown", url: "" }],
+            images: [],
+            annotations: [],
+            categories: project.classes.map((cls) => {
+                const category = {
+                    id: cls.id,
+                    name: cls.name,
+                    supercategory: "object"
+                };
+
+                if (cls.skeleton) {
+                    category.keypoints = cls.skeleton.keypoints;
+                    category.skeleton = cls.skeleton.connections;
+                }
+
+                return category;
+            })
+        };
+
+        let annotationId = 1;
+
+        for (let imgIdx = 0; imgIdx < images.length; imgIdx++) {
+            const img = images[imgIdx];
+
+            cocoData.images.push({
+                id: imgIdx + 1,
+                file_name: this.getImageFilename(img),
+                width: img.width,
+                height: img.height,
+                license: 1,
+                date_captured: ""
+            });
+
+            if (img.annotations) {
+                for (const ann of img.annotations) {
+                    if (ann.type !== 'keypoints') continue;
+
+                    const keypoints = ann.data.keypoints;
+                    if (!keypoints || keypoints.length === 0) continue;
+
+                    // Calculate bbox
+                    const visibleKps = keypoints.filter(kp => kp && kp.x !== null && kp.visibility > 0);
+                    if (visibleKps.length === 0) continue;
+
+                    const xs = visibleKps.map(kp => kp.x);
+                    const ys = visibleKps.map(kp => kp.y);
+                    const minX = Math.min(...xs);
+                    const minY = Math.min(...ys);
+                    const maxX = Math.max(...xs);
+                    const maxY = Math.max(...ys);
+
+                    // COCO keypoints format: [x1, y1, v1, x2, y2, v2, ...]
+                    const cocoKeypoints = [];
+                    let numKeypoints = 0;
+                    keypoints.forEach(kp => {
+                        if (!kp || kp.x === null) {
+                            cocoKeypoints.push(0, 0, 0);
+                        } else {
+                            cocoKeypoints.push(kp.x, kp.y, kp.visibility || 2);
+                            if (kp.visibility > 0) numKeypoints++;
+                        }
+                    });
+
+                    cocoData.annotations.push({
+                        id: annotationId++,
+                        image_id: imgIdx + 1,
+                        category_id: ann.class,
+                        keypoints: cocoKeypoints,
+                        num_keypoints: numKeypoints,
+                        bbox: [minX, minY, maxX - minX, maxY - minY],
+                        area: (maxX - minX) * (maxY - minY),
+                        iscrowd: 0
+                    });
+                }
+            }
+        }
+
+        const jsonContent = JSON.stringify(cocoData, null, 2);
+        const blob = new Blob([jsonContent], { type: 'application/json' });
+        this.downloadFile(blob, `${project.name}_coco_keypoints.json`);
+
+        this.ui.showToast(`✓ COCO JSON exported with ${cocoData.annotations.length} keypoint instances`, 'success');
+    }

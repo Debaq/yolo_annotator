@@ -119,6 +119,10 @@
         "name": "YOLO Segmentation",
         "description": "Polygons in YOLO format (.txt) with data.yaml"
       },
+      "yoloPose": {
+        "name": "YOLO Pose",
+        "description": "Keypoints in YOLO format (.txt) with skeleton configuration"
+      },
       "coco": {
         "name": "COCO JSON",
         "description": "COCO format for Mask R-CNN, RetinaNet, etc."

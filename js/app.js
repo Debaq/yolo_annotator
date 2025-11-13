@@ -3839,10 +3839,21 @@ class YOLOAnnotator {
                 { id: 'coco', key: 'coco' },
                 { id: 'masksPng', key: 'masksPng' }
             ];
+        } else if (projectType === 'polygon') {
+            return [
+                { id: 'yoloSeg', key: 'yoloSeg' },
+                { id: 'coco', key: 'coco' }
+            ];
         } else if (projectType === 'keypoints') {
             return [
-                { id: 'coco', key: 'coco' },
-                { id: 'yolo', key: 'yolo' }
+                { id: 'yoloPose', key: 'yoloPose' },
+                { id: 'coco', key: 'coco' }
+            ];
+        } else if (projectType === 'landmarks') {
+            return [
+                { id: 'yolo', key: 'yolo' },
+                { id: 'csv', key: 'csv' },
+                { id: 'coco', key: 'coco' }
             ];
         }
 
