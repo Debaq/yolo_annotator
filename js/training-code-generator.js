@@ -10,50 +10,174 @@ class TrainingCodeGenerator {
         this.ui = ui;
     }
 
+    // Helper method to get translations
+    t(key) {
+        return window.i18n ? window.i18n.t(key) : key;
+    }
+
+    // Get project modality from project type
+    getProjectModality(projectType) {
+        // Map project types to modalities
+        const typeToModality = {
+            // Images
+            'classification': 'images',
+            'multiLabel': 'images',
+            'detection': 'images',
+            'segmentation': 'images',
+            'instanceSeg': 'images',
+            'semanticSeg': 'images',
+            'panopticSeg': 'images',
+            'keypoints': 'images',
+            'polygon': 'images',
+            'landmarks': 'images',
+            'obb': 'images',
+            'ocr': 'images',
+            'depthEstimation': 'images',
+            // Time Series
+            'timeSeriesClassification': 'timeSeries',
+            'timeSeriesForecasting': 'timeSeries',
+            'anomalyDetection': 'timeSeries',
+            'timeSeriesSegmentation': 'timeSeries',
+            'patternRecognition': 'timeSeries',
+            'eventDetection': 'timeSeries',
+            'timeSeriesRegression': 'timeSeries',
+            'clustering': 'timeSeries',
+            'imputation': 'timeSeries',
+            // Audio
+            'audioClassification': 'audio',
+            'speechRecognition': 'audio',
+            'soundEventDetection': 'audio',
+            'speakerIdentification': 'audio',
+            'audioTagging': 'audio',
+            'musicGenreClassification': 'audio',
+            'emotionRecognition': 'audio',
+            'voiceActivityDetection': 'audio',
+            'keywordSpotting': 'audio',
+            'environmentalSound': 'audio',
+            // Video
+            'actionRecognition': 'video',
+            'objectTracking': 'video',
+            'temporalActionLocalization': 'video',
+            'videoClassification': 'video',
+            'videoSegmentation': 'video',
+            'activityDetection': 'video',
+            'poseTracking': 'video',
+            'videoAnomalyDetection': 'video',
+            'spatiotemporalAction': 'video',
+            // 3D
+            'object3DDetection': 'threeD',
+            'semantic3DSegmentation': 'threeD',
+            'instance3DSegmentation': 'threeD',
+            'pointCloudClassification': 'threeD',
+            'meshSegmentation': 'threeD',
+            'pose3DEstimation': 'threeD',
+            'keypoint3DDetection': 'threeD',
+            'surfaceReconstruction': 'threeD',
+            'slamAnnotation': 'threeD',
+            // Text
+            'textClassification': 'text',
+            'namedEntityRecognition': 'text',
+            'sentimentAnalysis': 'text',
+            'intentClassification': 'text',
+            'relationExtraction': 'text',
+            'posTagging': 'text',
+            'dependencyParsing': 'text',
+            'questionAnswering': 'text',
+            'keyphraseExtraction': 'text',
+            'entityLinking': 'text',
+            'toxicityClassification': 'text',
+            'languageIdentification': 'text'
+        };
+
+        return typeToModality[projectType] || 'images';
+    }
+
     populateFrameworks() {
         const projectType = this.projectManager.currentProject?.type || 'detection';
+        const modality = this.getProjectModality(projectType);
         const frameworkSelect = document.getElementById('codeFramework');
         if (!frameworkSelect) return;
 
         let frameworks = [];
 
-        // Define frameworks based on project type
-        if (projectType === 'detection') {
-            frameworks = [
-                { value: 'yolov8', label: 'YOLOv8 (Ultralytics)' },
-                { value: 'yolov5', label: 'YOLOv5' },
-                { value: 'yolov11', label: 'YOLOv11' },
-                { value: 'yolo-nas', label: 'YOLO-NAS' },
-                { value: 'detectron2', label: 'Detectron2 (Faster R-CNN)' }
-            ];
-        } else if (projectType === 'segmentation' || projectType === 'instanceSeg') {
-            frameworks = [
-                { value: 'yolov8-seg', label: 'YOLOv8 Segmentation' },
-                { value: 'yolov11-seg', label: 'YOLOv11 Segmentation' },
-                { value: 'detectron2-mask', label: 'Detectron2 (Mask R-CNN)' },
-                { value: 'smp', label: 'segmentation_models.pytorch' }
-            ];
-        } else if (projectType === 'classification' || projectType === 'multiLabel') {
-            frameworks = [
-                { value: 'yolov8-cls', label: 'YOLOv8 Classification' },
-                { value: 'yolov11-cls', label: 'YOLOv11 Classification' },
-                { value: 'timm', label: 'PyTorch timm (ResNet, EfficientNet, ViT)' },
-                { value: 'torchvision', label: 'TorchVision Models' }
-            ];
-        } else if (projectType === 'keypoints') {
-            frameworks = [
-                { value: 'yolov8-pose', label: 'YOLOv8 Pose' },
-                { value: 'yolov11-pose', label: 'YOLOv11 Pose' },
-                { value: 'mmpose', label: 'MMPose' }
-            ];
-        } else if (projectType === 'obb') {
-            frameworks = [
-                { value: 'yolov8-obb', label: 'YOLOv8 OBB' },
-                { value: 'yolov11-obb', label: 'YOLOv11 OBB' },
-                { value: 'detectron2-rotated', label: 'Detectron2 (Rotated)' }
-            ];
+        // Define frameworks based on modality and project type
+        if (modality === 'images') {
+            if (projectType === 'detection') {
+                frameworks = [
+                    { value: 'yolov8', label: 'YOLOv8 (Ultralytics)' },
+                    { value: 'yolov5', label: 'YOLOv5' },
+                    { value: 'yolov11', label: 'YOLOv11' },
+                    { value: 'yolo-nas', label: 'YOLO-NAS' },
+                    { value: 'detectron2', label: 'Detectron2 (Faster R-CNN)' }
+                ];
+            } else if (projectType === 'segmentation' || projectType === 'instanceSeg' || projectType === 'polygon' || projectType === 'semanticSeg') {
+                frameworks = [
+                    { value: 'yolov8-seg', label: 'YOLOv8 Segmentation' },
+                    { value: 'yolov11-seg', label: 'YOLOv11 Segmentation' },
+                    { value: 'detectron2-mask', label: 'Detectron2 (Mask R-CNN)' },
+                    { value: 'smp', label: 'segmentation_models.pytorch' }
+                ];
+            } else if (projectType === 'classification' || projectType === 'multiLabel') {
+                frameworks = [
+                    { value: 'yolov8-cls', label: 'YOLOv8 Classification' },
+                    { value: 'yolov11-cls', label: 'YOLOv11 Classification' },
+                    { value: 'timm', label: 'PyTorch timm (ResNet, EfficientNet, ViT)' },
+                    { value: 'torchvision', label: 'TorchVision Models' }
+                ];
+            } else if (projectType === 'keypoints' || projectType === 'landmarks') {
+                frameworks = [
+                    { value: 'yolov8-pose', label: 'YOLOv8 Pose' },
+                    { value: 'yolov11-pose', label: 'YOLOv11 Pose' },
+                    { value: 'mmpose', label: 'MMPose' }
+                ];
+            } else if (projectType === 'obb') {
+                frameworks = [
+                    { value: 'yolov8-obb', label: 'YOLOv8 OBB' },
+                    { value: 'yolov11-obb', label: 'YOLOv11 OBB' },
+                    { value: 'detectron2-rotated', label: 'Detectron2 (Rotated)' }
+                ];
+            } else {
+                // Default to detection
+                frameworks = [
+                    { value: 'yolov8', label: 'YOLOv8 (Ultralytics)' },
+                    { value: 'yolov5', label: 'YOLOv5' },
+                    { value: 'yolov11', label: 'YOLOv11' }
+                ];
+            }
+        } else if (modality === 'timeSeries') {
+            // Time Series frameworks
+            if (projectType === 'timeSeriesClassification' || projectType === 'clustering') {
+                frameworks = [
+                    { value: 'ts-pytorch', label: 'PyTorch (LSTM/GRU/Transformer)' },
+                    { value: 'ts-tensorflow', label: 'TensorFlow/Keras' },
+                    { value: 'sktime', label: 'sktime (sklearn-based)' },
+                    { value: 'tsai', label: 'tsai (fastai for time series)' }
+                ];
+            } else if (projectType === 'timeSeriesForecasting') {
+                frameworks = [
+                    { value: 'ts-pytorch-forecast', label: 'PyTorch (LSTM/Transformer)' },
+                    { value: 'ts-tensorflow-forecast', label: 'TensorFlow/Keras' },
+                    { value: 'prophet', label: 'Prophet (Facebook)' },
+                    { value: 'neuralforecast', label: 'NeuralForecast (Nixtla)' },
+                    { value: 'gluonts', label: 'GluonTS (Amazon)' }
+                ];
+            } else if (projectType === 'anomalyDetection') {
+                frameworks = [
+                    { value: 'ts-pytorch-anomaly', label: 'PyTorch (AutoEncoder)' },
+                    { value: 'ts-tensorflow-anomaly', label: 'TensorFlow/Keras' },
+                    { value: 'pyod', label: 'PyOD (sklearn-based)' },
+                    { value: 'luminaire', label: 'Luminaire (Zillow)' }
+                ];
+            } else {
+                // Default time series frameworks
+                frameworks = [
+                    { value: 'ts-pytorch', label: 'PyTorch (LSTM/GRU/Transformer)' },
+                    { value: 'ts-tensorflow', label: 'TensorFlow/Keras' },
+                    { value: 'sktime', label: 'sktime' }
+                ];
+            }
         } else {
-            // Default to detection
+            // Default to detection for other modalities
             frameworks = [
                 { value: 'yolov8', label: 'YOLOv8 (Ultralytics)' },
                 { value: 'yolov5', label: 'YOLOv5' },
@@ -108,7 +232,27 @@ class TrainingCodeGenerator {
         const projectType = this.projectManager.currentProject?.type || 'detection';
         const projectName = this.projectManager.currentProject?.name || 'mi_proyecto';
         const numClasses = this.canvasManager.classes.length;
+        const modality = this.getProjectModality(projectType);
 
+        let code = '';
+
+        // Route to appropriate code generator based on modality and framework
+        if (modality === 'timeSeries') {
+            code = this._generateTimeSeriesCode(framework, projectName, projectType, device, numClasses, batch, epochs, lr, optimizer, saveMetricsCsv, savePlots);
+        } else if (modality === 'images') {
+            // Existing image-based frameworks
+            code = this._generateImageCode(framework, projectName, projectType, model, device, epochs, batch, imgsz, optimizer, lr, patience, valSplit, augMosaic, augMixup, augHsv, augFlip, augRotate, augScale, savePlots, saveConfMatrix, savePredictions, saveMetricsCsv, exportOnnx, exportTorchscript, exportTflite, exportOpenvino, exportCoreml, exportTensorrt, numClasses);
+        } else {
+            code = `# ${this.t('export.code.template.important')}: ${modality} ${this.t('export.code.template.important').toLowerCase()}\n# Coming soon...`;
+        }
+
+        const codePreview = document.getElementById('codePreview');
+        if (codePreview) {
+            codePreview.textContent = code;
+        }
+    }
+
+    _generateImageCode(framework, projectName, projectType, model, device, epochs, batch, imgsz, optimizer, lr, patience, valSplit, augMosaic, augMixup, augHsv, augFlip, augRotate, augScale, savePlots, saveConfMatrix, savePredictions, saveMetricsCsv, exportOnnx, exportTorchscript, exportTflite, exportOpenvino, exportCoreml, exportTensorrt, numClasses) {
         let code = '';
 
         if (framework === 'yolov8' || framework === 'yolov11' ||
@@ -1018,6 +1162,289 @@ print(f"🏆 Mejor IoU: {best_iou:.4f}")
             a.click();
             URL.revokeObjectURL(url);
             this.ui.showToast('Notebook .ipynb descargado', 'success');
+        }
+    }
+
+    _generateTimeSeriesCode(framework, projectName, projectType, device, numClasses, batch, epochs, lr, optimizer, saveMetricsCsv, savePlots) {
+        const t = (key) => this.t(key);
+        const projectTypeLabel = this.getProjectTypeLabel(projectType);
+
+        if (framework === 'ts-pytorch' || framework === 'ts-pytorch-forecast' || framework === 'ts-pytorch-anomaly') {
+            const isForecasting = framework === 'ts-pytorch-forecast';
+            const isAnomaly = framework === 'ts-pytorch-anomaly';
+            const isClassification = !isForecasting && !isAnomaly;
+
+            return `"""
+${projectName} - ${t('export.code.template.trainModel')}
+${t('export.code.template.generatedBy')}
+Framework: PyTorch (LSTM/GRU/Transformer)
+${t('export.code.template.projectType')}: ${projectTypeLabel}
+
+${t('export.code.template.important')}: ${t('export.code.template.installDeps')}
+"""
+
+# ============================================
+# 1. ${t('export.code.template.installation')}
+# ============================================
+# ${t('export.code.template.executeCmds')}:
+# pip install torch numpy pandas scikit-learn${saveMetricsCsv ? '\n# pip install pandas  # ' + t('export.code.template.forExportMetrics') : ''}${savePlots ? '\n# pip install matplotlib seaborn  # ' + t('export.code.template.forVisualization') : ''}
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import Dataset, DataLoader
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split${savePlots ? '\nimport matplotlib.pyplot as plt\nimport seaborn as sns' : ''}
+
+print(f"PyTorch version: {torch.__version__}")
+print(f"CUDA available: {torch.cuda.is_available()}")
+
+# ============================================
+# 2. ${t('export.code.template.configuration')}
+# ============================================
+
+DEVICE = torch.device('${device.replace('cuda:0', 'cuda')}' if torch.cuda.is_available() else 'cpu')
+NUM_CLASSES = ${numClasses}
+BATCH_SIZE = ${batch}
+EPOCHS = ${epochs}
+LEARNING_RATE = ${lr}
+SEQUENCE_LENGTH = 50  # Ajustar según tus datos
+${isForecasting ? 'FORECAST_HORIZON = 10  # Pasos a predecir' : ''}
+
+print(f"Device: {DEVICE}")
+
+# ============================================
+# 3. ${t('export.code.template.dataLoading')}
+# ============================================
+
+# Cargar tus datos de series temporales
+# Formato esperado: CSV con columnas [timestamp, feature1, feature2, ..., target]
+df = pd.read_csv('path/to/your/timeseries.csv')
+
+# ${t('export.code.template.prepareData')}
+${isClassification ? `# Para clasificación: última columna debe ser la clase (0 a ${numClasses-1})
+features = df.iloc[:, :-1].values
+labels = df.iloc[:, -1].values` : isForecasting ? `# Para pronóstico: todas las columnas son features, predeciremos la primera
+features = df.values` : `# Para detección de anomalías: todas las columnas son features
+features = df.values`}
+
+# Escalar datos
+scaler = StandardScaler()
+features_scaled = scaler.fit_transform(features)
+
+# Crear secuencias
+def create_sequences(data, seq_length${isForecasting ? ', forecast_horizon' : ''}):
+    xs, ys = [], []
+    for i in range(len(data) - seq_length${isForecasting ? ' - forecast_horizon + 1' : ''}):
+        x = data[i:(i + seq_length)]
+        ${isForecasting ? `y = data[(i + seq_length):(i + seq_length + forecast_horizon), 0]  # Predecir primera columna` : isClassification ? `y = labels[i + seq_length - 1]` : `y = data[i + seq_length]`}
+        xs.append(x)
+        ys.append(y)
+    return np.array(xs), np.array(ys)
+
+${isForecasting ? `X, y = create_sequences(features_scaled, SEQUENCE_LENGTH, FORECAST_HORIZON)` : `X, y = create_sequences(features_scaled, SEQUENCE_LENGTH)`}
+
+# Train/Test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=${!isForecasting})
+
+print(f"${t('export.code.template.trainSamples')}: {len(X_train)}")
+print(f"${t('export.code.template.testSamples')}: {len(X_test)}")
+print(f"${t('export.code.template.sequenceLength')}: {SEQUENCE_LENGTH}")
+print(f"${t('export.code.template.numFeatures')}: {X_train.shape[2]}")
+
+# ============================================
+# 4. DATASET Y DATALOADER
+# ============================================
+
+class TimeSeriesDataset(Dataset):
+    def __init__(self, X, y):
+        self.X = torch.FloatTensor(X)
+        self.y = torch.${isClassification ? 'LongTensor' : 'FloatTensor'}(y)
+
+    def __len__(self):
+        return len(self.X)
+
+    def __getitem__(self, idx):
+        return self.X[idx], self.y[idx]
+
+train_dataset = TimeSeriesDataset(X_train, y_train)
+test_dataset = TimeSeriesDataset(X_test, y_test)
+
+train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
+
+# ============================================
+# 5. ${t('export.code.template.modelArchitecture')}
+# ============================================
+
+class ${isClassification ? 'TimeSeriesClassifier' : isForecasting ? 'TimeSeriesForecaster' : 'TimeSeriesAnomalyDetector'}(nn.Module):
+    def __init__(self, input_size, hidden_size=128, num_layers=2${isClassification ? ', num_classes=' + numClasses : isForecasting ? ', forecast_horizon=' + 'FORECAST_HORIZON' : ''}):
+        super().__init__()
+
+        # LSTM layers
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers,
+                           batch_first=True, dropout=0.2 if num_layers > 1 else 0)
+
+        # Fully connected layers
+        ${isClassification ? `self.fc = nn.Linear(hidden_size, num_classes)` : isForecasting ? `self.fc = nn.Linear(hidden_size, forecast_horizon)` : `self.fc = nn.Linear(hidden_size, input_size)  # Reconstrucción`}
+
+    def forward(self, x):
+        # x shape: (batch, seq_length, features)
+        lstm_out, (hidden, cell) = self.lstm(x)
+
+        # Usar último estado oculto
+        ${isClassification || isForecasting ? `out = self.fc(lstm_out[:, -1, :])` : `out = self.fc(lstm_out[:, -1, :])  # Reconstruir última secuencia`}
+        return out
+
+model = ${isClassification ? 'TimeSeriesClassifier' : isForecasting ? 'TimeSeriesForecaster' : 'TimeSeriesAnomalyDetector'}(
+    input_size=X_train.shape[2]${isClassification ? '' : isForecasting ? ', forecast_horizon=FORECAST_HORIZON' : ''}
+).to(DEVICE)
+
+print(f"✅ ${t('export.code.template.modelLoaded')}")
+print(f"📦 ${t('export.code.template.parameters')}: {sum(p.numel() for p in model.parameters()):,}")
+
+# ============================================
+# 6. ${t('export.code.template.lossAndOptimizer')}
+# ============================================
+
+criterion = nn.${isClassification ? 'CrossEntropyLoss' : 'MSELoss'}()
+optimizer = optim.${optimizer}(model.parameters(), lr=LEARNING_RATE)
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=10, factor=0.5)
+
+# ============================================
+# 7. ${t('export.code.template.trainTest')}
+# ============================================
+
+history = {'train_loss': [], 'test_loss': []${isClassification ? ", 'train_acc': [], 'test_acc': []" : ''}}
+best_loss = float('inf')
+
+for epoch in range(EPOCHS):
+    # ${t('export.code.template.trainEpoch')}
+    model.train()
+    train_loss = 0.0
+    ${isClassification ? `train_correct = 0
+    train_total = 0` : ''}
+
+    for batch_X, batch_y in train_loader:
+        batch_X, batch_y = batch_X.to(DEVICE), batch_y.to(DEVICE)
+
+        optimizer.zero_grad()
+        outputs = model(batch_X)
+        loss = criterion(outputs, batch_y)
+        loss.backward()
+        optimizer.step()
+
+        train_loss += loss.item()
+        ${isClassification ? `
+        _, predicted = outputs.max(1)
+        train_total += batch_y.size(0)
+        train_correct += predicted.eq(batch_y).sum().item()` : ''}
+
+    # ${t('export.code.template.testEpoch')}
+    model.eval()
+    test_loss = 0.0
+    ${isClassification ? `test_correct = 0
+    test_total = 0` : ''}
+
+    with torch.no_grad():
+        for batch_X, batch_y in test_loader:
+            batch_X, batch_y = batch_X.to(DEVICE), batch_y.to(DEVICE)
+            outputs = model(batch_X)
+            loss = criterion(outputs, batch_y)
+            test_loss += loss.item()
+            ${isClassification ? `
+            _, predicted = outputs.max(1)
+            test_total += batch_y.size(0)
+            test_correct += predicted.eq(batch_y).sum().item()` : ''}
+
+    # Métricas
+    avg_train_loss = train_loss / len(train_loader)
+    avg_test_loss = test_loss / len(test_loader)
+    ${isClassification ? `train_acc = 100. * train_correct / train_total
+    test_acc = 100. * test_correct / test_total` : ''}
+
+    history['train_loss'].append(avg_train_loss)
+    history['test_loss'].append(avg_test_loss)
+    ${isClassification ? `history['train_acc'].append(train_acc)
+    history['test_acc'].append(test_acc)` : ''}
+
+    print(f"Epoch [{epoch+1}/{EPOCHS}] - "
+          f"${t('export.code.template.trainLoss')}: {avg_train_loss:.4f}, "
+          f"${t('export.code.template.testLoss')}: {avg_test_loss:.4f}"
+          ${isClassification ? `f", ${t('export.code.template.trainAcc')}: {train_acc:.2f}%, "
+          f"${t('export.code.template.testAcc')}: {test_acc:.2f}%"` : ''})
+
+    # Guardar mejor modelo
+    if avg_test_loss < best_loss:
+        best_loss = avg_test_loss
+        torch.save(model.state_dict(), 'best_model.pth')
+        print(f"💾 ${t('export.code.template.saveBestModel')}: {best_loss:.4f})")
+
+    scheduler.step(avg_test_loss)
+
+print(f"\\n✅ ${t('export.code.template.trainingCompleted')}")
+${saveMetricsCsv ? `
+# ${t('export.code.template.saveMetrics')}
+metrics_df = pd.DataFrame(history)
+metrics_df.to_csv('training_metrics.csv', index=False)
+print(f"💾 ${t('export.code.template.metricsSaved')}: training_metrics.csv")` : ''}
+${savePlots ? `
+# ${t('export.code.template.plotResults')}
+plt.figure(figsize=(12, 4))
+
+plt.subplot(1, ${isClassification ? '2' : '1'}, 1)
+plt.plot(history['train_loss'], label='Train')
+plt.plot(history['test_loss'], label='Test')
+plt.title('Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend()
+${isClassification ? `
+plt.subplot(1, 2, 2)
+plt.plot(history['train_acc'], label='Train')
+plt.plot(history['test_acc'], label='Test')
+plt.title('Accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy (%)')
+plt.legend()` : ''}
+
+plt.tight_layout()
+plt.savefig('training_curves.png')
+print("📊 Gráficos guardados en: training_curves.png")` : ''}
+${isForecasting ? `
+# ============================================
+# 8. ${t('export.code.template.forecasting')}
+# ============================================
+
+model.load_state_dict(torch.load('best_model.pth'))
+model.eval()
+
+# ${t('export.code.template.makePredictions')}
+with torch.no_grad():
+    sample_X = torch.FloatTensor(X_test[:5]).to(DEVICE)
+    predictions = model(sample_X).cpu().numpy()
+
+    # Desescalar predicciones
+    predictions_descaled = scaler.inverse_transform(
+        np.concatenate([predictions, np.zeros((predictions.shape[0], features.shape[1] - predictions.shape[1]))], axis=1)
+    )[:, :predictions.shape[1]]
+
+    print(f"\\n${t('export.code.template.predictionsMade')}:")
+    print(predictions_descaled)` : ''}
+
+print("\\n🎉 ${t('export.code.template.allDone')}")
+`;
+        } else if (framework === 'ts-tensorflow' || framework === 'ts-tensorflow-forecast' || framework === 'ts-tensorflow-anomaly') {
+            // Similar structure for TensorFlow/Keras
+            return `# TensorFlow/Keras ${t('export.code.template.important')}\n# Coming soon...`;
+        } else if (framework === 'sktime') {
+            return `# sktime ${t('export.code.template.important')}\n# Coming soon...`;
+        } else if (framework === 'prophet') {
+            return `# Prophet ${t('export.code.template.important')}\n# Coming soon...`;
+        } else {
+            return `# ${framework} ${t('export.code.template.important')}\n# Coming soon...`;
         }
     }
 }
