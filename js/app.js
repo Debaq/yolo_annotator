@@ -14,6 +14,7 @@ class YOLOAnnotator {
         this.canvasManager = null;
         this.classificationManager = null;
         this.galleryManager = null;
+        this.timeSeriesWizard = null;
 
         // Active annotation mode ('canvas' or 'classification')
         this.annotationMode = 'canvas';
@@ -33,6 +34,7 @@ class YOLOAnnotator {
             // Initialize managers
             this.projectManager = new ProjectManager(this.db, this.ui);
             this.exportManager = new ExportManager(this.db, this.ui);
+            this.timeSeriesWizard = new TimeSeriesWizardManager(this.ui);
             this.shortcutsManager = new ShortcutsManager(this.ui);
 
             // Canvas will be created dynamically when project is loaded (using CanvasFactory)
@@ -1101,6 +1103,41 @@ class YOLOAnnotator {
             return;
         }
 
+        // Detect if files are CSV (time series data)
+        const csvFiles = Array.from(files).filter(f => f.name.toLowerCase().endsWith('.csv'));
+        const imageFiles = Array.from(files).filter(f => !f.name.toLowerCase().endsWith('.csv'));
+
+        // Handle CSV files (time series)
+        if (csvFiles.length > 0) {
+            const projectType = this.projectManager.currentProject.type;
+
+            // Check if project supports time series
+            const timeSeriesTypes = [
+                'timeSeriesClassification', 'timeSeriesForecasting', 'anomalyDetection',
+                'timeSeriesSegmentation', 'patternRecognition', 'eventDetection',
+                'timeSeriesRegression', 'clustering', 'imputation'
+            ];
+
+            if (!timeSeriesTypes.includes(projectType)) {
+                this.ui.showToast('Este proyecto no soporta series temporales. Crea un proyecto de series temporales.', 'warning');
+                return;
+            }
+
+            // Launch wizard for CSV import
+            const processedData = await this.timeSeriesWizard.startWizard(csvFiles);
+            if (processedData) {
+                await this.saveTimeSeriesData(processedData);
+            }
+
+            // If there are also image files, process them separately
+            if (imageFiles.length > 0) {
+                this.ui.showToast('Los archivos CSV fueron procesados. Ahora cargando imágenes...', 'info');
+                files = imageFiles;
+            } else {
+                return; // Only CSV files, we're done
+            }
+        }
+
         // Load all images first to check dimensions
         const loadedImages = [];
         for (const file of files) {
@@ -1213,6 +1250,75 @@ class YOLOAnnotator {
         }
     }
 
+    /**
+     * Save time series data from wizard to database
+     */
+    async saveTimeSeriesData(processedFiles) {
+        if (!processedFiles || processedFiles.length === 0) {
+            return;
+        }
+
+        const projectId = this.projectManager.currentProject.id;
+        let savedCount = 0;
+        let firstDataId = null;
+
+        for (const fileData of processedFiles) {
+            try {
+                // Create blob from CSV file
+                const csvBlob = fileData.file;
+
+                // Store as "image" entry (reusing existing structure)
+                const dataEntry = {
+                    projectId: projectId,
+                    name: fileData.name,
+                    originalFileName: fileData.name,
+                    displayName: fileData.name,
+                    mimeType: 'text/csv',
+                    image: csvBlob, // Store original CSV
+                    annotations: [],
+                    width: fileData.columnCount || 0, // Store column count as width
+                    height: fileData.rowCount || 0, // Store row count as height
+                    timestamp: Date.now(),
+                    // Time series specific metadata
+                    timeSeriesMetadata: {
+                        headers: fileData.headers,
+                        columnTypes: fileData.columnTypes,
+                        timeColumn: fileData.timeColumn,
+                        hasHeaders: fileData.hasHeaders,
+                        delimiter: fileData.delimiter,
+                        rowCount: fileData.rowCount,
+                        columnCount: fileData.columnCount
+                    }
+                };
+
+                const dataId = await this.db.saveImage(dataEntry);
+
+                if (savedCount === 0) {
+                    firstDataId = dataId;
+                }
+
+                savedCount++;
+            } catch (error) {
+                console.error(`Error saving ${fileData.name}:`, error);
+                this.ui.showToast(`Error al guardar ${fileData.name}`, 'error');
+            }
+        }
+
+        if (savedCount > 0) {
+            // Update gallery
+            await this.galleryManager.loadGallery(projectId);
+            this.updateStats();
+            await this.updateStorageIndicator();
+
+            if (firstDataId) {
+                await this.galleryManager.loadImage(firstDataId);
+            }
+
+            this.ui.showToast(`${savedCount} archivo(s) de series temporales cargados`, 'success');
+        } else {
+            this.ui.showToast('No se pudieron guardar los archivos', 'error');
+        }
+    }
 
 
     async showManageProjectsModal() {
