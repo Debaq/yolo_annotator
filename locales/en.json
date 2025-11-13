@@ -119,6 +119,10 @@
         "name": "YOLO Segmentation",
         "description": "Polygons in YOLO format (.txt) with data.yaml"
       },
+      "yoloPose": {
+        "name": "YOLO Pose",
+        "description": "Keypoints in YOLO format (.txt) with skeleton configuration"
+      },
       "coco": {
         "name": "COCO JSON",
         "description": "COCO format for Mask R-CNN, RetinaNet, etc."
@@ -195,6 +199,20 @@
         "useCases": "Pose estimation, facial recognition, anatomy",
         "models": "OpenPose, HRNet, MediaPipe",
         "difficulty": "Intermediate"
+      },
+      "polygon": {
+        "name": "Polygon Segmentation",
+        "description": "Draw polygons point-by-point for precise segmentation",
+        "useCases": "Precise object boundaries, geometric shapes, lighter than masks",
+        "models": "YOLOv8-seg, Mask R-CNN, SOLO",
+        "difficulty": "Intermediate"
+      },
+      "landmarks": {
+        "name": "Landmark Points",
+        "description": "Place independent points without connections",
+        "useCases": "Object centers, reference points, counting, locations",
+        "models": "Detection models, custom point detectors",
+        "difficulty": "Beginner"
       },
       "obb": {
         "name": "Oriented Boxes (OBB)",
@@ -284,6 +302,59 @@
   "imageInfo": {
     "noName": "No name",
     "dimensions": "Dimensions"
+  },
+  "polygon": {
+    "toolName": "Polygon",
+    "clickToAdd": "Click to add points. Double-click or press Enter to close.",
+    "needMinPoints": "Need at least {min} points to create a polygon",
+    "created": "Polygon created",
+    "cancelled": "Drawing cancelled",
+    "cannotDeletePoint": "Cannot delete point. Minimum {min} points required.",
+    "pointDeleted": "Point deleted"
+  },
+  "landmarks": {
+    "toolName": "Landmark",
+    "placed": "Landmark \"{name}\" placed",
+    "selectFirst": "Select a landmark first",
+    "enterName": "Please enter a name",
+    "renamed": "Landmark renamed",
+    "renumbered": "Renumbered {count} landmarks",
+    "renameLandmark": "Rename Landmark",
+    "landmarkName": "Landmark Name:",
+    "namePlaceholder": "e.g., Center, Top-Left, Entrance"
+  },
+  "skeleton": {
+    "addKeypointClass": "Add Keypoint Class",
+    "step1": "Step 1: Basic Information",
+    "step2": "Step 2: Select Skeleton Preset",
+    "className": "Class Name",
+    "classNamePlaceholder": "e.g., Person, Hand, Face",
+    "classColor": "Class Color",
+    "selectPreset": "Select a skeleton preset for this class:",
+    "presetInfo": "Each class can have its own skeleton. This allows you to annotate different types of objects in the same project.",
+    "points": "points",
+    "connections": "connections",
+    "previous": "Previous",
+    "next": "Next",
+    "finish": "Finish",
+    "presets": {
+      "coco17": "COCO 17 Keypoints",
+      "coco17Desc": "Full body human skeleton (COCO dataset)",
+      "mediapipePose": "MediaPipe Pose 33",
+      "mediapipePoseDesc": "Detailed full body pose",
+      "mediapipeHand": "MediaPipe Hand 21",
+      "mediapipeHandDesc": "Detailed hand joints",
+      "openpose25": "OpenPose 25",
+      "openpose25Desc": "OpenPose skeleton with hands",
+      "facial68": "Facial Landmarks 68",
+      "facial68Desc": "Detailed facial points",
+      "facial5": "Facial 5 Points",
+      "facial5Desc": "Basic facial points (eyes, nose, mouth)",
+      "animalQuad": "Animal Quadruped",
+      "animalQuadDesc": "Skeleton for 4-legged animals",
+      "custom": "Custom",
+      "customDesc": "Define your own skeleton"
+    }
   },
   "preprocessing": {
     "title": "Preprocess Images",

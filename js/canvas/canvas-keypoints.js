@@ -22,28 +22,31 @@ class CanvasKeypoints extends CanvasBase {
         this.draggedKeypoint = null;
         this.selectedKeypoint = null;
 
-        // Skeleton definition (can be customized per project)
-        // Default: COCO 17-point skeleton
-        this.keypointNames = [
-            'nose', 'left_eye', 'right_eye', 'left_ear', 'right_ear',
-            'left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow',
-            'left_wrist', 'right_wrist', 'left_hip', 'right_hip',
-            'left_knee', 'right_knee', 'left_ankle', 'right_ankle'
-        ];
-
-        // Skeleton connections (pairs of keypoint indices)
-        this.skeletonConnections = [
-            [0, 1], [0, 2], [1, 3], [2, 4],  // head
-            [5, 6], [5, 7], [7, 9], [6, 8], [8, 10],  // arms
-            [5, 11], [6, 12], [11, 12],  // torso
-            [11, 13], [13, 15], [12, 14], [14, 16]  // legs
-        ];
-
         // Current tool
         this.currentTool = 'keypoint'; // 'keypoint', 'select', 'pan'
 
         // Current keypoint index being placed
         this.currentKeypointIndex = 0;
+    }
+
+    // Get skeleton for current class
+    getCurrentSkeleton() {
+        const currentClass = this.classes[this.currentClass];
+        if (currentClass && currentClass.skeleton) {
+            return currentClass.skeleton;
+        }
+        // Fallback to COCO-17 if no skeleton defined
+        return SkeletonPresets.createFromPreset('coco-17');
+    }
+
+    // Get skeleton for a specific annotation
+    getAnnotationSkeleton(annotation) {
+        const cls = this.classes.find(c => c.id === annotation.class);
+        if (cls && cls.skeleton) {
+            return cls.skeleton;
+        }
+        // Fallback to COCO-17 if no skeleton defined
+        return SkeletonPresets.createFromPreset('coco-17');
     }
 
     // ============================================
@@ -119,18 +122,22 @@ class CanvasKeypoints extends CanvasBase {
             this.selectedKeypoint.visibility = visibility === 2 ? 1 : (visibility === 1 ? 0 : 2);
             this.hasUnsavedChanges = true;
             this.redraw();
+            this.updateKeypointProgressPanel();
             const states = ['Not Labeled', 'Occluded', 'Visible'];
             this.ui.showToast(`Keypoint: ${states[this.selectedKeypoint.visibility]}`, 'info');
         }
     }
 
     newKeypointInstance() {
+        // Get skeleton for current class
+        const skeleton = this.getCurrentSkeleton();
+
         // Create new empty keypoint instance
         const annotation = {
             type: 'keypoints',
             class: this.currentClass,
             data: {
-                keypoints: this.keypointNames.map(() => ({ x: null, y: null, visibility: 0 })),
+                keypoints: skeleton.keypoints.map(() => ({ x: null, y: null, visibility: 0 })),
                 bbox: null // Will be computed from keypoints
             }
         };
@@ -139,12 +146,14 @@ class CanvasKeypoints extends CanvasBase {
         this.currentKeypointIndex = 0;
         this.ui.showToast('New keypoint instance created', 'success');
         this.redraw();
+        this.updateKeypointProgressPanel();
     }
 
     nextKeypoint() {
         if (this.selectedAnnotation && this.selectedAnnotation.type === 'keypoints') {
-            this.currentKeypointIndex = (this.currentKeypointIndex + 1) % this.keypointNames.length;
-            this.ui.showToast(`Placing: ${this.keypointNames[this.currentKeypointIndex]}`, 'info');
+            const skeleton = this.getAnnotationSkeleton(this.selectedAnnotation);
+            this.currentKeypointIndex = (this.currentKeypointIndex + 1) % skeleton.keypoints.length;
+            this.ui.showToast(`Placing: ${skeleton.keypoints[this.currentKeypointIndex]}`, 'info');
         }
     }
 
@@ -173,6 +182,9 @@ class CanvasKeypoints extends CanvasBase {
                 this.hasUnsavedChanges = true;
                 this.redraw();
 
+                // Update progress panel
+                this.updateKeypointProgressPanel();
+
                 // Auto-advance to next keypoint
                 this.nextKeypoint();
             }
@@ -185,6 +197,7 @@ class CanvasKeypoints extends CanvasBase {
                 this.draggedKeypoint = { annotation, index: keypointIndex };
                 this.isDragging = true;
                 this.redraw();
+                this.updateKeypointProgressPanel();
             } else {
                 // Check if clicking on instance (bbox)
                 const instance = this.getInstanceAtPosition(x, y);
@@ -192,10 +205,12 @@ class CanvasKeypoints extends CanvasBase {
                     this.selectedAnnotation = instance;
                     this.selectedKeypoint = null;
                     this.redraw();
+                    this.updateKeypointProgressPanel();
                 } else {
                     this.selectedAnnotation = null;
                     this.selectedKeypoint = null;
                     this.redraw();
+                    this.updateKeypointProgressPanel();
                 }
             }
         }
@@ -260,18 +275,20 @@ class CanvasKeypoints extends CanvasBase {
         const color = cls?.color || '#ff0000';
         const isSelected = annotation === this.selectedAnnotation;
 
+        // Get skeleton for this annotation
+        const skeleton = this.getAnnotationSkeleton(annotation);
         const kps = annotation.data.keypoints;
 
         // Draw skeleton connections first (behind keypoints)
         this.ctx.strokeStyle = color;
         this.ctx.lineWidth = 2 / this.zoom;
 
-        this.skeletonConnections.forEach(([idx1, idx2]) => {
+        skeleton.connections.forEach(([idx1, idx2]) => {
             const kp1 = kps[idx1];
             const kp2 = kps[idx2];
 
             // Only draw if both keypoints are visible
-            if (kp1.x !== null && kp1.y !== null && kp1.visibility > 0 &&
+            if (kp1 && kp2 && kp1.x !== null && kp1.y !== null && kp1.visibility > 0 &&
                 kp2.x !== null && kp2.y !== null && kp2.visibility > 0) {
                 this.ctx.beginPath();
                 this.ctx.moveTo(kp1.x, kp1.y);
@@ -282,7 +299,7 @@ class CanvasKeypoints extends CanvasBase {
 
         // Draw keypoints
         kps.forEach((kp, idx) => {
-            if (kp.x === null || kp.y === null || kp.visibility === 0) return;
+            if (!kp || kp.x === null || kp.y === null || kp.visibility === 0) return;
 
             const isSelectedKp = kp === this.selectedKeypoint;
             const radius = (isSelectedKp ? 6 : 4) / this.zoom;
@@ -302,7 +319,7 @@ class CanvasKeypoints extends CanvasBase {
             if (this.showLabels && isSelectedKp) {
                 this.ctx.fillStyle = color;
                 this.ctx.font = `${12 / this.zoom}px Arial`;
-                const text = this.keypointNames[idx];
+                const text = skeleton.keypoints[idx] || `Point ${idx}`;
                 const textWidth = this.ctx.measureText(text).width;
                 this.ctx.fillRect(kp.x + 8 / this.zoom, kp.y - 16 / this.zoom, textWidth + 6 / this.zoom, 16 / this.zoom);
                 this.ctx.fillStyle = '#fff';
@@ -377,16 +394,110 @@ class CanvasKeypoints extends CanvasBase {
     // ============================================
 
     setSkeletonDefinition(keypointNames, connections) {
-        this.keypointNames = keypointNames;
-        this.skeletonConnections = connections;
-        this.redraw();
+        // Legacy method - no longer needed as skeletons are per-class
+        // Kept for backward compatibility
+        console.warn('setSkeletonDefinition is deprecated - skeletons are now per-class');
     }
 
     getKeypointNames() {
-        return this.keypointNames;
+        // Return keypoints for current skeleton
+        const skeleton = this.getCurrentSkeleton();
+        return skeleton.keypoints;
     }
 
     getCurrentKeypointName() {
-        return this.keypointNames[this.currentKeypointIndex];
+        // Return current keypoint name being placed
+        if (this.selectedAnnotation && this.selectedAnnotation.type === 'keypoints') {
+            const skeleton = this.getAnnotationSkeleton(this.selectedAnnotation);
+            return skeleton.keypoints[this.currentKeypointIndex];
+        }
+        const skeleton = this.getCurrentSkeleton();
+        return skeleton.keypoints[this.currentKeypointIndex];
+    }
+
+    // Update keypoints progress panel
+    updateKeypointProgressPanel() {
+        const panel = document.getElementById('keypointProgressPanel');
+        const content = document.getElementById('keypointProgressContent');
+
+        if (!panel || !content) return;
+
+        // Show panel only for keypoints projects
+        if (this.projectType !== 'keypoints') {
+            panel.style.display = 'none';
+            return;
+        }
+
+        panel.style.display = 'block';
+
+        // If no instance selected, show empty message
+        if (!this.selectedAnnotation || this.selectedAnnotation.type !== 'keypoints') {
+            content.innerHTML = '<div class="empty-message">No instance selected. Click "New Instance" or press N</div>';
+            return;
+        }
+
+        // Get skeleton and keypoints for selected annotation
+        const skeleton = this.getAnnotationSkeleton(this.selectedAnnotation);
+        const kps = this.selectedAnnotation.data.keypoints;
+        const cls = this.classes.find(c => c.id === this.selectedAnnotation.class);
+
+        // Find instance number
+        const keypointInstances = this.annotations.filter(a => a.type === 'keypoints');
+        const instanceIndex = keypointInstances.indexOf(this.selectedAnnotation) + 1;
+
+        // Calculate progress
+        const completedCount = kps.filter(kp => kp && kp.x !== null && kp.y !== null && kp.visibility > 0).length;
+        const totalCount = kps.length;
+        const progressPercent = totalCount > 0 ? (completedCount / totalCount * 100) : 0;
+
+        // Build HTML
+        let html = `
+            <div class="keypoint-instance-info">
+                <div>
+                    <div class="keypoint-instance-label">Instance #${instanceIndex}</div>
+                    ${cls ? `<span class="keypoint-instance-class" style="background: ${cls.color}">${cls.name}</span>` : ''}
+                </div>
+            </div>
+            <div class="keypoint-list">
+        `;
+
+        kps.forEach((kp, idx) => {
+            const isCompleted = kp && kp.x !== null && kp.y !== null && kp.visibility > 0;
+            const isCurrent = idx === this.currentKeypointIndex;
+            const visibilityClass = kp && kp.visibility === 2 ? 'visible' :
+                                   (kp && kp.visibility === 1 ? 'occluded' : 'not-labeled');
+            const visibilityLabel = kp && kp.visibility === 2 ? 'V' :
+                                   (kp && kp.visibility === 1 ? 'O' : '');
+
+            html += `
+                <div class="keypoint-item ${isCurrent ? 'current' : ''} ${isCompleted ? 'completed' : ''}" data-kp-index="${idx}">
+                    <input type="checkbox" class="keypoint-checkbox" ${isCompleted ? 'checked' : ''} disabled>
+                    <span class="keypoint-name">${idx + 1}. ${skeleton.keypoints[idx] || `Point ${idx}`}</span>
+                    ${visibilityLabel ? `<span class="keypoint-visibility ${visibilityClass}">${visibilityLabel}</span>` : ''}
+                </div>
+            `;
+        });
+
+        html += `
+            </div>
+            <div class="keypoint-progress-stats">
+                <strong>${completedCount} / ${totalCount}</strong> keypoints placed
+                <div class="keypoint-progress-bar">
+                    <div class="keypoint-progress-fill" style="width: ${progressPercent}%"></div>
+                </div>
+            </div>
+        `;
+
+        content.innerHTML = html;
+
+        // Add click handlers to navigate to keypoints
+        const keypointItems = content.querySelectorAll('.keypoint-item');
+        keypointItems.forEach((item, idx) => {
+            item.addEventListener('click', () => {
+                this.currentKeypointIndex = idx;
+                this.updateKeypointProgressPanel();
+                this.ui.showToast(`Now placing: ${skeleton.keypoints[idx]}`, 'info');
+            });
+        });
     }
 }

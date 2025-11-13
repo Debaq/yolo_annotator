@@ -60,7 +60,61 @@
   },
   "annotations": {
     "title": "Anotaciones",
-    "empty": "Sin anotaciones"
+    "empty": "Sin anotaciones",
+    "addClassFirst": "Agrega al menos una clase antes de anotar"
+  },
+  "polygon": {
+    "toolName": "Polígono",
+    "clickToAdd": "Click para agregar puntos. Doble click o Enter para cerrar.",
+    "needMinPoints": "Necesitas al menos {min} puntos para crear un polígono",
+    "created": "Polígono creado",
+    "cancelled": "Dibujo cancelado",
+    "cannotDeletePoint": "No se puede eliminar punto. Se requieren mínimo {min} puntos.",
+    "pointDeleted": "Punto eliminado"
+  },
+  "landmarks": {
+    "toolName": "Punto de Referencia",
+    "placed": "Punto de referencia \"{name}\" colocado",
+    "selectFirst": "Selecciona un punto de referencia primero",
+    "enterName": "Por favor ingresa un nombre",
+    "renamed": "Punto de referencia renombrado",
+    "renumbered": "{count} puntos renumerados",
+    "renameLandmark": "Renombrar Punto de Referencia",
+    "landmarkName": "Nombre del Punto:",
+    "namePlaceholder": "ej: Centro, Arriba-Izquierda, Entrada"
+  },
+  "skeleton": {
+    "addKeypointClass": "Agregar Clase de Keypoints",
+    "step1": "Paso 1: Información Básica",
+    "step2": "Paso 2: Seleccionar Preset de Esqueleto",
+    "className": "Nombre de la Clase",
+    "classNamePlaceholder": "ej: Persona, Mano, Rostro",
+    "classColor": "Color de la Clase",
+    "selectPreset": "Selecciona un preset de esqueleto para esta clase:",
+    "presetInfo": "Cada clase puede tener su propio esqueleto. Esto te permite anotar diferentes tipos de objetos en el mismo proyecto.",
+    "points": "puntos",
+    "connections": "conexiones",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "finish": "Finalizar",
+    "presets": {
+      "coco17": "COCO 17 Keypoints",
+      "coco17Desc": "Esqueleto humano completo (COCO dataset)",
+      "mediapipePose": "MediaPipe Pose 33",
+      "mediapipePoseDesc": "Pose detallada de cuerpo completo",
+      "mediapipeHand": "MediaPipe Hand 21",
+      "mediapipeHandDesc": "Articulaciones de mano detalladas",
+      "openpose25": "OpenPose 25",
+      "openpose25Desc": "Esqueleto OpenPose con manos",
+      "facial68": "Facial Landmarks 68",
+      "facial68Desc": "Puntos faciales detallados",
+      "facial5": "Facial 5 Points",
+      "facial5Desc": "Puntos faciales básicos (ojos, nariz, boca)",
+      "animalQuad": "Animal Cuadrúpedo",
+      "animalQuadDesc": "Esqueleto para animales de 4 patas",
+      "custom": "Personalizado",
+      "customDesc": "Define tu propio esqueleto"
+    }
   },
   "images": {
     "load": "Cargar imágenes",
@@ -159,6 +213,10 @@
         "name": "YOLO Segmentation",
         "description": "Polígonos en formato YOLO (.txt) con data.yaml"
       },
+      "yoloPose": {
+        "name": "YOLO Pose",
+        "description": "Keypoints en formato YOLO (.txt) con configuración de esqueleto"
+      },
       "coco": {
         "name": "COCO JSON",
         "description": "Formato COCO para Mask R-CNN, RetinaNet, etc."
@@ -236,6 +294,20 @@
         "useCases": "Pose estimation, reconocimiento facial, anatomía",
         "models": "OpenPose, HRNet, MediaPipe",
         "difficulty": "Intermedio"
+      },
+      "polygon": {
+        "name": "Segmentación con Polígonos",
+        "description": "Dibujar polígonos punto por punto para segmentación precisa",
+        "useCases": "Contornos precisos, formas geométricas, más liviano que máscaras",
+        "models": "YOLOv8-seg, Mask R-CNN, SOLO",
+        "difficulty": "Intermedio"
+      },
+      "landmarks": {
+        "name": "Puntos de Referencia",
+        "description": "Colocar puntos independientes sin conexiones",
+        "useCases": "Centros de objetos, puntos de referencia, conteo, ubicaciones",
+        "models": "Modelos de detección, detectores de puntos personalizados",
+        "difficulty": "Principiante"
       },
       "obb": {
         "name": "Cajas Rotadas (OBB)",

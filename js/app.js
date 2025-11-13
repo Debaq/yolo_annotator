@@ -129,7 +129,14 @@ class YOLOAnnotator {
         
         // Class management
         document.getElementById('btnAddClass')?.addEventListener('click', () => this.addClass());
-        
+
+        // Keypoints controls
+        document.getElementById('btnNewKeypointInstance')?.addEventListener('click', () => {
+            if (this.canvasManager && this.canvasManager.newKeypointInstance) {
+                this.canvasManager.newKeypointInstance();
+            }
+        });
+
         // Canvas controls
         document.getElementById('btnZoomIn')?.addEventListener('click', () => this.zoomIn());
         document.getElementById('btnZoomOut')?.addEventListener('click', () => this.zoomOut());
@@ -685,6 +692,8 @@ class YOLOAnnotator {
             { id: 'segmentation', key: 'segmentation', icon: 'fa-fill-drip', color: '#f59e0b' },
             { id: 'instanceSeg', key: 'instanceSeg', icon: 'fa-object-group', color: '#ef4444' },
             { id: 'keypoints', key: 'keypoints', icon: 'fa-braille', color: '#06b6d4' },
+            { id: 'polygon', key: 'polygon', icon: 'fa-draw-polygon', color: '#8b5cf6' },
+            { id: 'landmarks', key: 'landmarks', icon: 'fa-location-dot', color: '#ec4899' },
             { id: 'obb', key: 'obb', icon: 'fa-rotate', color: '#6366f1' }
         ];
 
@@ -2368,6 +2377,12 @@ class YOLOAnnotator {
     }
 
     addClass() {
+        // Check if this is a keypoints project and show special modal
+        if (this.projectManager.currentProject?.type === 'keypoints') {
+            this.showAddKeypointClassModal();
+            return;
+        }
+
         const nameInput = document.getElementById('newClassName');
         const colorInput = document.getElementById('newClassColor');
 
@@ -2419,6 +2434,213 @@ class YOLOAnnotator {
         if (window.eventBus) {
             window.eventBus.emit('classAdded', { class: newClass });
         }
+    }
+
+    showAddKeypointClassModal() {
+        let currentStep = 1;
+        let className = '';
+        let classColor = Utils.randomColor();
+        let selectedPreset = 'coco-17';
+        let customKeypoints = [];
+        let customConnections = [];
+
+        const showStep1 = () => {
+            this.ui.showModal(
+                window.i18n.t('skeleton.addKeypointClass') + ' - ' + window.i18n.t('skeleton.step1'),
+                `
+                    <div class="modal-steps">
+                        <div class="step active">1. ${window.i18n.t('skeleton.step1').split(':')[1] || 'Basic'}</div>
+                        <div class="step">2. ${window.i18n.t('skeleton.step2').split(':')[1] || 'Skeleton'}</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">${window.i18n.t('skeleton.className')}:</label>
+                        <input type="text" id="keypointClassName" class="form-control" value="${className}" placeholder="${window.i18n.t('skeleton.classNamePlaceholder')}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">${window.i18n.t('skeleton.classColor')}:</label>
+                        <input type="color" id="keypointClassColor" class="color-input" value="${classColor}">
+                    </div>
+                `,
+                [
+                    {
+                        text: window.i18n.t('actions.cancel'),
+                        type: 'secondary',
+                        action: 'cancel',
+                        handler: (modal, close) => close()
+                    },
+                    {
+                        text: window.i18n.t('skeleton.next') + ' →',
+                        type: 'primary',
+                        icon: 'fas fa-arrow-right',
+                        action: 'next',
+                        handler: (modal, close) => {
+                            const nameInput = modal.querySelector('#keypointClassName');
+                            const colorInput = modal.querySelector('#keypointClassColor');
+
+                            const name = nameInput.value.trim();
+                            if (!name) {
+                                this.ui.showToast(window.i18n.t('classes.enterName'), 'warning');
+                                return;
+                            }
+
+                            className = name;
+                            classColor = colorInput.value;
+                            close();
+                            showStep2();
+                        }
+                    }
+                ]
+            );
+
+            // Focus on name input
+            setTimeout(() => {
+                const input = document.getElementById('keypointClassName');
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
+            }, 100);
+        };
+
+        const showStep2 = () => {
+            const presets = SkeletonPresets.getAllPresets();
+            const categories = SkeletonPresets.getCategories();
+
+            // Group presets by category
+            let presetsHTML = '';
+            categories.forEach(category => {
+                const categoryPresets = SkeletonPresets.getPresetsByCategory(category);
+                if (categoryPresets.length > 0) {
+                    presetsHTML += `
+                        <div class="preset-category">
+                            <h4>${SkeletonPresets.getCategoryName(category)}</h4>
+                            <div class="preset-list">
+                    `;
+                    categoryPresets.forEach(preset => {
+                        const isSelected = preset.id === selectedPreset ? 'selected' : '';
+                        presetsHTML += `
+                            <div class="preset-card ${isSelected}" data-preset="${preset.id}">
+                                <div class="preset-header">
+                                    <strong>${preset.name}</strong>
+                                    <span class="preset-count">${preset.keypoints.length} ${window.i18n.t('skeleton.points')}</span>
+                                </div>
+                                <div class="preset-description">${preset.description}</div>
+                            </div>
+                        `;
+                    });
+                    presetsHTML += `
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            this.ui.showModal(
+                window.i18n.t('skeleton.addKeypointClass') + ' - ' + window.i18n.t('skeleton.step2'),
+                `
+                    <div class="modal-steps">
+                        <div class="step completed">1. ${window.i18n.t('skeleton.step1').split(':')[1] || 'Basic'}</div>
+                        <div class="step active">2. ${window.i18n.t('skeleton.step2').split(':')[1] || 'Skeleton'}</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">${window.i18n.t('skeleton.selectPreset')}</label>
+                        <p class="help-text">${window.i18n.t('skeleton.presetInfo')}</p>
+                        <div id="presetContainer" class="preset-container">
+                            ${presetsHTML}
+                        </div>
+                    </div>
+                    <div class="selected-preset-info" id="selectedPresetInfo">
+                        <strong>${window.i18n.t('classes.active')}:</strong> <span id="selectedPresetName">COCO 17 Keypoints</span>
+                    </div>
+                `,
+                [
+                    {
+                        text: '← ' + window.i18n.t('skeleton.previous'),
+                        type: 'secondary',
+                        icon: 'fas fa-arrow-left',
+                        action: 'back',
+                        handler: (modal, close) => {
+                            close();
+                            showStep1();
+                        }
+                    },
+                    {
+                        text: window.i18n.t('skeleton.finish'),
+                        type: 'primary',
+                        icon: 'fas fa-check',
+                        action: 'create',
+                        handler: (modal, close) => {
+                            // Get selected preset
+                            const preset = SkeletonPresets.getPreset(selectedPreset);
+                            if (!preset) {
+                                this.ui.showToast(window.i18n.t('skeleton.selectPreset'), 'warning');
+                                return;
+                            }
+
+                            // Create skeleton structure
+                            const skeleton = SkeletonPresets.createFromPreset(selectedPreset);
+
+                            // Create new class with skeleton
+                            const classes = this.canvasManager.classes;
+                            const newId = classes.length > 0 ?
+                                Math.max(...classes.map(c => c.id)) + 1 : 0;
+
+                            const newClass = {
+                                id: newId,
+                                name: className,
+                                color: classColor,
+                                skeleton: skeleton
+                            };
+
+                            this.canvasManager.classes.push(newClass);
+                            this.updateClassUI();
+
+                            if (this.projectManager.currentProject) {
+                                this.projectManager.updateProject({ classes: this.canvasManager.classes });
+                            }
+
+                            // Emit event for UI updates
+                            if (window.eventBus) {
+                                window.eventBus.emit('classAdded', { class: newClass });
+                            }
+
+                            // Update canvas keypoints definition if this is the first class
+                            if (this.canvasManager.classes.length === 1 && this.canvasManager.setSkeletonDefinition) {
+                                this.canvasManager.setSkeletonDefinition(skeleton.keypoints, skeleton.connections);
+                            }
+
+                            this.ui.showToast(`Class "${className}" created with ${preset.keypoints.length} keypoints`, 'success');
+                            close();
+                        }
+                    }
+                ]
+            );
+
+            // Add click handlers for preset cards
+            setTimeout(() => {
+                const presetCards = modal.querySelectorAll('.preset-card');
+                const presetNameDisplay = modal.querySelector('#selectedPresetName');
+
+                presetCards.forEach(card => {
+                    card.addEventListener('click', () => {
+                        // Remove selected class from all cards
+                        presetCards.forEach(c => c.classList.remove('selected'));
+                        // Add selected class to clicked card
+                        card.classList.add('selected');
+
+                        // Update selected preset
+                        selectedPreset = card.dataset.preset;
+                        const preset = SkeletonPresets.getPreset(selectedPreset);
+                        if (preset && presetNameDisplay) {
+                            presetNameDisplay.textContent = preset.name;
+                        }
+                    });
+                });
+            }, 100);
+        };
+
+        // Start with step 1
+        showStep1();
     }
 
     updateClassUI() {
@@ -3618,10 +3840,21 @@ class YOLOAnnotator {
                 { id: 'coco', key: 'coco' },
                 { id: 'masksPng', key: 'masksPng' }
             ];
+        } else if (projectType === 'polygon') {
+            return [
+                { id: 'yoloSeg', key: 'yoloSeg' },
+                { id: 'coco', key: 'coco' }
+            ];
         } else if (projectType === 'keypoints') {
             return [
-                { id: 'coco', key: 'coco' },
-                { id: 'yolo', key: 'yolo' }
+                { id: 'yoloPose', key: 'yoloPose' },
+                { id: 'coco', key: 'coco' }
+            ];
+        } else if (projectType === 'landmarks') {
+            return [
+                { id: 'yolo', key: 'yolo' },
+                { id: 'csv', key: 'csv' },
+                { id: 'coco', key: 'coco' }
             ];
         }
 
