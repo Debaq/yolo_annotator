@@ -101,6 +101,11 @@ class YOLOAnnotator {
 
         // Button to trigger file input
         document.getElementById('btnLoadImages')?.addEventListener('click', () => {
+            // Validate project exists before allowing image load
+            if (!this.projectManager.currentProject) {
+                this.ui.showToast('Create or select a project first', 'warning');
+                return;
+            }
             document.getElementById('imageInput')?.click();
         });
 
@@ -479,6 +484,7 @@ class YOLOAnnotator {
             this.updateClassUI();
             await this.galleryManager.loadImages(projectId);
             this.updateStats();
+            this.updateButtonStates();
         } catch (error) {
             console.error('Error loading project:', error);
         }
@@ -2647,6 +2653,14 @@ class YOLOAnnotator {
     }
 
     updateButtonStates() {
+        // Disable load images button if no project
+        const btnLoadImages = document.getElementById('btnLoadImages');
+        if (btnLoadImages) {
+            btnLoadImages.disabled = !this.projectManager.currentProject;
+            btnLoadImages.style.opacity = this.projectManager.currentProject ? '1' : '0.5';
+            btnLoadImages.style.cursor = this.projectManager.currentProject ? 'pointer' : 'not-allowed';
+        }
+
         if (!this.canvasManager) return;
 
         // Update labels button (default is true)

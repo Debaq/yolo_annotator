@@ -102,6 +102,11 @@ class CanvasBbox extends CanvasBase {
 
     handleDrawStart(x, y) {
         if (this.currentTool === 'bbox') {
+            // Validate classes exist before allowing annotation
+            if (!this.classes || this.classes.length === 0) {
+                this.ui.showToast('Add at least one class before annotating', 'warning');
+                return;
+            }
             // Start drawing new bbox
             this.isDrawing = true;
             this.startX = x;

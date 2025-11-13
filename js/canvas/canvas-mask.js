@@ -174,6 +174,12 @@ class CanvasMask extends CanvasBase {
 
     handleDrawStart(x, y) {
         if (this.currentTool === 'mask') {
+            // Validate classes exist before allowing annotation
+            if (!this.classes || this.classes.length === 0) {
+                this.ui.showToast('Add at least one class before annotating', 'warning');
+                return;
+            }
+
             this.isDrawing = true;
 
             // Create temporary mask canvas if not exists

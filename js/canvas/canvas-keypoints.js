@@ -154,6 +154,12 @@ class CanvasKeypoints extends CanvasBase {
 
     handleDrawStart(x, y) {
         if (this.currentTool === 'keypoint') {
+            // Validate classes exist before allowing annotation
+            if (!this.classes || this.classes.length === 0) {
+                this.ui.showToast('Add at least one class before annotating', 'warning');
+                return;
+            }
+
             // If no instance selected, create one
             if (!this.selectedAnnotation || this.selectedAnnotation.type !== 'keypoints') {
                 this.newKeypointInstance();
