@@ -3931,7 +3931,7 @@ class YOLOAnnotator {
                                             <!-- Populated dynamically based on project type -->
                                         </select>
                                     </div>
-                                    <div class="config-item">
+                                    <div class="config-item modality-images">
                                         <label class="form-label">
                                             Modelo
                                             <span class="help-icon" data-i18n-title="export.code.tooltips.model">
@@ -4133,27 +4133,27 @@ class YOLOAnnotator {
                                                     <input type="checkbox" id="savePlots" checked>
                                                     <span>Guardar gráficos de entrenamiento</span>
                                                 </label>
-                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.saveConfMatrix">
-                                                    <input type="checkbox" id="saveConfMatrix" checked>
-                                                    <span>Matriz de confusión</span>
-                                                </label>
-                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.savePrCurves">
-                                                    <input type="checkbox" id="savePrCurves" checked>
-                                                    <span>Curvas Precision-Recall</span>
-                                                </label>
-                                                <label class="checkbox-label" data-i18n-title="export.code.tooltips.savePredictions">
-                                                    <input type="checkbox" id="savePredictions">
-                                                    <span>Visualizar predicciones</span>
-                                                </label>
                                                 <label class="checkbox-label" data-i18n-title="export.code.tooltips.saveMetricsCsv">
                                                     <input type="checkbox" id="saveMetricsCsv" checked>
                                                     <span>Exportar métricas a CSV</span>
                                                 </label>
+                                                <label class="checkbox-label modality-images" data-i18n-title="export.code.tooltips.saveConfMatrix">
+                                                    <input type="checkbox" id="saveConfMatrix" checked>
+                                                    <span>Matriz de confusión</span>
+                                                </label>
+                                                <label class="checkbox-label modality-images" data-i18n-title="export.code.tooltips.savePrCurves">
+                                                    <input type="checkbox" id="savePrCurves" checked>
+                                                    <span>Curvas Precision-Recall</span>
+                                                </label>
+                                                <label class="checkbox-label modality-images" data-i18n-title="export.code.tooltips.savePredictions">
+                                                    <input type="checkbox" id="savePredictions">
+                                                    <span>Visualizar predicciones</span>
+                                                </label>
                                             </div>
                                         </div>
 
-                                        <!-- Model Export -->
-                                        <div class="config-section">
+                                        <!-- Model Export (Images only) -->
+                                        <div class="config-section modality-images">
                                             <h5 class="config-section-title">
                                                 <i class="fas fa-file-export"></i> Exportación del Modelo
                                                 <span class="help-icon" data-i18n-title="export.code.tooltips.exportTitle">

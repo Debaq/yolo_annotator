@@ -1,6 +1,38 @@
 /**
  * TRAINING CODE GENERATOR
  * Generates training scripts for various ML frameworks (YOLO, Detectron2, PyTorch, etc.)
+ *
+ * CONTROL APPLICABILITY BY MODALITY:
+ *
+ * Universal (all modalities):
+ * - Framework (auto-populated based on project type)
+ * - Device (CPU, CUDA, MPS)
+ * - Epochs
+ * - Batch Size
+ * - Optimizer (Adam, AdamW, SGD, RMSprop)
+ * - Learning Rate
+ * - Patience (Early Stop)
+ * - Validation Split
+ * - Save plots
+ * - Export metrics CSV
+ *
+ * Images only (.modality-images):
+ * - Model size (n, s, m, l, x)
+ * - Image size (416, 640, 1280)
+ * - Data Augmentation (Mosaic, Mixup, HSV, Flips, Rotate, Scale)
+ * - Confusion Matrix
+ * - Precision-Recall Curves
+ * - Visualize Predictions
+ * - Model Export (ONNX, TorchScript, TFLite, OpenVINO, CoreML, TensorRT)
+ *
+ * Time Series only (.modality-timeSeries):
+ * - Sequence Length
+ * - Forecast Horizon
+ * - Hidden Size
+ *
+ * Audio/Video/3D/Text:
+ * - Currently using same universal controls
+ * - Specific controls can be added as needed
  */
 
 class TrainingCodeGenerator {
@@ -99,18 +131,23 @@ class TrainingCodeGenerator {
         const modality = this.getProjectModality(projectType);
 
         // Show/hide controls based on modality
+        // Each control can have one or more modality classes (e.g., .modality-images, .modality-timeSeries)
         const imageControls = document.querySelectorAll('.modality-images');
         const timeSeriesControls = document.querySelectorAll('.modality-timeSeries');
         const audioControls = document.querySelectorAll('.modality-audio');
         const videoControls = document.querySelectorAll('.modality-video');
+        const threeDControls = document.querySelectorAll('.modality-threeD');
+        const textControls = document.querySelectorAll('.modality-text');
 
-        // Hide all first
+        // Hide all modality-specific controls first
         imageControls.forEach(el => el.style.display = 'none');
         timeSeriesControls.forEach(el => el.style.display = 'none');
         audioControls.forEach(el => el.style.display = 'none');
         videoControls.forEach(el => el.style.display = 'none');
+        threeDControls.forEach(el => el.style.display = 'none');
+        textControls.forEach(el => el.style.display = 'none');
 
-        // Show only relevant ones
+        // Show only controls relevant to current modality
         if (modality === 'images') {
             imageControls.forEach(el => el.style.display = '');
         } else if (modality === 'timeSeries') {
@@ -119,6 +156,10 @@ class TrainingCodeGenerator {
             audioControls.forEach(el => el.style.display = '');
         } else if (modality === 'video') {
             videoControls.forEach(el => el.style.display = '');
+        } else if (modality === 'threeD') {
+            threeDControls.forEach(el => el.style.display = '');
+        } else if (modality === 'text') {
+            textControls.forEach(el => el.style.display = '');
         }
 
         // Update frameworks after UI is updated
