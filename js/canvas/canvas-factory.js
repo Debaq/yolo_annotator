@@ -22,9 +22,10 @@ class CanvasFactory {
      * @param {UIManager} ui - UI manager instance
      * @returns {CanvasBase|null} Canvas instance or null for classification types
      */
-    static create(projectType, canvas, ui) {
+    static create(projectType, canvas, ui, classes = []) {
         // Mapping of project types to canvas classes
         const canvasMapping = {
+            // Images
             'detection': CanvasBbox,
             'obb': CanvasObb,
             'segmentation': CanvasMask,
@@ -33,7 +34,18 @@ class CanvasFactory {
             'polygon': CanvasPolygon,
             'landmarks': CanvasLandmarks,
             'classification': null,  // Handled by ClassificationManager
-            'multiLabel': null       // Handled by ClassificationManager
+            'multiLabel': null,      // Handled by ClassificationManager
+
+            // Time Series
+            'timeSeriesClassification': TimeSeriesCanvasManager,
+            'timeSeriesForecasting': TimeSeriesCanvasManager,
+            'anomalyDetection': TimeSeriesCanvasManager,
+            'timeSeriesSegmentation': TimeSeriesCanvasManager,
+            'patternRecognition': TimeSeriesCanvasManager,
+            'eventDetection': TimeSeriesCanvasManager,
+            'timeSeriesRegression': TimeSeriesCanvasManager,
+            'clustering': TimeSeriesCanvasManager,
+            'imputation': TimeSeriesCanvasManager
         };
 
         const CanvasClass = canvasMapping[projectType];
@@ -60,7 +72,14 @@ class CanvasFactory {
 
         // Instantiate and return canvas
         try {
-            const canvasInstance = new CanvasClass(canvas, ui, projectType);
+            // TimeSeriesCanvasManager requires classes parameter
+            let canvasInstance;
+            if (CanvasClass === TimeSeriesCanvasManager) {
+                canvasInstance = new CanvasClass(canvas, projectType, classes, ui);
+            } else {
+                canvasInstance = new CanvasClass(canvas, ui, projectType);
+            }
+
             console.log(`Canvas instance created successfully:`, canvasInstance.constructor.name);
             return canvasInstance;
         } catch (error) {
@@ -111,7 +130,18 @@ class CanvasFactory {
             'polygon': ['polygon', 'select', 'pan'],
             'landmarks': ['landmark', 'select', 'pan'],
             'classification': [],
-            'multiLabel': []
+            'multiLabel': [],
+
+            // Time Series tools
+            'timeSeriesClassification': ['point', 'range', 'select', 'pan', 'zoom'],
+            'timeSeriesForecasting': ['point', 'range', 'select', 'pan', 'zoom'],
+            'anomalyDetection': ['point', 'range', 'select', 'pan', 'zoom'],
+            'timeSeriesSegmentation': ['range', 'select', 'pan', 'zoom'],
+            'patternRecognition': ['point', 'range', 'select', 'pan', 'zoom'],
+            'eventDetection': ['point', 'select', 'pan', 'zoom'],
+            'timeSeriesRegression': ['point', 'range', 'select', 'pan', 'zoom'],
+            'clustering': ['select', 'pan', 'zoom'],
+            'imputation': ['point', 'range', 'select', 'pan', 'zoom']
         };
 
         return toolMapping[projectType] || [];

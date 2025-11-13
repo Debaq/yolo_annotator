@@ -191,7 +191,25 @@ class GalleryManager {
             const blob = imageData.image;
             const file = new File([blob], imageData.name, { type: blob.type });
 
-            if (this.app.annotationMode === 'classification') {
+            // Check if it's time series data
+            const isTimeSeries = imageData.mimeType === 'text/csv' || imageData.timeSeriesMetadata;
+
+            if (isTimeSeries) {
+                // Time Series mode
+                if (this.app.canvasManager && this.app.canvasManager.loadData) {
+                    await this.app.canvasManager.loadData(imageData);
+                    this.app.canvasManager.imageId = imageId;
+                    this.app.canvasManager.imageName = imageData.name;
+
+                    // Note: annotations are loaded inside loadData()
+                    if (this.app.canvasManager.clearUnsavedChanges) {
+                        this.app.canvasManager.clearUnsavedChanges();
+                    }
+                } else {
+                    console.error('Canvas manager does not support time series data');
+                    this.ui.showToast('Canvas no soporta series temporales', 'error');
+                }
+            } else if (this.app.annotationMode === 'classification') {
                 // Classification mode
                 await this.app.classificationManager.loadImage(file);
                 this.app.classificationManager.imageId = imageId;

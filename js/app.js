@@ -551,10 +551,12 @@ class YOLOAnnotator {
                 // Create canvas using factory if not exists
                 if (!this.canvasManager) {
                     try {
-                        this.canvasManager = CanvasFactory.create(project.type, this.canvas, this.ui);
+                        this.canvasManager = CanvasFactory.create(project.type, this.canvas, this.ui, project.classes || []);
 
                         // Clear annotation-list when creating new canvas for new project
-                        this.canvasManager.updateAnnotationsBar();
+                        if (this.canvasManager && this.canvasManager.updateAnnotationsBar) {
+                            this.canvasManager.updateAnnotationsBar();
+                        }
                     } catch (canvasError) {
                         console.error('Failed to create canvas:', canvasError);
                         this.ui.showToast(`Error creating canvas: ${canvasError.message}`, 'error');
