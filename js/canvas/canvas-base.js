@@ -367,6 +367,7 @@ class CanvasBase {
                     this.originalImageBlob = file;
                     this.fitImageToCanvas();
                     this.redraw();
+                    this.updateToolAvailability();
                     resolve(img);
                 };
                 img.onerror = reject;
@@ -861,6 +862,22 @@ class CanvasBase {
         if (keypointControls) {
             keypointControls.style.display = showKeypoints ? 'flex' : 'none';
         }
+
+        // Hide time series tools (point, range)
+        const pointBtn = document.querySelector('[data-tool="point"]');
+        const rangeBtn = document.querySelector('[data-tool="range"]');
+
+        if (pointBtn) pointBtn.style.display = 'none';
+        if (rangeBtn) rangeBtn.style.display = 'none';
+
+        // Show zoom and view controls, hide scale controls for images
+        const scaleControls = document.getElementById('scaleControls');
+        const zoomControls = document.getElementById('zoomControls');
+        const viewControls = document.getElementById('viewControls');
+
+        if (scaleControls) scaleControls.style.display = 'none';
+        if (zoomControls) zoomControls.style.display = 'flex';
+        if (viewControls) viewControls.style.display = 'flex';
     }
 
     // ============================================
