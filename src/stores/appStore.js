@@ -39,6 +39,13 @@ export function createAppStore() {
 
         // Modals & UI
         activeModal: null,
+        modals: {
+            newProject: false,
+            manageProjects: false,
+            export: false,
+            addClass: false,
+            confirm: false
+        },
         toast: { message: '', type: '', visible: false },
 
         // Auto-save
@@ -472,11 +479,25 @@ export function createAppStore() {
             }, duration);
         },
 
-        async confirm(message) {
-            // This will be handled by modal component
+        showModal(modalName) {
+            this.modals[modalName] = true;
+        },
+
+        hideModal(modalName) {
+            this.modals[modalName] = false;
+        },
+
+        hideAllModals() {
+            Object.keys(this.modals).forEach(key => {
+                this.modals[key] = false;
+            });
+        },
+
+        async confirm(message, title = 'Confirm') {
             return new Promise((resolve) => {
                 this.activeModal = {
                     type: 'confirm',
+                    title,
                     message,
                     onConfirm: () => {
                         this.activeModal = null;

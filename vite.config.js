@@ -10,6 +10,7 @@ export default defineConfig({
     assetsDir: 'assets',
     sourcemap: true,
     minify: 'terser',
+    target: 'esnext', // Support top-level await
 
     rollupOptions: {
       output: {

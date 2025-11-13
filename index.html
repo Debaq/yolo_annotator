@@ -67,14 +67,14 @@
 
                     <!-- New Project -->
                     <button class="btn-header btn-icon-only"
-                            @click="$dispatch('show-new-project-modal')"
+                            @click="$store.app.showModal('newProject')"
                             title="New Project">
                         <i class="fas fa-plus"></i>
                     </button>
 
                     <!-- Manage Projects -->
                     <button class="btn-header btn-icon-only"
-                            @click="$dispatch('show-manage-projects-modal')"
+                            @click="$store.app.showModal('manageProjects')"
                             title="Manage Projects">
                         <i class="fas fa-folder-tree"></i>
                     </button>
@@ -93,7 +93,7 @@
 
                     <!-- Export -->
                     <button class="btn-header btn-icon-only"
-                            @click="$dispatch('show-export-modal')"
+                            @click="$store.app.showModal('export')"
                             :disabled="!$store.app.hasProject"
                             title="Export Dataset">
                         <i class="fas fa-download"></i>
@@ -335,13 +335,10 @@
 
                 <!-- Canvas Container -->
                 <div class="canvas-container"
-                     x-show="$store.app.hasImage">
+                     x-show="$store.app.hasImage"
+                     x-data="canvasComponent">
                     <canvas id="canvas"
-                            x-ref="canvas"
-                            @mousedown="handleCanvasMouseDown"
-                            @mousemove="handleCanvasMouseMove"
-                            @mouseup="handleCanvasMouseUp"
-                            @wheel.prevent="handleCanvasWheel"></canvas>
+                            x-ref="canvas"></canvas>
                 </div>
 
                 <!-- Empty State -->
@@ -408,8 +405,156 @@
 
     </div>
 
-    <!-- Modals will be injected here -->
-    <div id="modal-root"></div>
+    <!-- Modals -->
+
+    <!-- Confirm Modal -->
+    <div x-data="confirmModal"
+         x-show="show"
+         x-cloak
+         class="modal-overlay"
+         @click.self="cancel()">
+        <div class="modal" @click.away="cancel()">
+            <div class="modal-header">
+                <h3 x-text="title"></h3>
+                <button @click="cancel()" class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p x-text="message"></p>
+            </div>
+            <div class="modal-footer">
+                <button @click="cancel()" class="btn btn-secondary">
+                    Cancel
+                </button>
+                <button @click="confirm()" class="btn btn-primary">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Project Modal -->
+    <div x-data="newProjectModal"
+         x-show="show"
+         x-cloak
+         class="modal-overlay"
+         @click.self="close()">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h3>Create New Project</h3>
+                <button @click="close()" class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Project Name</label>
+                    <input type="text"
+                           x-model="formData.name"
+                           placeholder="My Project"
+                           class="form-input"
+                           @keydown.enter="submit()">
+                </div>
+
+                <div class="form-group">
+                    <label>Project Type</label>
+                    <select x-model="formData.type" class="form-select">
+                        <option value="bbox">Bounding Box (Detection)</option>
+                        <option value="mask">Segmentation Mask</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Classes</label>
+                    <div class="classes-input">
+                        <input type="text"
+                               x-model="newClassName"
+                               placeholder="Class name"
+                               class="form-input"
+                               @keydown.enter="addClass()">
+                        <input type="color"
+                               x-model="newClassColor"
+                               class="form-color">
+                        <button @click="addClass()" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+
+                    <div class="classes-list-modal">
+                        <template x-for="(cls, index) in formData.classes" :key="index">
+                            <div class="class-item-modal">
+                                <div class="class-color" :style="`background: ${cls.color}`"></div>
+                                <span x-text="cls.name"></span>
+                                <button @click="removeClass(index)" class="btn-icon-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button @click="close()" class="btn btn-secondary">
+                    Cancel
+                </button>
+                <button @click="submit()" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Create Project
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div x-data="exportModal"
+         x-show="show"
+         x-cloak
+         class="modal-overlay"
+         @click.self="close()">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Export Dataset</h3>
+                <button @click="close()" class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Export Format</label>
+                    <select x-model="exportFormat" class="form-select">
+                        <option value="yolo">YOLO</option>
+                        <option value="coco">COCO JSON</option>
+                        <option value="voc">Pascal VOC</option>
+                        <option value="csv">CSV</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" x-model="includeImages">
+                        Include Images
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" x-model="includeLabels">
+                        Include Labels
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button @click="close()" class="btn btn-secondary">
+                    Cancel
+                </button>
+                <button @click="startExport()" class="btn btn-primary">
+                    <i class="fas fa-download"></i>
+                    Export
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Main Script -->
     <script type="module" src="/src/main.js"></script>
