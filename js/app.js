@@ -64,6 +64,9 @@ class YOLOAnnotator {
             // Start periodic auto-save
             this.startPeriodicAutoSave();
 
+            // Initialize Tippy.js tooltips for all elements with data-tippy-content or data-i18n-title
+            this.initTooltips();
+
             this.ui.showToast(window.i18n.t('notifications.appStarted'), 'success');
         } catch (error) {
             console.error('Error initializing app:', error);
@@ -2908,14 +2911,19 @@ class YOLOAnnotator {
         const storageIndicator = document.getElementById('storageIndicator');
         const storageSizeEl = document.getElementById('storageSize');
 
-        if (!storageIndicator || !storageSizeEl) return;
+        if (!storageIndicator || !storageSizeEl) {
+            console.warn('Storage indicator elements not found in DOM');
+            return;
+        }
 
         try {
+            console.log('Updating storage indicator...');
             // Calculate total size of all data in IndexedDB
             let totalSize = 0;
 
             // Get all projects
             const projects = await this.db.getAllProjects();
+            console.log(`Found ${projects.length} projects`);
 
             // Estimate project metadata size (rough estimate)
             const projectsJSON = JSON.stringify(projects);
@@ -2923,7 +2931,9 @@ class YOLOAnnotator {
 
             // Get all images across all projects
             for (const project of projects) {
-                const images = await this.db.getAllImages(project.id);
+                const images = await this.db.getProjectImages(project.id); // FIXED: was getAllImages
+
+                console.log(`Project "${project.name}": ${images.length} images`);
 
                 // Add size of each image blob and its metadata
                 for (const image of images) {
@@ -2942,6 +2952,8 @@ class YOLOAnnotator {
             // Format size for display
             const formattedSize = this.formatBytes(totalSize);
             storageSizeEl.textContent = formattedSize;
+
+            console.log(`Total storage: ${formattedSize} (${totalSize} bytes)`);
 
             // Show indicator if there's data
             if (totalSize > 0) {
@@ -2963,6 +2975,49 @@ class YOLOAnnotator {
         const i = Math.floor(Math.log(bytes) / Math.log(k));
 
         return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    initTooltips() {
+        // Initialize Tippy.js tooltips if the library is loaded
+        if (typeof tippy === 'undefined') {
+            console.warn('Tippy.js is not loaded, tooltips will not be initialized');
+            return;
+        }
+
+        try {
+            // Initialize tooltips for elements with data-tippy-content
+            tippy('[data-tippy-content]', {
+                theme: 'light',
+                arrow: true,
+                placement: 'auto',
+                maxWidth: 320,
+                animation: 'scale',
+                duration: [200, 150],
+                appendTo: () => document.body
+            });
+
+            // Initialize tooltips for elements with data-i18n-title
+            tippy('[data-i18n-title]', {
+                theme: 'light',
+                arrow: true,
+                placement: 'auto',
+                maxWidth: 320,
+                animation: 'scale',
+                duration: [200, 150],
+                appendTo: () => document.body,
+                content(reference) {
+                    const title = reference.getAttribute('data-i18n-title');
+                    if (title && window.i18n) {
+                        return window.i18n.t(title);
+                    }
+                    return reference.getAttribute('title') || '';
+                }
+            });
+
+            console.log('Tippy.js tooltips initialized successfully');
+        } catch (error) {
+            console.error('Error initializing Tippy.js tooltips:', error);
+        }
     }
 
     showExportModal() {
