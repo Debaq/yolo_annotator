@@ -157,5 +157,29 @@
   "imageInfo": {
     "noName": "Senza nome",
     "dimensions": "Dimensioni"
+  },
+  "pwa": {
+    "installButton": "Installa App",
+    "modal": {
+      "title": "🚀 Installa Annotix come applicazione",
+      "benefits": "Vantaggi dell'installazione:",
+      "benefit1": "✅ Accesso diretto dal desktop",
+      "benefit2": "✅ Funziona offline",
+      "benefit3": "✅ Più veloce e fluido",
+      "benefit4": "✅ Senza barra del browser",
+      "benefit5": "✅ I tuoi dati sempre privati",
+      "benefit6": "✅ Aggiornamenti automatici",
+      "cancelButton": "Non ora",
+      "installButtonModal": "📥 Installa App"
+    },
+    "notifications": {
+      "installed": "Annotix installato con successo!",
+      "installFailed": "Errore durante l'installazione",
+      "updateAvailable": "Aggiornamento disponibile. Ricarica per aggiornare.",
+      "offline": "Modalità offline attivata. L'app funziona senza connessione."
+    }
+  },
+  "storage": {
+    "used": "Spazio utilizzato in IndexedDB"
   }
 }

@@ -414,5 +414,29 @@
     "batchSuccess": "{count} imágenes aumentadas creadas correctamente",
     "batchRandomSuccess": "{count} variaciones aleatorias creadas correctamente",
     "batchError": "Error al aplicar augmentation por lotes"
+  },
+  "pwa": {
+    "installButton": "Instalar App",
+    "modal": {
+      "title": "🚀 Instalar Annotix como aplicación",
+      "benefits": "Beneficios de instalar:",
+      "benefit1": "✅ Acceso directo desde escritorio",
+      "benefit2": "✅ Funciona sin conexión",
+      "benefit3": "✅ Más rápido y fluido",
+      "benefit4": "✅ Sin barra del navegador",
+      "benefit5": "✅ Tus datos siempre privados",
+      "benefit6": "✅ Actualizaciones automáticas",
+      "cancelButton": "Ahora no",
+      "installButtonModal": "📥 Instalar App"
+    },
+    "notifications": {
+      "installed": "¡Annotix instalada correctamente!",
+      "installFailed": "Error al instalar la aplicación",
+      "updateAvailable": "Actualización disponible. Recarga para actualizar.",
+      "offline": "Modo offline activado. La app funciona sin conexión."
+    }
+  },
+  "storage": {
+    "used": "Almacenamiento usado en IndexedDB"
   }
 }

@@ -67,6 +67,9 @@ class YOLOAnnotator {
             // Initialize Tippy.js tooltips for all elements with data-tippy-content or data-i18n-title
             this.initTooltips();
 
+            // Setup PWA installation functionality
+            this.setupPWA();
+
             this.ui.showToast(window.i18n.t('notifications.appStarted'), 'success');
         } catch (error) {
             console.error('Error initializing app:', error);
@@ -3020,6 +3023,125 @@ class YOLOAnnotator {
         }
     }
 
+    setupPWA() {
+        // PWA Installation functionality
+        let deferredPrompt = null;
+        const installButton = document.getElementById('btnInstallPWA');
+
+        if (!installButton) {
+            console.warn('PWA install button not found');
+            return;
+        }
+
+        // Listen for the beforeinstallprompt event
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent the mini-infobar from appearing on mobile
+            e.preventDefault();
+
+            // Store the event so it can be triggered later
+            deferredPrompt = e;
+
+            // Show the install button
+            installButton.style.display = 'block';
+
+            console.log('[PWA] Install prompt ready');
+        });
+
+        // Handle install button click
+        installButton.addEventListener('click', async () => {
+            if (!deferredPrompt) {
+                console.log('[PWA] No install prompt available');
+                return;
+            }
+
+            // Show the installation modal first
+            this.showPWAInstallModal(async () => {
+                // Show the native install prompt
+                deferredPrompt.prompt();
+
+                // Wait for the user's response
+                const { outcome } = await deferredPrompt.userChoice;
+
+                console.log(`[PWA] User response: ${outcome}`);
+
+                if (outcome === 'accepted') {
+                    this.ui.showToast(window.i18n.t('pwa.notifications.installed'), 'success');
+                    // Hide the install button
+                    installButton.style.display = 'none';
+                } else {
+                    console.log('[PWA] User dismissed the install prompt');
+                }
+
+                // Clear the deferredPrompt
+                deferredPrompt = null;
+            });
+        });
+
+        // Detect if app is already installed
+        window.addEventListener('appinstalled', () => {
+            console.log('[PWA] App was installed');
+            installButton.style.display = 'none';
+            deferredPrompt = null;
+        });
+
+        // Hide button if already in standalone mode (app is installed)
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+            installButton.style.display = 'none';
+            console.log('[PWA] App is running in standalone mode');
+        }
+    }
+
+    showPWAInstallModal(onInstall) {
+        const content = `
+            <div style="text-align: left; padding: 0 20px;">
+                <p style="font-size: 1.1em; margin-bottom: 20px;">
+                    <strong>${window.i18n.t('pwa.modal.benefits')}</strong>
+                </p>
+                <ul style="list-style: none; padding: 0; margin: 0;">
+                    <li style="padding: 8px 0; font-size: 0.95em;">
+                        ${window.i18n.t('pwa.modal.benefit1')}
+                    </li>
+                    <li style="padding: 8px 0; font-size: 0.95em;">
+                        ${window.i18n.t('pwa.modal.benefit2')}
+                    </li>
+                    <li style="padding: 8px 0; font-size: 0.95em;">
+                        ${window.i18n.t('pwa.modal.benefit3')}
+                    </li>
+                    <li style="padding: 8px 0; font-size: 0.95em;">
+                        ${window.i18n.t('pwa.modal.benefit4')}
+                    </li>
+                    <li style="padding: 8px 0; font-size: 0.95em;">
+                        ${window.i18n.t('pwa.modal.benefit5')}
+                    </li>
+                    <li style="padding: 8px 0; font-size: 0.95em;">
+                        ${window.i18n.t('pwa.modal.benefit6')}
+                    </li>
+                </ul>
+            </div>
+        `;
+
+        this.ui.showModal(window.i18n.t('pwa.modal.title'), content, [
+            {
+                text: window.i18n.t('pwa.modal.cancelButton'),
+                type: 'secondary',
+                action: 'cancel',
+                handler: (modal, close) => close()
+            },
+            {
+                text: window.i18n.t('pwa.modal.installButtonModal'),
+                type: 'primary',
+                action: 'install',
+                handler: async (modal, close) => {
+                    close();
+                    // Call the install callback
+                    if (onInstall) {
+                        await onInstall();
+                    }
+                }
+            }
+        ]);
+    }
+
     showExportModal() {
         if (!this.projectManager.currentProject) {
             this.ui.showToast(window.i18n.t('project.selectFirst'), 'warning');
@@ -3510,3 +3632,38 @@ document.addEventListener('DOMContentLoaded', () => {
     window.app = new YOLOAnnotator();
     window.app.init();
 });
+
+// Register Service Worker for PWA functionality
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', async () => {
+        try {
+            const registration = await navigator.serviceWorker.register('/js/sw.js', {
+                scope: '/'
+            });
+            console.log('[PWA] Service Worker registered successfully:', registration.scope);
+
+            // Check for updates periodically
+            registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                console.log('[PWA] New Service Worker found, installing...');
+
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        console.log('[PWA] New Service Worker installed, update available');
+                        // Optionally notify the user about the update
+                        if (window.app && window.app.ui) {
+                            window.app.ui.showToast(
+                                window.i18n?.t('pwa.notifications.updateAvailable') || 'Update available. Reload to update.',
+                                'info'
+                            );
+                        }
+                    }
+                });
+            });
+        } catch (error) {
+            console.error('[PWA] Service Worker registration failed:', error);
+        }
+    });
+} else {
+    console.log('[PWA] Service Workers are not supported in this browser');
+}
