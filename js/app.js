@@ -1087,7 +1087,13 @@ class YOLOAnnotator {
             return;
         }
 
-        this.canvasManager.toolManager.setTool(tool);
+        // Set tool - handle both toolManager (images) and direct setTool (time series)
+        if (this.canvasManager.toolManager) {
+            this.canvasManager.toolManager.setTool(tool);
+        } else if (this.canvasManager.setTool) {
+            this.canvasManager.setTool(tool);
+        }
+
         document.querySelectorAll('.tool-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tool === tool);
         });

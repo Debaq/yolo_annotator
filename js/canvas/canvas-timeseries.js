@@ -187,6 +187,15 @@ class TimeSeriesCanvasManager {
             // Load existing annotations
             this.annotations = dataEntry.annotations || [];
 
+            // Set compatibility properties for UI
+            this.imageName = dataEntry.name;
+            this.imageId = dataEntry.id;
+            // Create pseudo-image object for compatibility with UI code
+            this.image = {
+                width: parsed.data.length,  // Number of time points
+                height: parsed.headers ? parsed.headers.length - 1 : 1  // Number of series (excluding time column)
+            };
+
             // Render chart
             this.renderChart();
 
@@ -642,6 +651,38 @@ class TimeSeriesCanvasManager {
     updateAnnotationsBar() {
         // Time series doesn't use the annotations bar yet
         // This is for compatibility with the existing interface
+    }
+
+    /**
+     * Update tool availability based on project type
+     * Hides/shows tools in the UI
+     */
+    updateToolAvailability() {
+        // Hide image annotation tools (bbox, mask, obb)
+        const bboxBtn = document.querySelector('[data-tool="bbox"]');
+        const obbBtn = document.querySelector('[data-tool="obb"]');
+        const maskBtn = document.querySelector('[data-tool="mask"]');
+        const eraseBtn = document.getElementById('btnEraseMode');
+        const maskControls = document.getElementById('maskControls');
+        const rotationControls = document.getElementById('rotationControls');
+
+        if (bboxBtn) bboxBtn.style.display = 'none';
+        if (obbBtn) obbBtn.style.display = 'none';
+        if (maskBtn) maskBtn.style.display = 'none';
+        if (eraseBtn) eraseBtn.style.display = 'none';
+        if (maskControls) maskControls.style.display = 'none';
+        if (rotationControls) rotationControls.style.display = 'none';
+
+        // Show/hide time series tools based on project config
+        const pointBtn = document.querySelector('[data-tool="point"]');
+        const rangeBtn = document.querySelector('[data-tool="range"]');
+
+        if (pointBtn) {
+            pointBtn.style.display = this.projectConfig.allowPoint ? 'flex' : 'none';
+        }
+        if (rangeBtn) {
+            rangeBtn.style.display = this.projectConfig.allowRange ? 'flex' : 'none';
+        }
     }
 
     /**

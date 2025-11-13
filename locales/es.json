@@ -30,6 +30,8 @@
       "bbox": "Bounding Box (B)",
       "obb": "Oriented Box (O)",
       "mask": "Máscara (M)",
+      "point": "Punto (P)",
+      "range": "Rango (R)",
       "select": "Seleccionar (V)",
       "pan": "Pan (H)"
     }
