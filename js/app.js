@@ -619,6 +619,28 @@ class YOLOAnnotator {
         return false;
     }
 
+    // Helper method to get the modality of the current project
+    getProjectModality() {
+        if (!this.projectManager || !this.projectManager.currentProject) {
+            return null;
+        }
+
+        const projectType = this.projectManager.currentProject.type;
+
+        if (typeof PROJECT_TYPES_CONFIG === 'undefined') {
+            return null;
+        }
+
+        // Search through all modalities to find which one contains this project type
+        for (const [modalityKey, modality] of Object.entries(PROJECT_TYPES_CONFIG)) {
+            if (modality.types && modality.types.some(type => type.id === projectType)) {
+                return modalityKey;
+            }
+        }
+
+        return null;
+    }
+
     // Update UI elements visibility based on annotation mode
     updateUIForMode() {
         const floatingTools = document.querySelector('.floating-tools');
@@ -698,6 +720,72 @@ class YOLOAnnotator {
         galleryAugmentButtons.forEach(btn => {
             btn.style.display = isImageProject ? '' : 'none';
         });
+
+        // Update load button based on project modality
+        this.updateLoadButton();
+    }
+
+    // Update the load button text and accepted file types based on project modality
+    updateLoadButton() {
+        const btnLoadImages = document.getElementById('btnLoadImages');
+        const imageInput = document.getElementById('imageInput');
+
+        if (!btnLoadImages || !imageInput) {
+            return;
+        }
+
+        const modality = this.getProjectModality();
+
+        // Configuration for each modality
+        const modalityConfig = {
+            images: {
+                icon: 'fa-image',
+                text: 'Cargar Imágenes',
+                accept: 'image/*'
+            },
+            audio: {
+                icon: 'fa-microphone',
+                text: 'Cargar Audio',
+                accept: 'audio/*'
+            },
+            video: {
+                icon: 'fa-video',
+                text: 'Cargar Video',
+                accept: 'video/*'
+            },
+            timeSeries: {
+                icon: 'fa-file-csv',
+                text: 'Cargar CSV',
+                accept: '.csv,text/csv'
+            },
+            threeD: {
+                icon: 'fa-cube',
+                text: 'Cargar 3D',
+                accept: '.ply,.obj,.pcd,.stl,.dae'
+            },
+            text: {
+                icon: 'fa-file-text',
+                text: 'Cargar Texto',
+                accept: '.txt,.json,.xml'
+            }
+        };
+
+        const config = modalityConfig[modality] || modalityConfig.images;
+
+        // Update button icon
+        const icon = btnLoadImages.querySelector('i');
+        if (icon) {
+            icon.className = `fas ${config.icon}`;
+        }
+
+        // Update button text
+        const span = btnLoadImages.querySelector('span');
+        if (span) {
+            span.textContent = config.text;
+        }
+
+        // Update input accept attribute
+        imageInput.accept = config.accept;
     }
 
     openProjectFile() {
